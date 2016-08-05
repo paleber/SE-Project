@@ -1,3 +1,3 @@
-package main.scala.engine
+package engine
 
 case class Point(x: Double, y: Double)
