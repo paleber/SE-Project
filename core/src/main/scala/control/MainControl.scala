@@ -1,6 +1,6 @@
-package main.scala.control
+package control
 
-import main.scala.engine.Point
+import engine.Point
 
 
 object MainControl extends App {
