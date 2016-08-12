@@ -1,6 +1,7 @@
 package loader
 
-import model.{Block, BlockState, Grid}
+import engine.Point
+import model.{Block, BlockGrids, Grid}
 
 
 object BlockLoader {
@@ -9,16 +10,16 @@ object BlockLoader {
 
     Block(
       Array(
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array()),
-        BlockState(grid, Array(), Array(), Array(), Array())
-      ), 0, 0, 0
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array()),
+        BlockGrids(grid, Array(), Array(), Array(), Array())
+      ), 0, Point(0, 0)
     )
   }
 
