@@ -29,26 +29,46 @@ case class LevelPanel(level: Level) extends JPanel {
 
     scaleFactor = Math.min(getWidth / level.width, getHeight / level.height)
 
-    // TODO Calculate Offset
+    xOffset = (getWidth - level.width * scaleFactor) / 2
+    yOffset = (getHeight - level.height * scaleFactor) / 2
 
-    g.setColor(Color.BLUE)
+    g.setColor(Color.LIGHT_GRAY)
+    g.fillRect(0, 0, getWidth, getHeight)
 
-    for (line <- level.grid.border) {
-      g.drawLine(
-        scale(line.start.x + level.gridPosition.x),
-        scale(line.start.y+ level.gridPosition.y),
-        scale(line.end.x+ level.gridPosition.x),
-        scale(line.end.y+ level.gridPosition.y))
+    g.setColor(Color.WHITE)
+    g.fillRect(scaleX(0), scaleY(0), scale(level.width), scale(level.height))
+
+
+    val xCoordinates = new Array[Int](level.grid.corners.length)
+    val yCoordinates = new Array[Int](level.grid.corners.length)
+    for (i <- level.grid.corners.indices) {
+      xCoordinates(i) = scaleX(level.grid.corners(i).x + level.gridPosition.x)
+      yCoordinates(i) = scaleY(level.grid.corners(i).y + level.gridPosition.y)
     }
+    g.setColor(Color.BLUE)
+    g.drawPolygon(xCoordinates, yCoordinates, level.grid.corners.length)
 
-    //g.fillRect(0,0,100,200)
 
-    // level.grid.borders
+    for (line <- level.grid.lines) {
+      g.drawLine(
+        scaleX(line.start.x + level.gridPosition.x),
+        scaleY(line.start.y + level.gridPosition.y),
+        scaleX(line.end.x + level.gridPosition.x),
+        scaleY(line.end.y + level.gridPosition.y))
+    }
 
   }
 
   def scale(z: Double): Int = {
     (z * scaleFactor).toInt
+  }
+
+  def scaleX(z: Double): Int = {
+    (z * scaleFactor + xOffset).toInt
+  }
+
+  def scaleY(z: Double): Int = {
+    (z * scaleFactor + yOffset).toInt
   }
 
 }
