@@ -6,9 +6,9 @@ import model.Grid
 object GridLoader {
 
   // TODO load from files or database
-  def load(id: Int): Grid = {
+  def load(gridId: Int): Grid = {
 
-    id match {
+    gridId match {
 
       case 0 =>
         Grid(
@@ -21,7 +21,8 @@ object GridLoader {
             Point(0.5, 0.5),
             Point(-0.5, 0.5)
           ),
-          Array()
+          Array(),
+          4
         )
 
       case 1 =>
@@ -38,28 +39,30 @@ object GridLoader {
           ),
           Array(
             Line(Point(-0.5, 0), Point(0.5, 0))
-          )
+          ),
+          4
         )
 
       case 2 =>
         Grid(
           Array(
+            Point(-0.5, -0.5),
+            Point(-0.5, 0.5),
+            Point(0.5, -0.5)
+          ),
+          Array(
+            Point(-1, -1),
+            Point(1, -1),
+            Point(1, 0),
             Point(0, 0),
             Point(0, 1),
-            Point(1, 0)
+            Point(-1, 1)
           ),
           Array(
-            Point(-0.5, -0.5),
-            Point(1.5, -0.5),
-            Point(1.5, 0.5),
-            Point(0.5, 0.5),
-            Point(0.5, 1.5),
-            Point(-0.5, 1.5)
+            Line(Point(-1, 0), Point(0, 0)),
+            Line(Point(0, -1), Point(0, 0))
           ),
-          Array(
-            Line(Point(-0.5, 0.5), Point(0.5, 0.5)),
-            Line(Point(0.5, -0.5), Point(0.5, 0.5))
-          )
+          4
         )
 
       case 3 =>
@@ -82,7 +85,8 @@ object GridLoader {
             Line(Point(-1.5, 0), Point(1.5, 0)),
             Line(Point(-0.5, -1), Point(-0.5, 1)),
             Line(Point(0.5, -1), Point(0.5, 1))
-          )
+          ),
+          4
         )
 
       case _ => throw new IllegalArgumentException

@@ -4,7 +4,7 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.11.8",
 
   libraryDependencies ++= Seq(
-    "org.scalactic" %% "scalactic" % "2.2.6",
+    /*"org.scalactic" %% "scalactic" % "2.2.6",
     "org.scalatest" %% "scalatest" % "2.2.6" % "test",
     "org.scala-lang.modules" %% "scala-swing" % "1.0.2",
     "org.json4s" %% "json4s-jackson" % "3.3.0",
@@ -13,8 +13,8 @@ lazy val commonSettings = Seq(
     "ch.qos.logback" % "logback-classic" % "1.1.7",
     "org.clapper" %% "grizzled-slf4j" % "1.0.2",
     "org.webjars" %% "webjars-play" % "2.5.0-2",
-    "com.typesafe.akka" %% "akka-cluster-tools" % "2.4.6",
-    "com.typesafe.akka" %% "akka-actor" % "2.4.8"
+    "com.typesafe.akka" %% "akka-cluster-tools" % "2.4.6", */
+    "com.typesafe.akka" %% "akka-actor" % "2.4.9-RC2"
   )
 
 )

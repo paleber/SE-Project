@@ -1,18 +1,14 @@
 package loader
 
-import engine.Point
-import model.{Block, Grid}
-
+import model.Grid
 
 object BlockCreator {
 
-  def create(grid: Grid, rotationSteps: Int, curGrid: Int, position: Point): Block = {
-
-    Block(
-      Array(
-        grid, grid, grid, grid,
-        grid, grid, grid, grid
-      ), 0, Point(0, 0)
+  // TODO real implementation
+  def create(grid: Grid): Array[Grid] = {
+    Array(
+      grid, grid, grid, grid,
+      grid, grid, grid, grid
     )
   }
 
