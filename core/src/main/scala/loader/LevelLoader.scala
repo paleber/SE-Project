@@ -7,7 +7,7 @@ object LevelLoader {
 
   def load: Level = {
 
-    Level(15, 10, GridLoader.loadGrid1, Point(7.5, 5), null)
+    Level(15, 10, GridLoader.load(3), Point(7.5, 5), null)
 
   }
 

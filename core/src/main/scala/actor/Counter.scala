@@ -1,8 +1,7 @@
 package actor
 
-import akka.actor.Actor
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{Actor, ActorSystem, Props}
+
 
 class HelloActor extends Actor {
   def receive = {
@@ -14,10 +13,7 @@ class HelloActor extends Actor {
 
 object Main extends App {
   val system = ActorSystem("HelloSystem")
-  // default Actor constructor
-  // TODO Do More
   val helloActor = system.actorOf(Props[HelloActor], name = "helloactor")
   helloActor ! "hello"
   helloActor ! "buenos dias"
-
 }

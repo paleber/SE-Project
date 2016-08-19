@@ -11,6 +11,8 @@ case class ContentFrame(content: Container) {
 
   val frame = new JFrame
 
+  frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+
   frame.setSize(800, 600)
   frame.setLocationRelativeTo(null)
   frame.setVisible(true)
@@ -32,12 +34,11 @@ case class LevelPanel(level: Level) extends JPanel {
     xOffset = (getWidth - level.width * scaleFactor) / 2
     yOffset = (getHeight - level.height * scaleFactor) / 2
 
-    g.setColor(Color.LIGHT_GRAY)
+    g.setColor(Color.DARK_GRAY)
     g.fillRect(0, 0, getWidth, getHeight)
 
     g.setColor(Color.WHITE)
     g.fillRect(scaleX(0), scaleY(0), scale(level.width), scale(level.height))
-
 
     val xCoordinates = new Array[Int](level.grid.corners.length)
     val yCoordinates = new Array[Int](level.grid.corners.length)
@@ -45,10 +46,16 @@ case class LevelPanel(level: Level) extends JPanel {
       xCoordinates(i) = scaleX(level.grid.corners(i).x + level.gridPosition.x)
       yCoordinates(i) = scaleY(level.grid.corners(i).y + level.gridPosition.y)
     }
-    g.setColor(Color.BLUE)
-    g.drawPolygon(xCoordinates, yCoordinates, level.grid.corners.length)
+
+    g.setColor(new Color(200, 200, 255))
+    g.fillPolygon(xCoordinates, yCoordinates, level.grid.corners.length)
 
 
+    g.setColor(Color.DARK_GRAY)
+    g.drawLine(0, getHeight / 2, getWidth, getHeight / 2)
+    g.drawLine(getWidth / 2, 0, getWidth / 2, getHeight)
+
+    g.setColor(new Color(0, 153, 0))
     for (line <- level.grid.lines) {
       g.drawLine(
         scaleX(line.start.x + level.gridPosition.x),
@@ -57,6 +64,15 @@ case class LevelPanel(level: Level) extends JPanel {
         scaleY(line.end.y + level.gridPosition.y))
     }
 
+    g.setColor(Color.BLUE)
+    g.drawPolygon(xCoordinates, yCoordinates, level.grid.corners.length)
+
+
+
+    g.setColor(Color.RED)
+    for (anchor <- level.grid.anchors) {
+      g.fillOval(scaleX(anchor.x + level.gridPosition.x) - 2, scaleY(anchor.y + level.gridPosition.y) - 2, 4, 4)
+    }
   }
 
   def scale(z: Double): Int = {

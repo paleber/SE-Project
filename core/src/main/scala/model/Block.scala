@@ -2,14 +2,6 @@ package model
 
 import engine.Point
 
-
-case class BlockGrids(default: Grid,
-                      rotationRight: Array[Grid],
-                      rotationLeft: Array[Grid],
-                      mirroringVertical: Array[Grid],
-                      mirroringHorizontal: Array[Grid])
-
-
-case class Block(grids: Array[BlockGrids],
+case class Block(grids: Array[Grid], // First half: frontSide, second half: backSide
                  curGrid: Int,
                  position: Point)
