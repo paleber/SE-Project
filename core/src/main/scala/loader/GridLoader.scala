@@ -21,8 +21,7 @@ object GridLoader {
             Point(0.5, 0.5),
             Point(-0.5, 0.5)
           ),
-          Array(),
-          4
+          Array()
         )
 
       case 1 =>
@@ -39,8 +38,7 @@ object GridLoader {
           ),
           Array(
             Line(Point(-0.5, 0), Point(0.5, 0))
-          ),
-          4
+          )
         )
 
       case 2 =>
@@ -61,8 +59,7 @@ object GridLoader {
           Array(
             Line(Point(-1, 0), Point(0, 0)),
             Line(Point(0, -1), Point(0, 0))
-          ),
-          4
+          )
         )
 
       case 3 =>
@@ -85,8 +82,7 @@ object GridLoader {
             Line(Point(-1.5, 0), Point(1.5, 0)),
             Line(Point(-0.5, -1), Point(-0.5, 1)),
             Line(Point(0.5, -1), Point(0.5, 1))
-          ),
-          4
+          )
         )
 
       case _ => throw new IllegalArgumentException
