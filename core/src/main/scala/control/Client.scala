@@ -19,7 +19,7 @@ class Client(views: View*) { // is a actor
 
 trait ClientEvent
 
-case object ShowMenu
+// case object ShowMenu
 
 case class UpdateBlockState(blockId: Int, rotation: Int, position: Point) extends ClientEvent
 
@@ -38,7 +38,7 @@ case class LevelShowed(level: Level)
 
 trait View {
 
-  def receiveEvent(serverEvent: ServerEvent)
+  // def receiveEvent(serverEvent: ServerEvent)
 
 }
 
