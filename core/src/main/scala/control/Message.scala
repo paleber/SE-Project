@@ -30,6 +30,8 @@ trait ServerEvent
 
 case object MenuShowed
 
+case class ChangeState(state: AppState)
+
 case class BlockStateUpdated(blockId: Int, rotation: Int, position: Point) extends ServerEvent
 
 case class LevelShowed(level: Level)

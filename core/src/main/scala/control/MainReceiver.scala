@@ -7,22 +7,34 @@ class MainReceiver extends Actor with ActorLogging {
 
   val mainSender = context.actorOf(Props[MainSender], "mainSender")
 
-  val menuControl = context.actorOf(Props(new MenuControl(mainSender)))
-
-  val gameControl = context.actorOf(Props(new GameControl(mainSender)))
-
-  var activeControl: ActorRef = menuControl
+  var activeControl = context.actorOf(Props(new MenuControl(mainSender)))
+  var activeState: AppState = AppState.Menu
 
   override def receive = {
 
     case msg: RegisterView =>
       mainSender ! msg
 
-    case ShowMenu =>
-      println("TODO: ShowMenu")
+    case ChangeState(state) =>
+      log.debug("changing state")
+      if (state != activeState) {
+        activeState = state
+        context.stop(activeControl)
 
-    case ShowGame =>
-      println("TODO: ShowGame")
+        activeControl = state match {
+          case AppState.Menu =>
+            context.actorOf(Props(new MenuControl(mainSender)))
+          case AppState.Game =>
+            context.actorOf(Props(new GameControl(mainSender)))
+          case _ =>
+            log.error("unknown state")
+            throw new IllegalArgumentException
+        }
+
+      } else {
+        log.error("state already active")
+      }
+
 
     case Shutdown =>
       log.info("shutdown")
@@ -36,7 +48,7 @@ class MainReceiver extends Actor with ActorLogging {
 
 }
 
-// Sends Event to UI
+/** Sends Events to all views. */
 class MainSender extends Actor with ActorLogging {
 
   var views = List.empty[ActorRef]
