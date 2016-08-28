@@ -1,34 +1,22 @@
 package control
 
-import akka.actor.Actor.Receive
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
-// Receives Event from View
-class MainReceiver extends Actor {
+/** Receives all events from views, handle them or forward them to the active control. */
+class MainReceiver extends Actor with ActorLogging {
 
-  /*
-   new LevelControl
-   new GameControl
+  val mainSender = context.actorOf(Props[MainSender], "mainSender")
 
-   // empfängt Events, UserEvents an Controller weiter
-   // leitet ServerEvents an alle Views weiter
+  val menuControl = context.actorOf(Props(new MenuControl(mainSender)))
+  val gameControl = context.actorOf(Props(new GameControl(mainSender)))
 
-   */
+  var activeControl: ActorRef = menuControl
 
-println(context.sender)
-
-  var views: List[View] = List.empty[View]
-
-  // var activeControl
-
-  val x = context.actorOf(Props[MainSender])
-  // x ! "Test"
-
-  context.stop(x)
 
   override def receive = {
 
-    case RegisterView(view) => views = view :: views
+    case msg: RegisterView =>
+      mainSender ! msg
 
     case ShowMenu =>
       println("TODO: ShowMenu")
@@ -41,6 +29,7 @@ println(context.sender)
       println("TODO: Shutdown")
 
     case _ =>
+      activeControl.forward _
       println("TODO: Redirect to current Controller")
 
   }
@@ -48,39 +37,25 @@ println(context.sender)
 }
 
 // Sends Event to UI
-class MainSender extends Actor {
+class MainSender extends Actor with ActorLogging {
+
+  var views = List.empty[ActorRef]
 
   override def receive = {
+
+    case RegisterView(view) =>
+      log.debug("Register view")
+      views = view :: views
+
     case _ => println("MainSender: " + context.sender)
       context.sender ! "Test"
+
   }
 
-  override def postStop(): Unit = super.postStop()
-
-
-}
-
-
-object Starter extends App {
-
-  val system = ActorSystem("HelloSystem")
-
-  val main = system.actorOf(Props[MainReceiver])
-
-  main ! Shutdown
-  // create MainControl Actor
-  // create TuiActor, let ist register by MainControl actor
-  // same with gui
-  // val helloActor = system.actorOf(Props[HelloActor], name = "helloactor")
+  override def postStop = {
+    for (v <- views) {
+      context.stop(v)
+    }
+  }
 
 }
-
-
-
-case class RegisterView(view: View)
-
-case object ShowMenu
-
-case object ShowGame
-
-case object Shutdown

@@ -1,21 +1,20 @@
 package control
 
-
+import akka.actor.ActorRef
 import engine.Point
 import model.Level
 
 
-class Client(views: View*) { // is a actor
+case class RegisterView(view: ActorRef)
 
-  // registerView
+case object ShowMenu
 
-  // Interface between server and ui
+case object ShowGame
 
-  // Listener, reactor, tui gui wui
+case object Shutdown
 
-  // receive events from view, sends events to view
 
-}
+
 
 trait ClientEvent
 
@@ -36,9 +35,4 @@ case class BlockStateUpdated(blockId: Int, rotation: Int, position: Point) exten
 case class LevelShowed(level: Level)
 
 
-trait View {
-
-  // def receiveEvent(serverEvent: ServerEvent)
-
-}
 
