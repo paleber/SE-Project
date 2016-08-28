@@ -8,10 +8,10 @@ class MainReceiver extends Actor with ActorLogging {
   val mainSender = context.actorOf(Props[MainSender], "mainSender")
 
   val menuControl = context.actorOf(Props(new MenuControl(mainSender)))
+
   val gameControl = context.actorOf(Props(new GameControl(mainSender)))
 
   var activeControl: ActorRef = menuControl
-
 
   override def receive = {
 
@@ -25,8 +25,8 @@ class MainReceiver extends Actor with ActorLogging {
       println("TODO: ShowGame")
 
     case Shutdown =>
-      context.stop(self)
-      println("TODO: Shutdown")
+      log.info("shutdown")
+      context.system.terminate
 
     case _ =>
       activeControl.forward _
@@ -47,7 +47,8 @@ class MainSender extends Actor with ActorLogging {
       log.debug("Register view")
       views = view :: views
 
-    case _ => println("MainSender: " + context.sender)
+    case _ =>
+      println("MainSender: " + context.sender)
       context.sender ! "Test"
 
   }

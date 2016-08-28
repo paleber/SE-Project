@@ -12,5 +12,10 @@ class GameControl(mainSender: ActorRef) extends Actor with ActorLogging {
     new Game(LevelLoader.load)
   }
 
-  override def receive: Receive = ???
+  override def receive = {
+    case _ => log.warning("TODO")
+  }
+
+
+
 }
