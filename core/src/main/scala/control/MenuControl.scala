@@ -1,16 +1,19 @@
 package control
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorLogging}
 
-class MenuControl(mainSender: ActorRef) extends Actor with ActorLogging {
-  log.debug("initializing")
+
+class MenuControl extends Actor with ActorLogging {
+  log.debug("Initializing")
+
+  val mainControl = context.actorSelection("..")
 
   override def receive = {
-    case _ => log.warning("TODO")
+    case msg => log.error("Unknown message: " + msg)
   }
 
   override def postStop = {
-    println("postStop X")
+    log.debug("Stopping")
   }
 
 }

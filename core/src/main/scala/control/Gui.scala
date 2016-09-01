@@ -1,15 +1,17 @@
 package control
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import msg.ClientMessage.RegisterView
 
 
-class Gui(mainReceiver: ActorRef) extends Actor with ActorLogging {
+class Gui extends Actor with ActorLogging {
+  log.debug("Initializing")
 
-  log.debug("Initialize Gui")
-  mainReceiver ! RegisterView(self)
+  val mainControl = context.actorSelection("../control")
+  mainControl ! RegisterView(self)
 
   override def receive = {
-    case msg => println("TODO: " + msg)
+    case msg => log.warning("TODO: " + msg)
   }
 
 }

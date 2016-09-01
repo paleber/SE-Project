@@ -105,7 +105,7 @@ case class LevelPanel(level: Level) extends JPanel {
 
 object Starter extends App {
 
-  val levelPanel = LevelPanel(LevelLoader.load)
-  ContentFrame(levelPanel)
+  //val levelPanel = LevelPanel(LevelLoader.load)
+  //ContentFrame(levelPanel)
 
 }

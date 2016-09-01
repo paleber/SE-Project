@@ -1,21 +1,21 @@
 package control
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import loader.LevelLoader
-import model.{Game, Level}
+import akka.actor.{Actor, ActorLogging}
+import model.Level
+import msg.ServerMessage.ShowGame
 
+class GameControl(level: Level) extends Actor with ActorLogging {
+  log.debug("Initializing")
 
-class GameControl(mainSender: ActorRef) extends Actor with ActorLogging {
-  log.debug("initializing")
-
-  def createGame(levelId: Level): Game = {
-    new Game(LevelLoader.load)
-  }
+  val mainControl = context.actorSelection("..")
+  mainControl ! ShowGame(level)
 
   override def receive = {
     case _ => log.warning("TODO")
   }
 
-
+  override def postStop = {
+    log.debug("Stopping")
+  }
 
 }
