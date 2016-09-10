@@ -28,6 +28,7 @@ class MainControl extends Actor with ActorLogging {
     case ClientMessage.Shutdown =>
       log.info("Shutdown")
       context.system.terminate
+      System.exit(1)
 
     case msg: ClientMessage =>
       log.debug("Forwarding ClientMessage")
