@@ -8,4 +8,6 @@ object ServerMessage {
 
   case class ShowGame(level: Level) extends ServerMessage
 
+  case object ShowMenu
+
 }

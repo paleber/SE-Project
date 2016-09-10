@@ -14,7 +14,8 @@ lazy val commonSettings = Seq(
     "org.clapper" %% "grizzled-slf4j" % "1.0.2",
     "org.webjars" %% "webjars-play" % "2.5.0-2",
     "com.typesafe.akka" %% "akka-cluster-tools" % "2.4.6", */
-    "com.typesafe.akka" %% "akka-actor" % "2.4.9-RC2"
+    "com.typesafe.akka" %% "akka-actor" % "2.4.9-RC2",
+    "com.typesafe.akka" %% "akka-camel" % "2.4.10"
   )
 
 )
