@@ -1,6 +1,7 @@
 package control
 
 import akka.actor.{ActorSystem, Props}
+import tui.Tui
 
 object Starter extends App {
 
