@@ -7,22 +7,42 @@ import msg.{ClientMessage, ServerMessage}
 
 class MainControl extends Actor with ActorLogging {
 
-  var activeControl = context.actorOf(Props[MenuControl], "menu")
+  var subControl: Option[ActorRef] = None
+
   var views = List.empty[ActorRef]
+
+  var idCounter = 0
+
+  def generateId: String = {
+    val id = idCounter.toString
+    idCounter += 1
+    id
+  }
 
   override def receive = {
 
     case ClientMessage.ShowMenu =>
-      log.debug("Switching to Menu")
-      context.stop(activeControl)
-      activeControl = context.actorOf(Props[MenuControl], "menu")
+      log.debug("Showing Menu")
+      if (subControl.isDefined) {
+        context.stop(subControl.get)
+      }
+      subControl = Option(context.actorOf(Props[MenuControl], s"menu-$generateId"))
 
     case ClientMessage.ShowGame(levelIndex) =>
-      log.debug("Switching to Game")
-      showGame(levelIndex)
+      log.debug("Showing Game")
+      val level = LevelLoader.load(levelIndex)
+      if (level.isDefined) {
+        log.info(s"Start Game with Level $level")
+        if (subControl.isDefined) {
+          context.stop(subControl.get)
+        }
+        subControl = Option(context.actorOf(Props(new GameControl(level.get)), s"menu-$generateId"))
+      } else {
+        log.error(s"Level $level is unknown")
+      }
 
     case ClientMessage.RegisterView(view) =>
-      log.debug("Registering view")
+      log.debug("Registering view: " + context.sender.path)
       views = view :: views
 
     case ClientMessage.Shutdown =>
@@ -31,27 +51,20 @@ class MainControl extends Actor with ActorLogging {
       System.exit(1)
 
     case msg: ClientMessage =>
-      log.debug("Forwarding ClientMessage")
-      activeControl.forward(msg)
+      log.debug("Forwarding ClientMessage to SubControl")
+      if (subControl.isDefined) {
+        subControl.get.forward(msg)
+      } else {
+        log.error("MainControl is initializing, no SubControl active")
+      }
 
     case msg: ServerMessage =>
-      log.debug("Forwarding ServerMessage")
+      log.debug("Forwarding ServerMessage to Views")
       views.foreach(view => view.forward(msg))
 
-    case _ =>
-      log.error("Unknown message")
+    case msg =>
+      log.error("Unhandled message: " + msg)
 
-  }
-
-  private def showGame(levelIndex: Int): Unit = {
-    val level = LevelLoader.load(levelIndex)
-    if (level.isDefined) {
-      log.info(s"Start Game with Level $level")
-      context.stop(activeControl)
-      context.actorOf(Props(new GameControl(level.get)), "game")
-    } else {
-      log.error(s"Level $level is unknown")
-    }
   }
 
 }

@@ -1,6 +1,7 @@
 package tui
 
 import msg.ClientMessage
+import msg.ClientMessage.ShowGame
 
 
 trait TextCommand {
@@ -9,9 +10,25 @@ trait TextCommand {
 
   val numberArgs: Int
 
-  /** Execute the command.
-    *
-    * @param args argument list, including command at args[0] */
+  @throws(classOf[NumberFormatException])
   def parse(args: Array[String]): ClientMessage
 
+}
+
+private[tui] object CmdShutdown extends TextCommand {
+  override val description = "- Shutdown the application"
+  override val numberArgs = 0
+  override def parse(args: Array[String]) = ClientMessage.Shutdown
+}
+
+private[tui] object CmdShowGame extends TextCommand {
+  override val description = "level:INT - Show the game"
+  override val numberArgs = 1
+  override def parse(args: Array[String]) = ClientMessage.ShowGame(args(1).toInt)
+}
+
+private[tui] object CmdShowMenu extends TextCommand {
+  override val description = "- Show the menu"
+  override val numberArgs = 0
+  override def parse(args: Array[String]) = ClientMessage.ShowMenu
 }

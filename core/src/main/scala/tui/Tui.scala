@@ -6,20 +6,17 @@ import akka.actor.{Actor, ActorLogging}
 import msg.ClientMessage
 import msg.ClientMessage.RegisterView
 
-private[tui] object Tui {
-
-  val cmdMap = Map(
-    "exit" -> ShutdownCommand,
-    "shutdown" -> ShutdownCommand
-  )
-
-}
-
 class Tui extends Actor with ActorLogging {
   log.debug("Initialize")
 
   val mainControl = context.actorSelection("../control")
   mainControl ! RegisterView(self)
+
+  val cmdMap = Map(
+    "exit" -> CmdShutdown,
+    "menu" -> CmdShowMenu,
+    "game" -> CmdShowGame
+  )
 
   new Thread(new Runnable {
     override def run(): Unit = {
@@ -39,15 +36,15 @@ class Tui extends Actor with ActorLogging {
     log.debug("Parsing input: " + input)
 
     if(input == "help") {
-      log.info("help: print this help")
-      for((key, cmd) <- Tui.cmdMap) {
-        log.info(s"$key: ${cmd.description}")
+      log.info("help - print this help")
+      for((key, cmd) <- cmdMap) {
+        log.info(s"$key ${cmd.description}")
       }
       return
     }
 
     val args = input.split(" ")
-    val cmd = Tui.cmdMap.get(args(0))
+    val cmd = cmdMap.get(args(0))
 
     if (cmd.isEmpty) {
       log.error(s"Unknown command '${args(0)}', type 'help' to print available commands")
@@ -67,16 +64,14 @@ class Tui extends Actor with ActorLogging {
     }
   }
 
+  private case class ConsoleInput(input: String)
+
 }
 
 
 
 
-private[tui] case class ConsoleInput(input: String)
 
-private[tui] object ShutdownCommand extends TextCommand {
-  override val description = "Shutdown the application"
-  override val numberArgs = 0
-  override def parse(args: Array[String]) = ClientMessage.Shutdown
-}
+
+
 

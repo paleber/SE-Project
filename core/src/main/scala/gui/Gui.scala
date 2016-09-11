@@ -1,6 +1,6 @@
-package control
+package gui
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorLogging}
 import msg.ClientMessage.RegisterView
 
 

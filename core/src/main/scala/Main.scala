@@ -1,9 +1,9 @@
-package control
-
 import akka.actor.{ActorSystem, Props}
+import control.MainControl
+import gui.Gui
 import tui.Tui
 
-object Starter extends App {
+object Main extends App {
 
   private val system = ActorSystem()
 
