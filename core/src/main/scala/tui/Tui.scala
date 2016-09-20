@@ -3,7 +3,7 @@ package tui
 import java.util.Scanner
 
 import akka.actor.{Actor, ActorLogging}
-import msg.ClientMessage
+import msg.{ClientMessage, ServerMessage}
 import msg.ClientMessage.RegisterView
 
 class Tui extends Actor with ActorLogging {
@@ -28,16 +28,19 @@ class Tui extends Actor with ActorLogging {
   }).start()
 
   override def receive = {
-    case ConsoleInput(input) =>parseInput(input)
+    case ConsoleInput(input) => parseInput(input)
+    case ServerMessage.ShowGame(level) =>
+      log.info("Grid: " + level.grid)
+      level.blocks.foreach(block => log.info(block.toString))
     case msg => log.error("Unhandled message: " + msg)
   }
 
   private def parseInput(input: String): Unit = {
     log.debug("Parsing input: " + input)
 
-    if(input == "help") {
+    if (input == "help") {
       log.info("help - print this help")
-      for((key, cmd) <- cmdMap) {
+      for ((key, cmd) <- cmdMap) {
         log.info(s"$key ${cmd.description}")
       }
       return

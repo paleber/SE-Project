@@ -2,6 +2,6 @@ package model
 
 import engine.{Line, Point}
 
-case class Grid(anchors: Array[Point],
-                corners: Array[Point],
-                lines: Array[Line])
+case class Grid(anchors: List[Point],
+                corners: List[Point],
+                lines: List[Line])

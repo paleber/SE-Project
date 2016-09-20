@@ -12,43 +12,43 @@ object GridLoader {
 
       case 0 =>
         Grid(
-          Array(
+          List(
             Point(0, 0)
           ),
-          Array(
+          List(
             Point(-0.5, -0.5),
             Point(0.5, -0.5),
             Point(0.5, 0.5),
             Point(-0.5, 0.5)
           ),
-          Array()
+          List.empty
         )
 
       case 1 =>
         Grid(
-          Array(
+          List(
             Point(0, -0.5),
             Point(0, 0.5)
           ),
-          Array(
+          List(
             Point(-0.5, -1),
             Point(0.5, -1),
             Point(0.5, 1),
             Point(-0.5, 1)
           ),
-          Array(
+          List(
             Line(Point(-0.5, 0), Point(0.5, 0))
           )
         )
 
       case 2 =>
         Grid(
-          Array(
+          List(
             Point(-0.5, -0.5),
             Point(-0.5, 0.5),
             Point(0.5, -0.5)
           ),
-          Array(
+          List(
             Point(-1, -1),
             Point(1, -1),
             Point(1, 0),
@@ -56,7 +56,7 @@ object GridLoader {
             Point(0, 1),
             Point(-1, 1)
           ),
-          Array(
+          List(
             Line(Point(-1, 0), Point(0, 0)),
             Line(Point(0, -1), Point(0, 0))
           )
@@ -64,7 +64,7 @@ object GridLoader {
 
       case 3 =>
         Grid(
-          Array(
+          List(
             Point(-1, -0.5),
             Point(0, -0.5),
             Point(1, -0.5),
@@ -72,13 +72,13 @@ object GridLoader {
             Point(0, 0.5),
             Point(1, 0.5)
           ),
-          Array(
+          List(
             Point(-1.5, -1),
             Point(1.5, -1),
             Point(1.5, 1),
             Point(-1.5, 1)
           ),
-          Array(
+          List(
             Line(Point(-1.5, 0), Point(1.5, 0)),
             Line(Point(-0.5, -1), Point(-0.5, 1)),
             Line(Point(0.5, -1), Point(0.5, 1))

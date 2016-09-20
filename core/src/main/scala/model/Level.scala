@@ -7,5 +7,5 @@ case class Level(width: Double,
                  height: Double,
                  grid: Grid,
                  gridPosition: Point,
-                 blocks: Array[Block],
+                 blocks: List[Block],
                  rotationSteps: Int)
