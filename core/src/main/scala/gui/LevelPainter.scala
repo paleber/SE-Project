@@ -3,9 +3,9 @@ package gui
 import java.awt.{Color, Container, Graphics}
 import javax.swing.{JFrame, JPanel}
 
-import engine.Point
+import engine.{Grid, Point}
 import loader.LevelLoader
-import model.{Grid, Level}
+import model.Level
 
 
 case class ContentFrame(content: Container) {
@@ -51,7 +51,7 @@ case class LevelPanel(level: Level) extends JPanel {
     }
 
     // Draw the board
-    drawGrid(g, level.grid, level.gridPosition)
+    drawGrid(g, level.board, Point(0, 0))
 
     // Draw the blocks
     for (block <- level.blocks) {
@@ -103,9 +103,3 @@ case class LevelPanel(level: Level) extends JPanel {
 
 }
 
-object Starter extends App {
-
-  //val levelPanel = LevelPanel(LevelLoader.load)
-  //ContentFrame(levelPanel)
-
-}

@@ -27,16 +27,18 @@ class MainControl extends Actor with ActorLogging {
         context.stop(subControl.get)
       }
       subControl = Option(context.actorOf(Props[MenuControl], s"menu-$generateId"))
+      self ! ServerMessage.ShowMenu
 
     case ClientMessage.ShowGame(levelIndex) =>
       log.debug("Showing Game")
       val level = LevelLoader.load(levelIndex)
       if (level.isDefined) {
-        log.info(s"Start Game with Level $level")
+        log.info(s"Start Game: ${level.get}")
         if (subControl.isDefined) {
           context.stop(subControl.get)
         }
-        subControl = Option(context.actorOf(Props(new GameControl(level.get)), s"menu-$generateId"))
+        subControl = Option(context.actorOf(Props(new GameControl(level.get)), s"game-$generateId"))
+        self ! ServerMessage.ShowGame(level.get)
       } else {
         log.error(s"Level $level is unknown")
       }
@@ -59,8 +61,10 @@ class MainControl extends Actor with ActorLogging {
       }
 
     case msg: ServerMessage =>
-      log.debug("Forwarding ServerMessage to Views")
+      log.debug("Forwarding ServerMessage to Views: " + msg)
       views.foreach(view => view.forward(msg))
+
+
 
     case msg =>
       log.error("Unhandled message: " + msg)

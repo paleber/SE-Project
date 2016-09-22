@@ -8,7 +8,6 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   log.debug("Initializing")
 
   val mainControl = context.actorSelection("..")
-  mainControl ! ShowGame(level)
 
   override def receive = {
     case _ => log.warning("TODO")

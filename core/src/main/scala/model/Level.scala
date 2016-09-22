@@ -1,11 +1,8 @@
 package model
 
-import engine.Point
-
+import engine.Grid
 
 case class Level(width: Double,
                  height: Double,
-                 grid: Grid,
-                 gridPosition: Point,
-                 blocks: List[Block],
-                 rotationSteps: Int)
+                 board: Grid,
+                 blocks: List[Block])

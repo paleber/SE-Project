@@ -3,14 +3,12 @@ package tui
 import java.util.Scanner
 
 import akka.actor.{Actor, ActorLogging}
-import msg.{ClientMessage, ServerMessage}
-import msg.ClientMessage.RegisterView
+import msg.ServerMessage
 
 class Tui extends Actor with ActorLogging {
   log.debug("Initialize")
 
-  val mainControl = context.actorSelection("../control")
-  mainControl ! RegisterView(self)
+  val main = context.actorSelection("../control")
 
   val cmdMap = Map(
     "exit" -> CmdShutdown,
@@ -29,9 +27,11 @@ class Tui extends Actor with ActorLogging {
 
   override def receive = {
     case ConsoleInput(input) => parseInput(input)
+    case ServerMessage.ShowMenu => log.info("Showing menu")
     case ServerMessage.ShowGame(level) =>
-      log.info("Grid: " + level.grid)
-      level.blocks.foreach(block => log.info(block.toString))
+      log.info("Showing game")
+      log.info("Board: " + level.board)
+      level.blocks.foreach(block => log.info(s"Block ${level.blocks.indexOf(block)}: ${block.toString}"))
     case msg => log.error("Unhandled message: " + msg)
   }
 
@@ -61,7 +61,7 @@ class Tui extends Actor with ActorLogging {
 
     try {
       val msg = cmd.get.parse(args)
-      mainControl ! msg
+      main ! msg
     } catch {
       case e: NumberFormatException => log.error(s"Wrong argument format of command '${args(0)}'")
     }

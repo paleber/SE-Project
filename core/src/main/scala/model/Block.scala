@@ -1,6 +1,6 @@
 package model
 
-import engine.Point
+import engine.{Grid, Point}
 
 case class Block(grids: List[Grid],
                  position: Point,

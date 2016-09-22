@@ -20,7 +20,7 @@ lazy val commonSettings = Seq(
 
 )
 
-lazy val root = (project in file(".")).
+lazy val SE_Project = (project in file(".")).
   settings(commonSettings: _*)//.
   //enablePlugins(PlayScala)
 

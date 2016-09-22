@@ -1,7 +1,6 @@
 package loader
 
-import engine.{Line, Point}
-import model.Grid
+import engine.{Grid, Line, Point}
 
 object GridLoader {
 
@@ -12,6 +11,7 @@ object GridLoader {
 
       case 0 =>
         Grid(
+          4,
           List(
             Point(0, 0)
           ),
@@ -26,6 +26,7 @@ object GridLoader {
 
       case 1 =>
         Grid(
+          4,
           List(
             Point(0, -0.5),
             Point(0, 0.5)
@@ -43,6 +44,7 @@ object GridLoader {
 
       case 2 =>
         Grid(
+          4,
           List(
             Point(-0.5, -0.5),
             Point(-0.5, 0.5),
@@ -64,6 +66,7 @@ object GridLoader {
 
       case 3 =>
         Grid(
+          4,
           List(
             Point(-1, -0.5),
             Point(0, -0.5),
