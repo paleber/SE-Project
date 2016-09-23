@@ -40,7 +40,7 @@ class MainControl extends Actor with ActorLogging {
         subControl = Option(context.actorOf(Props(new GameControl(level.get)), s"game-$generateId"))
         self ! ServerMessage.ShowGame(level.get)
       } else {
-        log.error(s"Level $level is unknown")
+        log.error(s"Level $levelIndex is unknown")
       }
 
     case ClientMessage.RegisterView(view) =>

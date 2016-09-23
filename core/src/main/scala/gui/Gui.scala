@@ -6,13 +6,15 @@ import javax.swing.{JFrame, JPanel}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import gui.Gui.SetContentPane
-import msg.ServerMessage
+import msg.{ClientMessage, ServerMessage}
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
 
 
 object Gui {
+
   private val DEFAULT_SIZE = new Dimension(800, 600)
 
   private[gui] case class SetContentPane(c: JPanel)
@@ -43,9 +45,13 @@ class Gui extends Actor with ActorLogging {
     case SetContentPane(panel) =>
       panel.setSize(frame.getContentPane.getSize)
       frame.setContentPane(panel)
+      panel.revalidate()
 
     case ServerMessage.ShowMenu =>
-      content = Some(context.actorOf(Props(new GuiMenu(frame)), "menu"))
+      content = Some(context.actorOf(Props[GuiMenu], "menu"))
+
+    case msg: ClientMessage =>
+      main ! msg
 
     case msg =>
       if (content.isDefined) {

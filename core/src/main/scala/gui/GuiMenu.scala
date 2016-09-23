@@ -1,27 +1,29 @@
 package gui
 
-import java.awt.{Color, Dimension, Graphics}
-import javax.swing.{JFrame, JPanel}
+import java.awt.event.{ActionEvent, ActionListener}
+import javax.swing.{JButton, JLabel, JPanel}
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorLogging}
+import msg.ClientMessage
 
-class GuiMenu(frame: JFrame) extends JPanel with Actor {
+class GuiMenu extends JPanel with Actor with ActorLogging{
   context.parent ! Gui.SetContentPane(this)
 
-
-
-  override def receive = {
-    case msg =>
+  private case class StartLevelEvent(level: Int) extends ActionListener {
+    override def actionPerformed(e: ActionEvent): Unit = {
+      log.info(s"Button clicked: Level $level")
+      context.parent ! ClientMessage.ShowGame(level)
+    }
   }
 
-  override def paint(g: Graphics): Unit = {
-    g.setColor(Color.CYAN)
-    g.fillRect(20, 20, 200, 90)
+  for(i <- 0 to 20) {
+    val bnLevel = new JButton(s"Level $i")
+    bnLevel.addActionListener(StartLevelEvent(i))
+    add(bnLevel)
+  }
 
-    g.setColor(Color.RED)
-    g.drawRect(0, 0, 799, 599)
-
-    g.drawString(System.currentTimeMillis().toString, 10, 20)
+  override def receive = {
+    case msg => log.warning("Unhandled message: " + msg)
   }
 
 }
