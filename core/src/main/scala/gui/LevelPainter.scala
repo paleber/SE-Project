@@ -55,7 +55,7 @@ case class LevelPanel(level: Level) extends JPanel {
 
     // Draw the blocks
     for (block <- level.blocks) {
-      drawGrid(g, block.grids(block.state), block.position)
+      drawGrid(g, block.grids(block.gridIndex), block.position)
     }
 
   }

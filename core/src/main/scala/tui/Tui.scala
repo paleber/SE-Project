@@ -47,6 +47,10 @@ class Tui extends Actor with ActorLogging {
     }
 
     val args = input.split(" ")
+    if(args.isEmpty) {
+      return
+    }
+
     val cmd = cmdMap.get(args(0))
 
     if (cmd.isEmpty) {

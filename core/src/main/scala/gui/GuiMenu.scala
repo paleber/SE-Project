@@ -1,12 +1,13 @@
 package gui
 
 import java.awt.event.{ActionEvent, ActionListener}
-import javax.swing.{JButton, JLabel, JPanel}
+import javax.swing.{JButton, JPanel}
 
 import akka.actor.{Actor, ActorLogging}
 import msg.ClientMessage
 
-class GuiMenu extends JPanel with Actor with ActorLogging{
+class GuiMenu extends JPanel with Actor with ActorLogging {
+  log.debug("Initializing")
   context.parent ! Gui.SetContentPane(this)
 
   private case class StartLevelEvent(level: Int) extends ActionListener {
@@ -16,7 +17,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging{
     }
   }
 
-  for(i <- 0 to 20) {
+  for (i <- 0 to 20) {
     val bnLevel = new JButton(s"Level $i")
     bnLevel.addActionListener(StartLevelEvent(i))
     add(bnLevel)

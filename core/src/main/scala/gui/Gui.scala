@@ -6,7 +6,9 @@ import javax.swing.{JFrame, JPanel}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import gui.Gui.SetContentPane
+import model.Level
 import msg.{ClientMessage, ServerMessage}
+import util.{IdGenerator, InitActor}
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,27 +40,28 @@ class Gui extends Actor with ActorLogging {
     frame.repaint()
   }
 
-  var content: Option[ActorRef] = None
+  var content = context.actorOf(Props[InitActor], "init")
 
   override def receive = {
 
     case SetContentPane(panel) =>
       panel.setSize(frame.getContentPane.getSize)
       frame.setContentPane(panel)
-      panel.revalidate()
+      context.system.scheduler.scheduleOnce(100 millis) {
+        panel.revalidate()
+      }
 
     case ServerMessage.ShowMenu =>
-      content = Some(context.actorOf(Props[GuiMenu], "menu"))
+      context.stop(content)
+      content = context.actorOf(Props[GuiMenu], s"menu-${IdGenerator.generate()}")
 
-    case msg: ClientMessage =>
-      main ! msg
+    case ServerMessage.ShowGame(level: Level) =>
+      content = context.actorOf(Props(GuiGame(level)), s"game-${IdGenerator.generate()}")
 
-    case msg =>
-      if (content.isDefined) {
-        content.get ! msg
-      } else {
-        log.warning("Unhandled message, while no content is defined: " + msg)
-      }
+    case msg: ClientMessage => main ! msg
+
+    case msg => content ! msg
+
   }
 
 }
