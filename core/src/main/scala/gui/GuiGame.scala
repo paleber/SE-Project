@@ -1,24 +1,36 @@
 package gui
 
+import java.awt.event.{MouseAdapter, MouseEvent}
 import java.awt.{BasicStroke, Color, Graphics, Graphics2D, Polygon}
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging}
 import engine.{Grid, Point}
-import model.Level
+import model.{Block, Level}
+
+
 
 case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-  val blocks = level.blocks.toArray
-  val blockPolys = new Array[Polygon](blocks.length)
+  private case class ExtendedBlock(block: Block) {
+    val poly = new Polygon()
+    block.grids.head.corners.foreach(b => poly.addPoint(0, 0))
+  }
 
-  for (i <- blocks.indices) {
+  private val blocks = new Array[ExtendedBlock](level.blocks.length)
+  for(i <- blocks.indices) {
+    blocks(i) = ExtendedBlock(level.blocks(i))
+  }
+
+  //val blockPolys = new Array[Polygon](blocks.length)
+
+  /*for (i <- blocks.indices) {
     blockPolys(i) = new Polygon()
     for (j <- blocks(i).grids.head.corners.indices) {
       blockPolys(i).addPoint(0, 0)
     }
-  }
+  }*/
 
   val boardPoly = new Polygon()
   for (i <- level.board.corners.indices) {
@@ -31,6 +43,16 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   var yOffset: Double = 0
 
 
+  var mouseX = 0
+  var mouseY = 0
+
+  addMouseMotionListener(new MouseAdapter {
+    override def mouseMoved(e: MouseEvent) = {
+      mouseX = e.getX
+      mouseY = e.getY
+    }
+  })
+
 
   context.parent ! Gui.SetContentPane(this)
 
@@ -42,7 +64,7 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   }
 
 
-  private val selectedBlock: Option[Int] = None
+  private var selectedBlock: Option[ExtendedBlock] = None
 
   override def paint(g: Graphics): Unit = {
 
@@ -53,11 +75,19 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
 
 
+    // Convert corners to polygon
     convertCornersToPoly(level.board.corners, Point.ORIGIN, boardPoly)
-
-    for(i <- blocks.indices) {
-      convertCornersToPoly(blocks(i).activeGrid.corners, blocks(i).position, blockPolys(i))
+    for (b <- blocks) {
+      convertCornersToPoly(b.block.activeGrid.corners, b.block.position, b.poly)
     }
+
+    // Select the block
+    selectedBlock = None
+      blocks.foreach(b => {
+      if(b.poly.contains(mouseX, mouseY))   {
+        selectedBlock = Some(b)
+      }
+    })
 
     // Draw the Background
     g.setColor(Color.GRAY)
@@ -95,14 +125,23 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
 
     // Draw the blocks
-    for (i <- level.blocks.indices) {
+    for (b <- blocks) {
       //drawGrid(g, block.grids(block.gridIndex), block.position)
 
-      g.setColor(new Color(100, 255, 255))
-      g.fillPolygon(blockPolys(i))
+      if(selectedBlock.isDefined && b == selectedBlock.get) {
+        g.setColor(new Color(100, 255, 100))
+      } else {
+        g.setColor(new Color(100, 255, 255))
+      }
+      g.fillPolygon(b.poly)
 
-      g.setColor(new Color(0, 139, 139))
-      g.drawPolygon(blockPolys(i))
+      if(selectedBlock.isDefined && b == selectedBlock.get) {
+        g.setColor(new Color(0, 139, 0))
+      } else {
+        g.setColor(new Color(0, 139, 139))
+      }
+
+      g.drawPolygon(b.poly)
 
       /*
       g.setColor(new Color(0, 153, 0))
