@@ -9,18 +9,21 @@ import engine.{Grid, Point}
 import model.{Block, Level}
 
 
-
 case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-  private case class ExtendedBlock(block: Block) {
+  private class ExtendedBlock(block: Block) {
     val poly = new Polygon()
-    block.grids.head.corners.foreach(b => poly.addPoint(0, 0))
+    val grids = block.grids
+    var position = block.position
+    var gridIndex = block.gridIndex
+
+    def activeGrid = grids(gridIndex)
   }
 
   private val blocks = new Array[ExtendedBlock](level.blocks.length)
-  for(i <- blocks.indices) {
-    blocks(i) = ExtendedBlock(level.blocks(i))
+  for (i <- blocks.indices) {
+    blocks(i) = new ExtendedBlock(level.blocks(i))
   }
 
   //val blockPolys = new Array[Polygon](blocks.length)
@@ -33,35 +36,75 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   }*/
 
   val boardPoly = new Polygon()
-  for (i <- level.board.corners.indices) {
-    boardPoly.addPoint(0, 0)
-  }
+
 
 
   var scaleFactor: Double = 1
   var xOffset: Double = 0
   var yOffset: Double = 0
 
+  private var lastX: Int = 0
+  private var lastY: Int = 0
 
   var mouseX = 0
   var mouseY = 0
 
   addMouseMotionListener(new MouseAdapter {
-    override def mouseMoved(e: MouseEvent) = {
-      mouseX = e.getX
-      mouseY = e.getY
+    override def mouseDragged(e: MouseEvent): Unit = {
+
+      if (selectedBlock.isEmpty) {
+        return
+      }
+
+
+      val delta = Point((e.getX - lastX) / scaleFactor, (e.getY - lastY) / scaleFactor)
+
+      selectedBlock.get.position = selectedBlock.get.position + delta
+
+      lastX = e.getX
+      lastY = e.getY
+
     }
   })
+
+  addMouseListener(new MouseAdapter {
+    override def mousePressed(e: MouseEvent): Unit = {
+      selectedBlock = None
+      for (b <- blocks) {
+        println(e.getX + " - " + e.getY)
+        println(b.poly.xpoints.head + " " + b.poly.ypoints.head)
+        if (b.poly.contains(e.getPoint)) {
+          lastX = e.getX
+          lastY = e.getY
+          selectedBlock = Some(b)
+
+          println("inside")
+        }
+
+      }
+      println("---")
+    }
+
+    override def mouseReleased(e: MouseEvent): Unit = {
+      selectedBlock = None
+    }
+  })
+
+
 
 
   context.parent ! Gui.SetContentPane(this)
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
+    poly.reset()
     for (i <- points.indices) {
-      poly.xpoints(i) = scaleX(points(i).x + position.x)
-      poly.ypoints(i) = scaleY(points(i).y + position.y)
+      poly.addPoint(
+        scaleX(points(i).x + position.x),
+        scaleY(points(i).y + position.y)
+      )
     }
   }
+
 
 
   private var selectedBlock: Option[ExtendedBlock] = None
@@ -78,16 +121,16 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     // Convert corners to polygon
     convertCornersToPoly(level.board.corners, Point.ORIGIN, boardPoly)
     for (b <- blocks) {
-      convertCornersToPoly(b.block.activeGrid.corners, b.block.position, b.poly)
+      convertCornersToPoly(b.activeGrid.corners, b.position, b.poly)
     }
 
-    // Select the block
+    /*/ Select the block
     selectedBlock = None
-      blocks.foreach(b => {
-      if(b.poly.contains(mouseX, mouseY))   {
+    blocks.foreach(b => {
+      if (b.poly.contains(mouseX, mouseY)) {
         selectedBlock = Some(b)
       }
-    })
+    })*/
 
     // Draw the Background
     g.setColor(Color.GRAY)
@@ -124,45 +167,43 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     }
 
 
-    // Draw the blocks
-    for (b <- blocks) {
-      //drawGrid(g, block.grids(block.gridIndex), block.position)
-
-      if(selectedBlock.isDefined && b == selectedBlock.get) {
-        g.setColor(new Color(100, 255, 100))
-      } else {
-        g.setColor(new Color(100, 255, 255))
-      }
+    // Draw unselected the blocks
+    for (b <- blocks if selectedBlock.isEmpty || selectedBlock.get != b) {
+      g.setColor(new Color(100, 255, 255))
       g.fillPolygon(b.poly)
 
-      if(selectedBlock.isDefined && b == selectedBlock.get) {
-        g.setColor(new Color(0, 139, 0))
-      } else {
-        g.setColor(new Color(0, 139, 139))
-      }
-
+      g.setColor(new Color(0, 139, 139))
       g.drawPolygon(b.poly)
+    }
 
-      /*
-      g.setColor(new Color(0, 153, 0))
-      for (line <- blocks(i).grids(blocks(i).gridIndex).lines) {
-        g.drawLine(
-          scaleX(line.start.x + blocks(i).position.x),
-          scaleY(line.start.y + blocks(i).position.y),
-          scaleX(line.end.x + blocks(i).position.x),
-          scaleY(line.end.y + blocks(i).position.y))
-      }*/
-      /*
-      g.setColor(Color.RED)
-      for (anchor <- grid.anchors) {
-        g.fillOval(scaleX(anchor.x + position.x) - 2, scaleY(anchor.y + position.y) - 2, 4, 4)
-      }
-      g.setColor(Color.BLUE)
-      g.drawPolygon(xCoordinates, yCoordinates, grid.corners.length)
-*/
+    if (selectedBlock.isDefined) {
+      g.setColor(new Color(100, 255, 100))
+      g.fillPolygon(selectedBlock.get.poly)
+
+      g.setColor(new Color(0, 139, 0))
+      g.drawPolygon(selectedBlock.get.poly)
     }
 
   }
+
+  /*
+  g.setColor(new Color(0, 153, 0))
+  for (line <- blocks(i).grids(blocks(i).gridIndex).lines) {
+    g.drawLine(
+      scaleX(line.start.x + blocks(i).position.x),
+      scaleY(line.start.y + blocks(i).position.y),
+      scaleX(line.end.x + blocks(i).position.x),
+      scaleY(line.end.y + blocks(i).position.y))
+  }*/
+  /*
+  g.setColor(Color.RED)
+  for (anchor <- grid.anchors) {
+    g.fillOval(scaleX(anchor.x + position.x) - 2, scaleY(anchor.y + position.y) - 2, 4, 4)
+  }
+  g.setColor(Color.BLUE)
+  g.drawPolygon(xCoordinates, yCoordinates, grid.corners.length)
+*/
+
 
   private def drawGrid(g: Graphics, grid: Grid, position: Point): Unit = {
 
