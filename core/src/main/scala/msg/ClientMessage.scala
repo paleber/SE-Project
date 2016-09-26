@@ -1,6 +1,7 @@
 package msg
 
 import akka.actor.ActorRef
+import engine.Point
 
 sealed trait ClientMessage
 
@@ -14,7 +15,15 @@ object ClientMessage {
 
   case class ShowGame(level: Int) extends ClientMessage
 
+  case class RotateBlockLeft(index: Int) extends ClientMessage
 
+  case class RotateBlockRight(index: Int) extends ClientMessage
+
+  case class MirrorBlockVertical(index: Int) extends ClientMessage
+
+  case class MirrorBlockHorizontal(index: Int) extends ClientMessage
+
+  case class UpdateBlockPosition(index: Int, position: Point)
 
 }
 
@@ -24,8 +33,6 @@ object ClientMessage {
 //case class UpdateBlockState(blockId: Int, rotation: Int, position: Point) extends ClientMessage
 
 //case class ShowLevel(levelId: Level)
-
-
 
 
 //case object MenuShowed
