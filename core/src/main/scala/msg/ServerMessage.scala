@@ -1,7 +1,7 @@
 package msg
 
 import engine.{Grid, Point}
-import model.Level
+import model.{Block, Level}
 
 sealed trait ServerMessage
 
@@ -11,6 +11,6 @@ object ServerMessage {
 
   case object ShowMenu extends ServerMessage
 
-  case class UpdateBlock(index: Int, grid: Grid, position: Point) extends ServerMessage
+  case class UpdateBlock(index: Int, block: Block) extends ServerMessage
 
 }

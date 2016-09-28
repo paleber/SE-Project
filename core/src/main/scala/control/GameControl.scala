@@ -2,7 +2,7 @@ package control
 
 import akka.actor.{Actor, ActorLogging}
 import model.Level
-import msg.ServerMessage.ShowGame
+import msg.ClientMessage
 
 class GameControl(level: Level) extends Actor with ActorLogging {
   log.debug("Initializing")
@@ -10,7 +10,9 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   val mainControl = context.actorSelection("..")
 
   override def receive = {
-    case _ => log.warning("TODO")
+    case ClientMessage.UpdateBlockPosition(index, position) =>
+
+    case msg => log.warning("Unhandled message: " + msg)
   }
 
   override def postStop = {

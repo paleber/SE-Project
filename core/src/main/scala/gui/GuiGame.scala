@@ -6,8 +6,8 @@ import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging}
 import engine.{Grid, Point}
-import model.Level
-import msg.ClientMessage
+import model.{Block, Level}
+import msg.{ClientMessage, ServerMessage}
 
 
 case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
@@ -17,7 +17,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   var blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
 
   val boardPoly = new Polygon()
-
 
   var scaleFactor: Double = 1
   var xOffset: Double = 0
@@ -29,42 +28,51 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   var mouseX = 0
   var mouseY = 0
 
+  private class Selected(var index: Int, var block: Block) {
+    var poly = new Polygon()
+  }
+
+  private var selected: Option[Selected] = None
+
+
   addMouseMotionListener(new MouseAdapter {
     override def mouseDragged(e: MouseEvent): Unit = {
-      if (selectedBlockIndex.isEmpty) {
-        return
+      if (selected.isDefined) {
+        val delta = Point((e.getX - lastX) / scaleFactor, (e.getY - lastY) / scaleFactor)
+        selected.get.block = selected.get.block.copy(
+          position = selected.get.block.position + delta
+        )
+        lastX = e.getX
+        lastY = e.getY
       }
-
-      val delta = Point((e.getX - lastX) / scaleFactor, (e.getY - lastY) / scaleFactor)
-      val index = selectedBlockIndex.get
-      blocks(index) = blocks(index).copy(
-        position = blocks(index).position + delta
-      )
-
-      lastX = e.getX
-      lastY = e.getY
     }
   })
 
   addMouseListener(new MouseAdapter {
     override def mousePressed(e: MouseEvent): Unit = {
-      selectedBlockIndex = None
+      selected = None
       for (poly <- blockPolys) {
         if (poly.contains(e.getPoint)) {
           lastX = e.getX
           lastY = e.getY
-          selectedBlockIndex = Some(blockPolys.indexOf(poly))
+          val index = blockPolys.indexOf(poly)
+          selected = Some(new Selected(index, blocks(index)))
         }
       }
     }
 
     override def mouseReleased(e: MouseEvent): Unit = {
-      context.parent ! ClientMessage.UpdateBlockPosition(
-        selectedBlockIndex.get,
-        Point(e.getX / scaleFactor - xOffset, e.getY / scaleFactor - yOffset)
-      )
+      if (selected.isDefined) {
+        val msg = ClientMessage.UpdateBlockPosition(
+          selected.get.index,
+          Point(e.getX / scaleFactor - xOffset, e.getY / scaleFactor - yOffset)
+        )
 
-      selectedBlockIndex = None
+
+        blocks(selected.get.index) = selected.get.block
+        selected = None
+        context.parent ! msg
+      }
     }
   })
 
@@ -80,7 +88,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     }
   }
 
-  private var selectedBlockIndex: Option[Int] = None
 
   override def paint(g: Graphics): Unit = {
 
@@ -88,8 +95,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     scaleFactor = Math.min(getWidth / level.width, getHeight / level.height)
     xOffset = (getWidth - level.width * scaleFactor) / 2
     yOffset = (getHeight - level.height * scaleFactor) / 2
-
-
 
     // Convert corners to polygon
     convertCornersToPoly(level.board.corners, Point.ORIGIN, boardPoly)
@@ -141,8 +146,8 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
 
     // Draw unselected the blocks
-    for (poly <- blockPolys if selectedBlockIndex.isEmpty ||
-      blockPolys.indexOf(poly) != selectedBlockIndex.get) {
+    for (poly <- blockPolys if selected.isEmpty ||
+      blockPolys.indexOf(poly) != selected.get.index) {
 
       g.setColor(new Color(100, 255, 255))
       g.fillPolygon(poly)
@@ -151,12 +156,18 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
       g.drawPolygon(poly)
     }
 
-    if (selectedBlockIndex.isDefined) {
+    if (selected.isDefined) {
+      convertCornersToPoly(
+        selected.get.block.grid.corners,
+        selected.get.block.position,
+        selected.get.poly
+      )
+
       g.setColor(new Color(100, 255, 100))
-      g.fillPolygon(blockPolys(selectedBlockIndex.get))
+      g.fillPolygon(selected.get.poly)
 
       g.setColor(new Color(0, 139, 0))
-      g.drawPolygon(blockPolys(selectedBlockIndex.get))
+      g.drawPolygon(selected.get.poly)
     }
 
   }
@@ -227,6 +238,9 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
 
   override def receive = {
+    case ServerMessage.UpdateBlock(index, block) =>
+      blocks(index) = block
+
     case msg => log.warning("Unhandled message: " + msg)
   }
 

@@ -23,7 +23,7 @@ object ClientMessage {
 
   case class MirrorBlockHorizontal(index: Int) extends ClientMessage
 
-  case class UpdateBlockPosition(index: Int, position: Point)
+  case class UpdateBlockPosition(index: Int, position: Point) extends ClientMessage
 
 }
 

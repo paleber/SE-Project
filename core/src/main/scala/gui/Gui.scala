@@ -58,9 +58,10 @@ class Gui extends Actor with ActorLogging {
     case ServerMessage.ShowGame(level: Level) =>
       content = context.actorOf(Props(GuiGame(level)), s"game-${IdGenerator.generate()}")
 
+
     case msg: ClientMessage => main ! msg
 
-    case msg => content ! msg
+    case msg => log.warning("Unhandled message: " + msg)
 
   }
 
