@@ -1,9 +1,9 @@
 package gui
 
 import java.awt.event.{KeyAdapter, KeyEvent, MouseAdapter, MouseEvent}
-import java.awt.{BasicStroke, Color, Graphics, Graphics2D, Polygon}
+import java.awt.image.BufferedImage
+import java.awt.{BasicStroke, Color, Cursor, Graphics, Graphics2D, Polygon, Toolkit, Point => AwtPoint}
 import javax.swing.JPanel
-import java.awt.{Point => AwtPoint}
 
 import akka.actor.{Actor, ActorLogging}
 import engine.{Grid, Point}
@@ -27,13 +27,21 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   private var xOffset, yOffset: Double = 0
   private var lastX, lastY: Int = 0
 
+  val defaultCursor = Cursor.getDefaultCursor
+
+  val blankCursor = Toolkit.getDefaultToolkit.createCustomCursor(
+    new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+    new AwtPoint(0, 0),
+    null
+  )
+
+
 
   private class Selected(var index: Int, var block: Block) {
     val poly = new Polygon()
   }
 
   private var selected: Option[Selected] = None
-
 
   private case class MoveBlock(p: AwtPoint)
 
@@ -184,6 +192,12 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   }
 
 
+
+
+
+
+
+
   override def receive = {
 
     case ServerMessage.UpdateBlock(index, block) =>
@@ -207,6 +221,7 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
           lastY = position.y
           val index = blockPolys.indexOf(poly)
           selected = Some(new Selected(index, blocks(index)))
+          setCursor(blankCursor)
         }
       }
 
@@ -219,6 +234,7 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
         blocks(selected.get.index) = selected.get.block
         selected = None
         activeAction = None
+        setCursor(defaultCursor)
         context.parent ! msg
       }
 
