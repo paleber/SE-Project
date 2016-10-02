@@ -50,6 +50,8 @@ class Gui extends Actor with ActorLogging {
       context.system.scheduler.scheduleOnce(100 millis) {
         panel.revalidate()
       }
+      panel.setFocusable(true)
+      panel.requestFocusInWindow()
 
     case ServerMessage.ShowMenu =>
       context.stop(content)
@@ -58,6 +60,7 @@ class Gui extends Actor with ActorLogging {
     case ServerMessage.ShowGame(level: Level) =>
       content = context.actorOf(Props(GuiGame(level)), s"game-${IdGenerator.generate()}")
 
+    case msg: ServerMessage => content ! msg
 
     case msg: ClientMessage => main ! msg
 

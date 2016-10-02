@@ -1,11 +1,12 @@
 package gui
 
-import java.awt.event.{MouseAdapter, MouseEvent}
+import java.awt.event.{KeyAdapter, KeyEvent, MouseAdapter, MouseEvent}
 import java.awt.{BasicStroke, Color, Graphics, Graphics2D, Polygon}
 import javax.swing.JPanel
+import java.awt.{Point => AwtPoint}
 
 import akka.actor.{Actor, ActorLogging}
-import engine.{Grid, Point}
+import engine.Point
 import model.{Block, Level}
 import msg.{ClientMessage, ServerMessage}
 
@@ -13,20 +14,15 @@ import msg.{ClientMessage, ServerMessage}
 case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-  var blocks = level.blocks.toArray
-  var blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
+  private val blocks = level.blocks.toArray
+  private val blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
 
-  val boardPoly = new Polygon()
+  private val boardPoly = new Polygon()
 
-  var scaleFactor: Double = 1
-  var xOffset: Double = 0
-  var yOffset: Double = 0
+  private var scaleFactor: Double = 1
+  private var xOffset, yOffset: Double = 0
+  private var lastX, lastY: Int = 0
 
-  private var lastX: Int = 0
-  private var lastY: Int = 0
-
-  var mouseX = 0
-  var mouseY = 0
 
   private class Selected(var index: Int, var block: Block) {
     var poly = new Polygon()
@@ -35,48 +31,54 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   private var selected: Option[Selected] = None
 
 
+  private case class MoveBlock(p: AwtPoint)
+
+  private case class SelectBlock(p: AwtPoint)
+
+  private case object ReleaseBlock
+
+  private case object RotateRight
+
+  private case object RotateLeft
+
+  private case object MirrorVertical
+
+  private case object MirrorHorizontal
+
+  private case object BackToMenu
+
   addMouseMotionListener(new MouseAdapter {
-    override def mouseDragged(e: MouseEvent): Unit = {
-      if (selected.isDefined) {
-        val delta = Point((e.getX - lastX) / scaleFactor, (e.getY - lastY) / scaleFactor)
-        selected.get.block = selected.get.block.copy(
-          position = selected.get.block.position + delta
-        )
-        lastX = e.getX
-        lastY = e.getY
-      }
-    }
+    override def mouseDragged(e: MouseEvent) = self ! MoveBlock(e.getPoint)
   })
 
   addMouseListener(new MouseAdapter {
-    override def mousePressed(e: MouseEvent): Unit = {
-      selected = None
-      for (poly <- blockPolys) {
-        if (poly.contains(e.getPoint)) {
-          lastX = e.getX
-          lastY = e.getY
-          val index = blockPolys.indexOf(poly)
-          selected = Some(new Selected(index, blocks(index)))
-        }
-      }
-    }
+    override def mousePressed(e: MouseEvent) = self ! SelectBlock(e.getPoint)
 
-    override def mouseReleased(e: MouseEvent): Unit = {
-      if (selected.isDefined) {
-        val msg = ClientMessage.UpdateBlockPosition(
-          selected.get.index,
-          Point(e.getX / scaleFactor - xOffset, e.getY / scaleFactor - yOffset)
-        )
+    override def mouseReleased(e: MouseEvent) = self ! ReleaseBlock
+  })
 
+  addKeyListener(new KeyAdapter {
+    override def keyPressed(e: KeyEvent) = e.getKeyCode match {
+      case KeyEvent.VK_A => self ! RotateLeft
+      case KeyEvent.VK_LEFT => self ! RotateLeft
 
-        blocks(selected.get.index) = selected.get.block
-        selected = None
-        context.parent ! msg
-      }
+      case KeyEvent.VK_D => self ! RotateRight
+      case KeyEvent.VK_RIGHT => self ! RotateRight
+
+      case KeyEvent.VK_W => self ! MirrorVertical
+      case KeyEvent.VK_UP => self ! MirrorVertical
+
+      case KeyEvent.VK_S => self ! MirrorHorizontal
+      case KeyEvent.VK_DOWN => self ! MirrorHorizontal
+
+      case KeyEvent.VK_ESCAPE => self ! BackToMenu
+
+      case msg => log.warning(s"Ignoring Key: ${e.getKeyCode} - ${e.getKeyChar}")
     }
   })
 
   context.parent ! Gui.SetContentPane(this)
+
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
     poly.reset()
@@ -87,7 +89,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
       )
     }
   }
-
 
   override def paint(g: Graphics): Unit = {
 
@@ -101,14 +102,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     for (i <- blocks.indices) {
       convertCornersToPoly(blocks(i).grid.corners, blocks(i).position, blockPolys(i))
     }
-
-    /*/ Select the block
-    selectedBlockIndex = None
-    blocks.foreach(b => {
-      if (b.poly.contains(mouseX, mouseY)) {
-        selectedBlockIndex = Some(b)
-      }
-    })*/
 
     // Draw the Background
     g.setColor(Color.GRAY)
@@ -144,7 +137,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
         scaleY(line.end.y))
     }
 
-
     // Draw unselected the blocks
     for (poly <- blockPolys if selected.isEmpty ||
       blockPolys.indexOf(poly) != selected.get.index) {
@@ -172,58 +164,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
   }
 
-  /*
-  g.setColor(new Color(0, 153, 0))
-  for (line <- blocks(i).grids(blocks(i).gridIndex).lines) {
-    g.drawLine(
-      scaleX(line.start.x + blocks(i).position.x),
-      scaleY(line.start.y + blocks(i).position.y),
-      scaleX(line.end.x + blocks(i).position.x),
-      scaleY(line.end.y + blocks(i).position.y))
-  }*/
-  /*
-  g.setColor(Color.RED)
-  for (anchor <- grid.anchors) {
-    g.fillOval(scaleX(anchor.x + position.x) - 2, scaleY(anchor.y + position.y) - 2, 4, 4)
-  }
-  g.setColor(Color.BLUE)
-  g.drawPolygon(xCoordinates, yCoordinates, grid.corners.length)
-*/
-
-
-  private def drawGrid(g: Graphics, grid: Grid, position: Point): Unit = {
-
-
-    val xCoordinates = new Array[Int](grid.corners.length)
-    val yCoordinates = new Array[Int](grid.corners.length)
-    for (i <- grid.corners.indices) {
-      xCoordinates(i) = scaleX(grid.corners(i).x + position.x)
-      yCoordinates(i) = scaleY(grid.corners(i).y + position.y)
-    }
-
-    g.setColor(new Color(200, 200, 255))
-    g.fillPolygon(xCoordinates, yCoordinates, grid.corners.length)
-
-    g.setColor(new Color(0, 153, 0))
-    for (line <- grid.lines) {
-      g.drawLine(
-        scaleX(line.start.x + position.x),
-        scaleY(line.start.y + position.y),
-        scaleX(line.end.x + position.x),
-        scaleY(line.end.y + position.y))
-    }
-
-    g.setColor(Color.RED)
-    for (anchor <- grid.anchors) {
-      g.fillOval(scaleX(anchor.x + position.x) - 2, scaleY(anchor.y + position.y) - 2, 4, 4)
-    }
-
-
-    g.setColor(Color.BLUE)
-    g.drawPolygon(xCoordinates, yCoordinates, grid.corners.length)
-
-  }
-
   private def scale(z: Double): Int = {
     (z * scaleFactor).toInt
   }
@@ -236,10 +176,51 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     (z * scaleFactor + yOffset).toInt
   }
 
-
   override def receive = {
+
     case ServerMessage.UpdateBlock(index, block) =>
       blocks(index) = block
+
+    case MoveBlock(point) =>
+      if (selected.isDefined) {
+        val delta = Point((point.x - lastX) / scaleFactor, (point.y - lastY) / scaleFactor)
+        selected.get.block = selected.get.block.copy(
+          position = selected.get.block.position + delta
+        )
+        lastX = point.x
+        lastY = point.y
+      }
+
+    case SelectBlock(point) =>
+      selected = None
+      for (poly <- blockPolys) {
+        if (poly.contains(point)) {
+          lastX = point.x
+          lastY = point.y
+          val index = blockPolys.indexOf(poly)
+          selected = Some(new Selected(index, blocks(index)))
+        }
+      }
+
+    case ReleaseBlock =>
+      if (selected.isDefined) {
+        val msg = ClientMessage.UpdateBlockPosition(
+          selected.get.index,
+          selected.get.block.position
+        )
+        blocks(selected.get.index) = selected.get.block
+        selected = None
+        context.parent ! msg
+      }
+
+
+    case RotateLeft => println("Left")
+    case RotateRight => println("Right")
+    case MirrorVertical => println("Vertical")
+    case MirrorHorizontal => println("Horizontal")
+
+
+    case BackToMenu => context.parent ! ClientMessage.ShowMenu
 
     case msg => log.warning("Unhandled message: " + msg)
   }
