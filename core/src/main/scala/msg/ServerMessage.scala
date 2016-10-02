@@ -12,4 +12,6 @@ object ServerMessage {
 
   case class UpdateBlock(index: Int, block: Block) extends ServerMessage
 
+  case object LevelFinished extends ServerMessage
+
 }

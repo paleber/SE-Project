@@ -8,9 +8,9 @@ import msg.ServerMessage
 class Tui extends Actor with ActorLogging {
   log.debug("Initialize")
 
-  val main = context.actorSelection("../control")
+  private case class ConsoleInput(input: String)
 
-  val cmdMap = Map(
+  private val cmdMap = Map(
     "exit" -> CmdShutdown,
     "menu" -> CmdShowMenu,
     "game" -> CmdShowGame
@@ -26,13 +26,15 @@ class Tui extends Actor with ActorLogging {
   }).start()
 
   override def receive = {
-    case ConsoleInput(input) => parseInput(input)
-    case ServerMessage.ShowMenu => log.info("Showing menu")
-    case ServerMessage.ShowGame(level) =>
-      log.info("Showing game")
-      log.info("Board: " + level.board)
-      level.blocks.foreach(block => log.info(s"Block ${level.blocks.indexOf(block)}: ${block.toString}"))
-    case msg => log.error("Unhandled message: " + msg)
+
+    case ConsoleInput(input) =>
+      parseInput(input)
+
+    case msg: ServerMessage =>
+      log.info(msg.toString)
+
+    case msg =>
+      log.error("Unhandled message: " + msg)
   }
 
   private def parseInput(input: String): Unit = {
@@ -47,7 +49,7 @@ class Tui extends Actor with ActorLogging {
     }
 
     val args = input.split(" ")
-    if(args.isEmpty) {
+    if (args.isEmpty) {
       return
     }
 
@@ -65,13 +67,11 @@ class Tui extends Actor with ActorLogging {
 
     try {
       val msg = cmd.get.parse(args)
-      main ! msg
+      context.parent ! msg
     } catch {
       case e: NumberFormatException => log.error(s"Wrong argument format of command '${args(0)}'")
     }
   }
-
-  private case class ConsoleInput(input: String)
 
 }
 

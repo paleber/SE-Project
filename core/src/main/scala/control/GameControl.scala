@@ -14,71 +14,64 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   private val boardAnchors = mutable.Map[Point, Option[Int]]()
   level.board.anchors.foreach(anchor => boardAnchors.put(anchor, None))
 
+  private var running = true
+
+  private def doBlockAction(index: Int)(function: => Unit): Unit = {
+    if (blocks.lift(index).isEmpty) {
+      log.error("Invalid block index: " + index)
+    } else if (!running) {
+      log.warning("Action while level is finished")
+    } else {
+      function
+      anchorBlock(index)
+    }
+  }
+
   override def receive = {
+
     case ClientMessage.UpdateBlockPosition(index, position) =>
-      val block = blocks.lift(index)
-      if (block.isDefined) {
-        blocks(index) = block.get.copy(
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
           position = position
         )
-        anchorBlock(index)
-      } else {
-        log.error("Invalid block index while updating position: " + index)
       }
 
-
     case ClientMessage.RotateBlockLeft(index) =>
-      val block = blocks.lift(index)
-      if (block.isDefined) {
-        blocks(index) = block.get.copy(
-          grid = block.get.grid.rotate(-Math.PI / 2)
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.rotate(-Math.PI * 2 / level.rotationSteps)
         )
-        anchorBlock(index)
-      } else {
-        log.error("Invalid block index while rotating left: " + index)
       }
 
     case ClientMessage.RotateBlockRight(index) =>
-      val block = blocks.lift(index)
-      if (block.isDefined) {
-        blocks(index) = block.get.copy(
-          grid = block.get.grid.rotate(Math.PI / 2)
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.rotate(Math.PI * 2 / level.rotationSteps)
         )
-        anchorBlock(index)
-      } else {
-        log.error("Invalid block index while rotating right: " + index)
       }
 
     case ClientMessage.MirrorBlockVertical(index) =>
-      val block = blocks.lift(index)
-      if (block.isDefined) {
-        blocks(index) = block.get.copy(
-          grid = block.get.grid.mirrorVertical()
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.mirrorVertical()
         )
-        anchorBlock(index)
-      } else {
-        log.error("Invalid block index while rotating right: " + index)
       }
 
     case ClientMessage.MirrorBlockHorizontal(index) =>
-      val block = blocks.lift(index)
-      if (block.isDefined) {
-        blocks(index) = block.get.copy(
-          grid = block.get.grid.mirrorHorizontal()
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.mirrorHorizontal()
         )
-        anchorBlock(index)
-      } else {
-        log.error("Invalid block index while rotating right: " + index)
       }
 
     case msg => log.warning("Unhandled message: " + msg)
   }
 
+
   private def anchorBlock(index: Int): Unit = {
     freeBoardAnchors(index)
 
     val anchored = anchorOnBoard(index)
-
     if (!anchored) {
       blocks(index) = blocks(index).copy(
         position = level.blocks(index).position
@@ -86,13 +79,24 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     }
 
     context.parent ! ServerMessage.UpdateBlock(index, blocks(index))
+    if (anchored) {
+      checkLevelFinished()
+    }
+  }
+
+  private def checkLevelFinished(): Unit = {
+    boardAnchors.values.foreach(f =>
+      if (f.isEmpty) {
+        return
+      }
+    )
+    running = false
+    context.parent ! ServerMessage.LevelFinished
   }
 
   private def anchorOnBoard(index: Int): Boolean = {
-
     val point = blocks(index).grid.anchors.head + blocks(index).position
     val boardAnchor = findNextBoardAnchor(point, 0.5)
-
     if (boardAnchor.isEmpty) {
       return false
     }
@@ -102,7 +106,7 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     )
 
     for (blockAnchor <- blockCopy.grid.anchors) {
-      val boardAnchor = findNextBoardAnchor(blockAnchor + blockCopy.position, 1)
+      val boardAnchor = findNextBoardAnchor(blockAnchor + blockCopy.position, 0.1)
       if (boardAnchor.isEmpty || boardAnchors(boardAnchor.get).isDefined) {
         freeBoardAnchors(index)
         return false

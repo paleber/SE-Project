@@ -20,7 +20,7 @@ class MainControl extends Actor with ActorLogging {
 
       context.stop(subControl)
 
-      subControl = context.actorOf(Props[MenuControl], s"menu-${IdGenerator.generate()}")
+      subControl = context.actorOf(Props[DefaultActor], s"menu-${IdGenerator.generate()}")
       self ! ServerMessage.ShowMenu
 
     case ClientMessage.ShowGame(levelIndex) =>
