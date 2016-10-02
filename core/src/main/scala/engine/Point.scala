@@ -6,8 +6,14 @@ object Point {
 
 case class Point(x: Double, y: Double) {
 
+  def distanceTo(p: Point) = Math.sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y))
+
   def +(p: Point): Point = {
     Point(x + p.x, y + p.y)
+  }
+
+  def +(v: Vector): Point = {
+    Point(x + v.x, y + v.y)
   }
 
   def rotate(angle: Double, pivot: Point = Point.ORIGIN): Point = {

@@ -36,7 +36,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   )
 
 
-
   private class Selected(var index: Int, var block: Block) {
     val poly = new Polygon()
   }
@@ -190,12 +189,6 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   private def scaleY(z: Double): Int = {
     (z * scaleFactor + yOffset).toInt
   }
-
-
-
-
-
-
 
 
   override def receive = {
