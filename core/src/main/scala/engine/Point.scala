@@ -23,8 +23,13 @@ case class Point(x: Double, y: Double) {
     )
   }
 
-  def mirrorYAxis(): Point = {
-    Point(-x, y)
+  def mirrorVertical(percentage: Double = 1): Point = {
+    Point(x - 2 * x * percentage, y)
+  }
+
+  def mirrorHorizontal(percentage: Double = 1): Point = {
+    Point(x, y - 2 * y * percentage)
   }
 
 }
+

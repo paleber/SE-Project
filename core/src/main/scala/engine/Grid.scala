@@ -21,11 +21,19 @@ case class Grid(rotationSteps: Int,
     )
   }
 
-  def mirrorYAxis(): Grid = {
+  def mirrorVertical(percentage: Double = 1): Grid = {
     copy(
-      anchors = anchors.toArray.transform(p => p.mirrorYAxis()).toList,
-      corners = corners.toArray.transform(p => p.mirrorYAxis()).toList,
-      lines = lines.toArray.transform(l => l.mirrorYAxis()).toList
+      anchors = anchors.toArray.transform(p => p.mirrorVertical(percentage)).toList,
+      corners = corners.toArray.transform(p => p.mirrorVertical(percentage)).toList,
+      lines = lines.toArray.transform(l => l.mirrorVertical(percentage)).toList
+    )
+  }
+
+  def mirrorHorizontal(percentage: Double = 1): Grid = {
+    copy(
+      anchors = anchors.toArray.transform(p => p.mirrorHorizontal(percentage)).toList,
+      corners = corners.toArray.transform(p => p.mirrorHorizontal(percentage)).toList,
+      lines = lines.toArray.transform(l => l.mirrorHorizontal(percentage)).toList
     )
   }
 

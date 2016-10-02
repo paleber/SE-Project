@@ -6,9 +6,13 @@ import javax.swing.JPanel
 import java.awt.{Point => AwtPoint}
 
 import akka.actor.{Actor, ActorLogging}
-import engine.Point
+import engine.{Grid, Point}
 import model.{Block, Level}
 import msg.{ClientMessage, ServerMessage}
+
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
 
 
 case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
@@ -25,7 +29,7 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
 
   private class Selected(var index: Int, var block: Block) {
-    var poly = new Polygon()
+    val poly = new Polygon()
   }
 
   private var selected: Option[Selected] = None
@@ -37,13 +41,16 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
 
   private case object ReleaseBlock
 
-  private case object RotateRight
 
-  private case object RotateLeft
+  private sealed trait Action
 
-  private case object MirrorVertical
+  private case object RotateRight extends Action
 
-  private case object MirrorHorizontal
+  private case object RotateLeft extends Action
+
+  private case object MirrorVertical extends Action
+
+  private case object MirrorHorizontal extends Action
 
   private case object BackToMenu
 
@@ -176,27 +183,28 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     (z * scaleFactor + yOffset).toInt
   }
 
+
   override def receive = {
 
     case ServerMessage.UpdateBlock(index, block) =>
       blocks(index) = block
 
-    case MoveBlock(point) =>
+    case MoveBlock(position) =>
       if (selected.isDefined) {
-        val delta = Point((point.x - lastX) / scaleFactor, (point.y - lastY) / scaleFactor)
+        val delta = Point((position.x - lastX) / scaleFactor, (position.y - lastY) / scaleFactor)
         selected.get.block = selected.get.block.copy(
           position = selected.get.block.position + delta
         )
-        lastX = point.x
-        lastY = point.y
+        lastX = position.x
+        lastY = position.y
       }
 
-    case SelectBlock(point) =>
+    case SelectBlock(position) =>
       selected = None
       for (poly <- blockPolys) {
-        if (poly.contains(point)) {
-          lastX = point.x
-          lastY = point.y
+        if (poly.contains(position)) {
+          lastX = position.x
+          lastY = position.y
           val index = blockPolys.indexOf(poly)
           selected = Some(new Selected(index, blocks(index)))
         }
@@ -210,19 +218,102 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
         )
         blocks(selected.get.index) = selected.get.block
         selected = None
+        activeAction = None
         context.parent ! msg
       }
 
+    case RotateLeft =>
+      if (selected.isDefined && activeAction.isEmpty) {
+        context.parent ! ClientMessage.RotateBlockLeft(selected.get.index)
+        activeAction = Some(BlockAction(RotateLeft, selected.get.block.grid))
+        self ! HandleBlockAction
+      }
 
-    case RotateLeft => println("Left")
-    case RotateRight => println("Right")
-    case MirrorVertical => println("Vertical")
-    case MirrorHorizontal => println("Horizontal")
+    case RotateRight =>
+      if (selected.isDefined && activeAction.isEmpty) {
+        context.parent ! ClientMessage.RotateBlockRight(selected.get.index)
+        activeAction = Some(BlockAction(RotateRight, selected.get.block.grid))
+        self ! HandleBlockAction
+      }
+
+    case MirrorVertical =>
+      if (selected.isDefined && activeAction.isEmpty) {
+        context.parent ! ClientMessage.MirrorBlockVertical(selected.get.index)
+        activeAction = Some(BlockAction(MirrorVertical, selected.get.block.grid))
+        self ! HandleBlockAction
+      }
+
+    case MirrorHorizontal =>
+      if (selected.isDefined && activeAction.isEmpty) {
+        context.parent ! ClientMessage.MirrorBlockHorizontal(selected.get.index)
+        activeAction = Some(BlockAction(MirrorHorizontal, selected.get.block.grid))
+        self ! HandleBlockAction
+      }
 
 
-    case BackToMenu => context.parent ! ClientMessage.ShowMenu
+    case BackToMenu =>
+      context.parent ! ClientMessage.ShowMenu
+
+    case HandleBlockAction =>
+      handleBlockAction()
 
     case msg => log.warning("Unhandled message: " + msg)
   }
+
+  private def handleBlockAction(): Unit = {
+    if (activeAction.isDefined) {
+
+      activeAction.get.action match {
+
+        case RotateLeft =>
+          selected.get.block = selected.get.block.copy(
+            grid = activeAction.get.startGrid.rotate(
+              -Math.PI / 2 / activeAction.get.maxSteps * activeAction.get.curStep
+            )
+          )
+
+        case RotateRight =>
+          selected.get.block = selected.get.block.copy(
+            grid = activeAction.get.startGrid.rotate(
+              Math.PI / 2 / activeAction.get.maxSteps * activeAction.get.curStep
+            )
+          )
+
+        case MirrorVertical =>
+          selected.get.block = selected.get.block.copy(
+            grid = activeAction.get.startGrid.mirrorVertical(
+              activeAction.get.curStep.toFloat / activeAction.get.maxSteps
+            )
+          )
+
+        case MirrorHorizontal =>
+          selected.get.block = selected.get.block.copy(
+            grid = activeAction.get.startGrid.mirrorHorizontal(
+              activeAction.get.curStep.toFloat / activeAction.get.maxSteps
+            )
+          )
+
+        case _ => log.error("Unknown Block Action")
+      }
+
+      if (activeAction.get.curStep < activeAction.get.maxSteps) {
+        activeAction = Some(activeAction.get.copy(
+          curStep = activeAction.get.curStep + 1)
+        )
+        context.system.scheduler.scheduleOnce(20 millis) {
+          self ! HandleBlockAction
+        }
+      } else {
+        activeAction = None
+      }
+    }
+  }
+
+
+  private var activeAction: Option[BlockAction] = None
+
+  private case class BlockAction(action: Action, startGrid: Grid, curStep: Int = 0, maxSteps: Int = 6)
+
+  private case object HandleBlockAction
 
 }

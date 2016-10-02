@@ -15,7 +15,7 @@ object BlockCreator {
       grids += grid.rotate(i * (Math.PI / 2))
     }
 
-    val mirroredGrid = grid.mirrorYAxis()
+    val mirroredGrid = grid.mirrorHorizontal()
     for (i <- 0 to grid.rotationSteps) {
       grids += mirroredGrid.rotate(i * (Math.PI / 2))
     }

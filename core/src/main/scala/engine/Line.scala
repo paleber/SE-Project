@@ -11,8 +11,12 @@ case class Line(start: Point, end: Point) {
     Line(start.rotate(angle, pivot), end.rotate(angle, pivot))
   }
 
-  def mirrorYAxis(): Line = {
-    Line(start.mirrorYAxis(), end.mirrorYAxis())
+  def mirrorVertical(percentage: Double = 1): Line = {
+    Line(start.mirrorVertical(percentage), end.mirrorVertical(percentage))
+  }
+
+  def mirrorHorizontal(percentage: Double = 1): Line = {
+    Line(start.mirrorHorizontal(percentage), end.mirrorHorizontal(percentage))
   }
 
 }

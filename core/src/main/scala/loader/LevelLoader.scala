@@ -18,7 +18,7 @@ object LevelLoader {
         Block(GridLoader.load(0), Point(2.5, 4.5)),
         Block(GridLoader.load(1), Point(4.5, 4.5)),
         Block(GridLoader.load(2), Point(7, 4.5))
-      )
+      ), 4
     ))
 
   }
