@@ -1,5 +1,4 @@
-package engine
-
+package model
 
 object Vector {
 

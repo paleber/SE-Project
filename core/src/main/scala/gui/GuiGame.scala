@@ -6,12 +6,11 @@ import java.awt.{BasicStroke, Color, Cursor, Graphics, Graphics2D, Polygon, Tool
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging}
-import engine.{Grid, Point}
-import model.{Block, Level}
+import model.{Block, Grid, Level, Point}
 import msg.{ClientMessage, ServerMessage}
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 

@@ -1,7 +1,6 @@
 package loader
 
-import engine.Point
-import model.{Block, Level}
+import model.{Block, Level, Point}
 
 object LevelLoader {
 

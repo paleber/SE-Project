@@ -8,7 +8,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import gui.Gui.SetContentPane
 import model.Level
 import msg.{ClientMessage, ServerMessage}
-import util.{IdGenerator, InitActor}
+import util.{IdGenerator, DefaultActor}
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,7 +40,7 @@ class Gui extends Actor with ActorLogging {
     frame.repaint()
   }
 
-  var content = context.actorOf(Props[InitActor], "init")
+  var content = context.actorOf(Props[DefaultActor], "init")
 
   override def receive = {
 

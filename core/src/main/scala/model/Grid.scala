@@ -1,4 +1,4 @@
-package engine
+package model
 
 case class Grid(rotationSteps: Int,
                 anchors: List[Point],

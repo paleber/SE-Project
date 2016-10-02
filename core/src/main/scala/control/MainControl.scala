@@ -3,12 +3,12 @@ package control
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import loader.LevelLoader
 import msg.{ClientMessage, ServerMessage}
-import util.{IdGenerator, InitActor}
+import util.{IdGenerator, DefaultActor}
 
 
 class MainControl extends Actor with ActorLogging {
 
-  var subControl: ActorRef = context.actorOf(Props[InitActor], "init")
+  var subControl: ActorRef = context.actorOf(Props[DefaultActor], "init")
 
   var views = List.empty[ActorRef]
 

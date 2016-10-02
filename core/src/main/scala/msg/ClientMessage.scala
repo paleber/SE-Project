@@ -1,7 +1,7 @@
 package msg
 
 import akka.actor.ActorRef
-import engine.Point
+import model.Point
 
 sealed trait ClientMessage
 

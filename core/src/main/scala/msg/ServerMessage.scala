@@ -1,6 +1,5 @@
 package msg
 
-import engine.{Grid, Point}
 import model.{Block, Level}
 
 sealed trait ServerMessage

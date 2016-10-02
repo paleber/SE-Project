@@ -1,8 +1,7 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import engine.{Point, Vector}
-import model.Level
+import model.{Level, Point, Vector}
 import msg.{ClientMessage, ServerMessage}
 
 import scala.collection.mutable

@@ -1,5 +1,4 @@
-package engine
-
+package model
 
 case class Line(start: Point, end: Point) {
 

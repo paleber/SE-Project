@@ -1,6 +1,6 @@
 package loader
 
-import engine.{Grid, Line, Point}
+import model.{Grid, Line, Point}
 
 object GridLoader {
 
