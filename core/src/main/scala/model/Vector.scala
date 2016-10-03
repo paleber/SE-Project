@@ -8,4 +8,16 @@ object Vector {
 
 }
 
-case class Vector(x: Double, y: Double)
+case class Vector(x: Double, y: Double) {
+
+  def rotate(angle: Double): Vector = {
+    var p = Point(x, y)
+    p = p.rotate(angle)
+    Vector(p.x, p.y)
+  }
+
+  def *(factor: Double): Vector = {
+    Vector(x * factor, y * factor)
+  }
+
+}
