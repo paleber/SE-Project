@@ -3,8 +3,11 @@ package loader
 import model.{Grid, Line, Point, Vector}
 
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
+case class GridPlan(rotationSteps: Int, shifts: List[List[Int]])
+
+case class GridWithAnchors(grid: Grid, anchors: List[Point])
 
 object GridLoader {
 
@@ -14,101 +17,39 @@ object GridLoader {
     gridId match {
 
       case 0 =>
-        Grid(
-          4,
-          List(
-            Point(0, 0)
-          ),
-          List(
-            Point(-0.5, -0.5),
-            Point(0.5, -0.5),
-            Point(0.5, 0.5),
-            Point(-0.5, 0.5)
-          ),
-          List.empty
-        )
+        buildGrid(GridPlan(4, List.empty))
 
       case 1 =>
-        Grid(
-          4,
-          List(
-            Point(0, -0.5),
-            Point(0, 0.5)
-          ),
-          List(
-            Point(-0.5, -1),
-            Point(0.5, -1),
-            Point(0.5, 1),
-            Point(-0.5, 1)
-          ),
-          List(
-            Line(Point(-0.5, 0), Point(0.5, 0))
-          )
-        )
+        buildGrid(GridPlan(4, List(
+          List(0)
+        )))
 
       case 2 =>
-        Grid(
-          4,
-          List(
-            Point(-0.5, -0.5),
-            Point(-0.5, 0.5),
-            Point(0.5, -0.5)
-          ),
-          List(
-            Point(-1, -1),
-            Point(1, -1),
-            Point(1, 0),
-            Point(0, 0),
-            Point(0, 1),
-            Point(-1, 1)
-          ),
-          List(
-            Line(Point(-1, 0), Point(0, 0)),
-            Line(Point(0, -1), Point(0, 0))
-          )
-        )
+        buildGrid(GridPlan(4, List(
+          List(1),
+          List(2)
+        )))
 
       case 3 =>
-        Grid(
-          4,
-          List(
-            Point(-1, -0.5),
-            Point(0, -0.5),
-            Point(1, -0.5),
-            Point(-1, 0.5),
-            Point(0, 0.5),
-            Point(1, 0.5)
-          ),
-          List(
-            Point(-1.5, -1),
-            Point(1.5, -1),
-            Point(1.5, 1),
-            Point(-1.5, 1)
-          ),
-          List(
-            Line(Point(-1.5, 0), Point(1.5, 0)),
-            Line(Point(-0.5, -1), Point(-0.5, 1)),
-            Line(Point(0.5, -1), Point(0.5, 1))
-          )
-        )
+        buildGrid(GridPlan(4, List(
+          List(3),
+          List(0, 3),
+          List(0),
+          List(0, 1),
+          List(1)
+        )))
+
+      case 4 =>
+        buildGrid(GridPlan(4, List(
+          List(3),
+          List(0, 3),
+          List(0)
+        )))
 
       case _ => throw new IllegalArgumentException
 
     }
   }
-
-
-  // 4
-  // 1
-  // 2
-  // 2 2
-  val plan3x2 = GridPlan(4, List(
-    List(3),
-    List(0, 3),
-    List(0) /*,
-    List(0, 1),
-    List(1)*/
-  ))
 
 
   def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {
@@ -124,41 +65,24 @@ object GridLoader {
     }
 
     val v = Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
-    println(v)
-    println(coreLines.toList)
     coreLines.transform(l => l + v)
-
     anchors.transform(a => a + v)
   }
 
 
-  def buildGrid(plan: GridPlan): GridWithAnchors = {
+  def buildGrid(plan: GridPlan): Grid = {
     val coreLines = buildCoreLines(plan.rotationSteps)
     val dirs = buildDirections(coreLines)
     val anchors = buildAnchors(dirs, plan.shifts)
-
     centerElements(coreLines, anchors)
-    println(anchors.toList)
 
     val allLines = buildAllLines(coreLines, anchors)
-
-    println("---")
-    allLines.foreach(f => println(f))
-    println("---")
-
-    println(allLines.length)
     val lines = extractInnerLines(allLines)
-
-    // TODO optimize allLines and lines
-
-
+    optimizeLines(lines)
+    optimizeLines(allLines)
 
     val corners = buildCorners(allLines)
-
-    println(corners)
-
-
-    null // TODO
+    Grid(plan.rotationSteps, anchors.toList, corners, lines.toList)
   }
 
   private def buildCoreLines(rotationSteps: Int): Array[Line] = {
@@ -202,13 +126,13 @@ object GridLoader {
   def buildAllLines(coreLines: Array[Line], anchors: Array[Point]): ListBuffer[Line] = {
     val lines = ListBuffer.empty[Line]
     anchors.foreach(anchor => {
-      val v = Vector.stretch(Point.ORIGIN, anchor)
+      val v = Vector.stretch(anchors(0), anchor)
       coreLines.foreach(l => lines += l + v)
     })
     lines
   }
 
-  def extractInnerLines(allLines: ListBuffer[Line]): List[Line] = {
+  def extractInnerLines(allLines: ListBuffer[Line]): ListBuffer[Line] = {
     val innerLines = ListBuffer.empty[Line]
 
     var index = 0
@@ -222,7 +146,7 @@ object GridLoader {
       }
     }
 
-    innerLines.toList
+    innerLines
   }
 
   private def extractEqualLine(lines: ListBuffer[Line], startIndex: Int): Option[Line] = {
@@ -253,20 +177,29 @@ object GridLoader {
 
   private def extractNextLine(allLines: ListBuffer[Line], p: Point): Line = {
     for (i <- allLines.indices) {
-      if (allLines(i).start.distanceTo(p) < 1e5 || allLines(i).end.distanceTo(p) < 1e5) {
+      if (allLines(i).start.distanceTo(p) < 1e-5 || allLines(i).end.distanceTo(p) < 1e-5) {
         return allLines.remove(i)
       }
     }
     throw new IllegalStateException("Next line not found, should never happen")
   }
 
+  def optimizeLines(lines: ListBuffer[Line]): Unit = {
+    for (i <- lines.indices) {
+      for (j <- (i + 1) until lines.length) {
+        val line = lines(i).connect(lines(j), 1e-5)
+        if (line.isDefined) {
+          lines.remove(j)
+          lines.remove(i)
+          lines += line.get
+          optimizeLines(lines)
+          return
+        }
+      }
+    }
+  }
 
 }
 
-case object Test extends App {
-  GridLoader.buildGrid(GridLoader.plan3x2)
-}
 
-case class GridPlan(rotationSteps: Int, shifts: List[List[Int]])
 
-case class GridWithAnchors(grid: Grid, anchors: List[Point])
