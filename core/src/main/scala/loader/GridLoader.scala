@@ -46,6 +46,20 @@ object GridLoader {
           List(0)
         )))
 
+      case 1000  =>
+        buildGrid(GridPlan(6, List(
+          List(0),
+          List(1)
+        )))
+
+      case 1001  =>
+        buildGrid(GridPlan(6, List.empty))
+
+      case 1002  =>
+        buildGrid(GridPlan(6, List(
+          List(2)
+        )))
+
       case _ => throw new IllegalArgumentException
 
     }
