@@ -86,7 +86,7 @@ object GridLoader {
 
   def buildGrid(plan: GridPlan): Grid = {
     val coreLines = buildCoreLines(plan.rotationSteps)
-    val dirs = buildDirections(coreLines)
+    val dirs = buildDirections(plan.rotationSteps)
     val anchors = buildAnchors(dirs, plan.shifts)
     centerElements(coreLines, anchors)
 
@@ -119,13 +119,7 @@ object GridLoader {
     lines
   }
 
-  private def buildDirections(coreLines: Array[Line]): List[Vector] = {
-    val dirs = new Array[Vector](coreLines.length)
-    for (i <- coreLines.indices) {
-      dirs(i) = Vector.stretch(Point.ORIGIN, coreLines(i).mid) * 2
-    }
-    dirs.toList
-  }
+
 
   private def buildAnchors(dirs: List[Vector], shifts: List[List[Int]]): Array[Point] = {
     val anchors = mutable.ListBuffer(Point.ORIGIN)
@@ -211,6 +205,15 @@ object GridLoader {
         }
       }
     }
+  }
+
+  def buildDirections(rotationSteps: Int): List[Vector] = {
+    val lines = buildCoreLines(rotationSteps)
+    val dirs = ListBuffer.empty[Vector]
+    lines.foreach(l =>
+      dirs += Vector.stretch(Point.ORIGIN, l.mid) * 2
+    )
+    dirs.toList
   }
 
 }
