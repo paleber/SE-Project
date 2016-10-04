@@ -12,7 +12,12 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   private val blocks = level.blocks.toArray
 
   private val boardAnchors = mutable.Map[Point, Option[Int]]()
-  level.board.anchors.foreach(anchor => boardAnchors.put(anchor, None))
+  level.board.anchors.foreach(a => boardAnchors.put(a, None))
+
+  private val freeAnchors = mutable.Map[Point, Option[Int]]()
+  level.freeAnchors.foreach(a => freeAnchors.put(a, None))
+
+
 
   private var running = true
 
@@ -68,8 +73,10 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   }
 
 
+
+
   private def anchorBlock(index: Int): Unit = {
-    freeBoardAnchors(index)
+    freeAnchorsWithBlock(index)
 
     val anchored = anchorOnBoard(index)
     if (!anchored) {
@@ -94,6 +101,10 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     context.parent ! ServerMessage.LevelFinished
   }
 
+  private def anchorOnFree(index: Int): Unit = {
+
+  }
+
   private def anchorOnBoard(index: Int): Boolean = {
     val point = blocks(index).grid.anchors.head + blocks(index).position
     val boardAnchor = findNextBoardAnchor(point, 0.5)
@@ -108,7 +119,7 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     for (blockAnchor <- blockCopy.grid.anchors) {
       val boardAnchor = findNextBoardAnchor(blockAnchor + blockCopy.position, 0.1)
       if (boardAnchor.isEmpty || boardAnchors(boardAnchor.get).isDefined) {
-        freeBoardAnchors(index)
+        freeAnchorsWithBlock(index)
         return false
       }
       boardAnchors(boardAnchor.get) = Some(index)
@@ -130,10 +141,15 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     nextAnchor
   }
 
-  private def freeBoardAnchors(blockIndex: Int): Unit = {
+  private def freeAnchorsWithBlock(blockIndex: Int): Unit = {
     boardAnchors.foreach { case (anchor, index) =>
       if (index.isDefined && blockIndex == index.get) {
         boardAnchors(anchor) = None
+      }
+    }
+    freeAnchors.foreach { case (anchor, index) =>
+      if (index.isDefined && blockIndex == index.get) {
+        freeAnchors(anchor) = None
       }
     }
   }

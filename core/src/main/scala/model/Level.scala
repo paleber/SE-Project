@@ -6,4 +6,4 @@ case class Level(width: Double,
                  board: Grid,
                  blocks: List[Block],
                  rotationSteps: Int,
-                 anchors: List[Point])
+                 freeAnchors: List[Point])

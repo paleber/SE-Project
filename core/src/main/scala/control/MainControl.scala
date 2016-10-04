@@ -55,7 +55,7 @@ class MainControl extends Actor with ActorLogging {
 
 
     case msg =>
-      log.error("Unhandled message: " + msg)
+      log.warning("Unhandled message: " + msg)
 
   }
 

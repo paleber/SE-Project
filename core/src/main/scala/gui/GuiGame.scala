@@ -176,7 +176,7 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     }
 
     g.setColor(Color.GRAY)
-    level.anchors.foreach(anchor => {
+    level.freeAnchors.foreach(anchor => {
       g.fillOval(scaleX(anchor.x) - 2, scaleY(anchor.y) - 2, 4, 4)
     })
 
