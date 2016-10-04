@@ -48,7 +48,6 @@ object LevelLoader {
     null
   }
 
-
   def minAnchorDistanceSquare(rotationSteps: Int): Double = {
     assert(rotationSteps == 4 || rotationSteps == 6)
     rotationSteps match {
@@ -56,6 +55,7 @@ object LevelLoader {
       case 6 => Math.pow(1.8, 2)
     }
   }
+
 
   private def buildAnchors(rotationSteps: Int, board: Grid, width: Double, height: Double): ListBuffer[Point] = {
     val dirs = GridLoader.buildDirections(rotationSteps).toArray.transform(v => v * 0.5).toList

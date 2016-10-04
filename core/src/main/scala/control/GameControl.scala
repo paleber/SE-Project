@@ -1,10 +1,12 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import model.{Level, Point, Vector}
+import loader.{GridLoader, LevelLoader}
+import model.{Block, Level, Point, Vector}
 import msg.{ClientMessage, ServerMessage}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 class GameControl(level: Level) extends Actor with ActorLogging {
   log.debug("Initializing")
@@ -14,9 +16,8 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   private val boardAnchors = mutable.Map[Point, Option[Int]]()
   level.board.anchors.foreach(a => boardAnchors.put(a, None))
 
-  private val freeAnchors = mutable.Map[Point, Option[Int]]()
-  level.freeAnchors.foreach(a => freeAnchors.put(a, None))
-
+  private val restAnchors = mutable.Map[Point, Option[Int]]()
+  level.freeAnchors.foreach(a => restAnchors.put(a, None))
 
 
   private var running = true
@@ -73,16 +74,30 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   }
 
 
-
-
   private def anchorBlock(index: Int): Unit = {
-    freeAnchorsWithBlock(index)
+    AnchorHelper.freeAnchorsWithIndex(index, boardAnchors)
+    AnchorHelper.freeAnchorsWithIndex(index, restAnchors)
+    for (index <- blocks.indices) {
+
+
+      AnchorHelper.blockAnchorsAround(
+        index,
+        blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
+        LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
+        restAnchors)
+    }
+
 
     val anchored = anchorOnBoard(index)
     if (!anchored) {
-      blocks(index) = blocks(index).copy(
-        position = level.blocks(index).position
-      )
+      anchorOnRest(index)
+      AnchorHelper.blockAnchorsAround(index,
+        blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
+        LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
+        restAnchors)
+      //blocks(index) = blocks(index).copy(
+      //  position = level.blocks(index).position
+      //)
     }
 
     context.parent ! ServerMessage.UpdateBlock(index, blocks(index))
@@ -101,61 +116,113 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     context.parent ! ServerMessage.LevelFinished
   }
 
-  private def anchorOnFree(index: Int): Unit = {
+  private def anchorOnRest(index: Int): Unit = {
+    val restList = AnchorHelper.getFreeAnchors(restAnchors)
+    while (restList.nonEmpty) {
+      val anchor = AnchorHelper.findNearest(
+        blocks(index).grid.anchors.head + blocks(index).position,
+        restList)
+      assert(anchor.isDefined)
+      restList -= anchor.get
 
+      val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
+      println("Durchlauf")
+      if (anchored) {
+        println("--Fund")
+        return
+      }
+    }
   }
 
   private def anchorOnBoard(index: Int): Boolean = {
     val point = blocks(index).grid.anchors.head + blocks(index).position
-    val boardAnchor = findNextBoardAnchor(point, 0.5)
+    val boardAnchor = AnchorHelper.findNearest(point, AnchorHelper.getFreeAnchors(boardAnchors), 0.5)
     if (boardAnchor.isEmpty) {
       return false
     }
-    val diff = Vector.stretch(point, boardAnchor.get)
-    val blockCopy = blocks(index).copy(
-      position = blocks(index).position + diff
-    )
-
-    for (blockAnchor <- blockCopy.grid.anchors) {
-      val boardAnchor = findNextBoardAnchor(blockAnchor + blockCopy.position, 0.1)
-      if (boardAnchor.isEmpty || boardAnchors(boardAnchor.get).isDefined) {
-        freeAnchorsWithBlock(index)
-        return false
-      }
-      boardAnchors(boardAnchor.get) = Some(index)
-
-    }
-    blocks(index) = blockCopy
-    true
+    AnchorHelper.anchorOnAnchor(boardAnchor.get, index, blocks, boardAnchors)
   }
 
-  private def findNextBoardAnchor(point: Point, maxDistance: Double): Option[Point] = {
-    var distance = maxDistance
-    var nextAnchor: Option[Point] = None
-    for (anchor <- level.board.anchors) {
-      if (anchor.distanceTo(point) < distance) {
-        distance = anchor.distanceTo(point)
-        nextAnchor = Some(anchor)
-      }
-    }
-    nextAnchor
-  }
-
-  private def freeAnchorsWithBlock(blockIndex: Int): Unit = {
-    boardAnchors.foreach { case (anchor, index) =>
-      if (index.isDefined && blockIndex == index.get) {
-        boardAnchors(anchor) = None
-      }
-    }
-    freeAnchors.foreach { case (anchor, index) =>
-      if (index.isDefined && blockIndex == index.get) {
-        freeAnchors(anchor) = None
-      }
-    }
-  }
 
   override def postStop = {
     log.debug("Stopping")
+  }
+
+}
+
+
+case object AnchorHelper {
+
+  def anchorOnAnchor(anchor: Point, blockIndex: Int, blocks: Array[Block], anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
+    val point = blocks(blockIndex).grid.anchors.head + blocks(blockIndex).position
+    val diff = Vector.stretch(point, anchor)
+    val blockCopy = blocks(blockIndex).copy(
+      position = blocks(blockIndex).position + diff
+    )
+
+    for (blockAnchor <- blockCopy.grid.anchors) {
+      val boardAnchor = AnchorHelper.findNearest(blockAnchor + blockCopy.position, AnchorHelper.getFreeAnchors(anchorMap), 1e-3)
+      if (boardAnchor.isEmpty || anchorMap(boardAnchor.get).isDefined) {
+        AnchorHelper.freeAnchorsWithIndex(blockIndex, anchorMap)
+        return false
+      }
+      anchorMap(boardAnchor.get) = Some(blockIndex)
+
+    }
+    blocks(blockIndex) = blockCopy
+    true
+  }
+
+
+  def freeAnchorsWithIndex(index: Int, anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
+    anchorMap.foreach { case (k, v) =>
+      if (v.isDefined && index == v.get) {
+        println("freeing: " + index)
+        anchorMap(k) = None
+      }
+    }
+  }
+
+  def findNearest(point: Point,
+                  anchors: ListBuffer[Point],
+                  maxDistance: Double = Double.PositiveInfinity): Option[Point] = {
+    var minDistanceSquare = maxDistance * maxDistance
+    var nearestAnchor: Option[Point] = None
+    anchors.foreach(a => {
+      val distanceSquare = a.distanceSquareTo(point)
+      if (distanceSquare < minDistanceSquare) {
+        minDistanceSquare = distanceSquare
+        nearestAnchor = Some(a)
+      }
+    })
+    nearestAnchor
+  }
+
+  def getFreeAnchors(anchorMap: mutable.Map[Point, Option[Int]]): ListBuffer[Point] = {
+    val anchorList = ListBuffer.empty[Point]
+    anchorMap.foreach { case (k, v) =>
+      if (v.isEmpty) {
+        anchorList += k
+      }
+    }
+    anchorList
+  }
+
+  def blockAnchorsAround(index: Int,
+                         anchors: List[Point],
+                         maxDistanceSquare: Double,
+                         anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
+
+
+    anchors.foreach(a => {
+      anchorMap.foreach { case (k, v) =>
+        if (v.isEmpty && a.distanceSquareTo(k) < maxDistanceSquare) {
+          anchorMap(k) = Some(index)
+          println("Blocked: " + k)
+        }
+      }
+    })
+
   }
 
 }
