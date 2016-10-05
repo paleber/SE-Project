@@ -1,7 +1,7 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import loader.{GridLoader, LevelLoader}
+import loader.LevelLoader
 import model.{Block, Level, Point, Vector}
 import msg.{ClientMessage, ServerMessage}
 
@@ -19,8 +19,17 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   private val restAnchors = mutable.Map[Point, Option[Int]]()
   level.freeAnchors.foreach(a => restAnchors.put(a, None))
 
-
   private var running = true
+
+  /* TODO auto-anchor at start and tell views
+  for(i <- blocks.indices) {
+    blocks(i) = blocks(i).copy(position = Point(level.width / 2, level.height / 2 + 1))
+    anchorOnRest(i)
+    AnchorHelper.blockAnchorsAround(i,
+      blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
+      LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
+      restAnchors)
+  } */
 
   private def doBlockAction(index: Int)(function: => Unit): Unit = {
     if (blocks.lift(index).isEmpty) {
@@ -77,16 +86,14 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   private def anchorBlock(index: Int): Unit = {
     AnchorHelper.freeAnchorsWithIndex(index, boardAnchors)
     AnchorHelper.freeAnchorsWithIndex(index, restAnchors)
-    for (index <- blocks.indices) {
 
-
+    for (i <- blocks.indices if i != index) {
       AnchorHelper.blockAnchorsAround(
-        index,
-        blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
+        i,
+        blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
         LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
         restAnchors)
     }
-
 
     val anchored = anchorOnBoard(index)
     if (!anchored) {
@@ -95,9 +102,6 @@ class GameControl(level: Level) extends Actor with ActorLogging {
         blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
         LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
         restAnchors)
-      //blocks(index) = blocks(index).copy(
-      //  position = level.blocks(index).position
-      //)
     }
 
     context.parent ! ServerMessage.UpdateBlock(index, blocks(index))
@@ -126,9 +130,7 @@ class GameControl(level: Level) extends Actor with ActorLogging {
       restList -= anchor.get
 
       val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
-      println("Durchlauf")
       if (anchored) {
-        println("--Fund")
         return
       }
     }
@@ -213,12 +215,10 @@ case object AnchorHelper {
                          maxDistanceSquare: Double,
                          anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
 
-
     anchors.foreach(a => {
       anchorMap.foreach { case (k, v) =>
         if (v.isEmpty && a.distanceSquareTo(k) < maxDistanceSquare) {
           anchorMap(k) = Some(index)
-          println("Blocked: " + k)
         }
       }
     })
