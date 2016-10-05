@@ -10,6 +10,8 @@ class Tui extends Actor with ActorLogging {
 
   private case class ConsoleInput(input: String)
 
+  private val main = context.actorSelection("../control")
+
   private val cmdMap = Map(
     "exit" -> CmdShutdown,
     "menu" -> CmdShowMenu,
@@ -67,7 +69,7 @@ class Tui extends Actor with ActorLogging {
 
     try {
       val msg = cmd.get.parse(args)
-      context.parent ! msg
+      main ! msg
     } catch {
       case e: NumberFormatException => log.error(s"Wrong argument format of command '${args(0)}'")
     }
