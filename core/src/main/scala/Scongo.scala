@@ -5,10 +5,14 @@ import msg.ClientMessage
 import msg.ClientMessage.RegisterView
 import tui.Tui
 
-object Starter extends App {
+object Scongo extends App {
+
   private val system = ActorSystem()
   private val main = system.actorOf(Props[MainControl], "control")
+
   main ! RegisterView(system.actorOf(Props[Tui], "tui"))
   main ! RegisterView(system.actorOf(Props[Gui], "gui"))
+
   main ! ClientMessage.ShowMenu
+
 }

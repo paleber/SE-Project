@@ -26,20 +26,3 @@ object ClientMessage {
   case class UpdateBlockPosition(index: Int, position: Point) extends ClientMessage
 
 }
-
-
-// case object ShowMenu
-
-//case class UpdateBlockState(blockId: Int, rotation: Int, position: Point) extends ClientMessage
-
-//case class ShowLevel(levelId: Level)
-
-
-//case object MenuShowed
-
-//case class ChangeState(state: AppState)
-
-//case class BlockStateUpdated(blockId: Int, rotation: Int, position: Point) extends ServerMessage
-
-//case class LevelShowed(level: Level)
-
