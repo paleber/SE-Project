@@ -5,7 +5,8 @@ lazy val commonSettings = Seq(
 )
 
 lazy val scongo = (project in file(".")).
-  settings(commonSettings: _*)
+  settings(commonSettings: _*).
+  enablePlugins(PlayScala)
 
 lazy val core = (project in file("core")).
   settings(commonSettings: _*).
@@ -26,5 +27,4 @@ lazy val web = (project in file("web")).
   settings(
     name := "scongo-web"
   ).
-  dependsOn(core).
-  enablePlugins(PlayScala)
+  dependsOn(core)
