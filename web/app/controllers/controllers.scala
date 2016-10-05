@@ -1,6 +1,16 @@
 package controllers
 
+import akka.actor.Actor
+import msg.ServerMessage
 import play.api.mvc._
+
+class WuiConsole extends Actor {
+  override def receive = {
+    case msg : ServerMessage =>
+    case
+
+  }
+}
 
 /**
  * Minimal controller examples that output text/plain responses.
@@ -14,6 +24,11 @@ class Application extends Controller {
   def hello(name: String) = Action {
     Ok("Hello " + name)
   }
+
+  def tui = Action {
+    Ok("TODO")
+  }
+
 }
 
 /**
