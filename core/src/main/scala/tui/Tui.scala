@@ -16,7 +16,11 @@ class Tui extends Actor with ActorLogging {
     override def run(): Unit = {
       val scanner = new Scanner(System.in)
       while (true) {
-        parser ! ConsoleInput(scanner.nextLine)
+        try {
+          parser ! ConsoleInput(scanner.nextLine)
+        } catch {
+          case e: NoSuchElementException => return
+        }
       }
     }
   }).start()
