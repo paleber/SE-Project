@@ -179,7 +179,6 @@ case object AnchorHelper {
   def freeAnchorsWithIndex(index: Int, anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
     anchorMap.foreach { case (k, v) =>
       if (v.isDefined && index == v.get) {
-        println("freeing: " + index)
         anchorMap(k) = None
       }
     }

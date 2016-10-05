@@ -20,7 +20,7 @@ lazy val commonSettings = Seq(
 
 )
 
-lazy val SE_Project = (project in file(".")).
+lazy val scongo = (project in file(".")).
   settings(commonSettings: _*)//.
   //enablePlugins(PlayScala)
 
@@ -28,13 +28,13 @@ lazy val SE_Project = (project in file(".")).
 lazy val core = (project in file("core")).
   settings(commonSettings: _*).
   settings(
-    name := "klima-core"
+    name := "scongo-core"
   )
 
 lazy val web = (project in file("web")).
   settings(commonSettings: _*).
   settings(
-    name := "klima-web"
+    name := "scongo-web"
   ).
   dependsOn(core)//.
   //enablePlugins(PlayScala)

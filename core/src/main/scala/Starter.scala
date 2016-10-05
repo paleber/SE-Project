@@ -7,8 +7,7 @@ import tui.Tui
 
 object Starter extends App {
   private val system = ActorSystem()
-
-  val main = system.actorOf(Props[MainControl], "control")
+  private val main = system.actorOf(Props[MainControl], "control")
   main ! RegisterView(system.actorOf(Props[Tui], "tui"))
   main ! RegisterView(system.actorOf(Props[Gui], "gui"))
   main ! ClientMessage.ShowMenu
