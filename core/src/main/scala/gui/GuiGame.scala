@@ -184,15 +184,15 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
   }
 
   private def scale(z: Double): Int = {
-    (z * scaleFactor).toInt
+    (z * scaleFactor + 0.5).toInt
   }
 
   private def scaleX(z: Double): Int = {
-    (z * scaleFactor + xOffset).toInt
+    (z * scaleFactor + xOffset + 0.5).toInt
   }
 
   private def scaleY(z: Double): Int = {
-    (z * scaleFactor + yOffset).toInt
+    (z * scaleFactor + yOffset + 0.5).toInt
   }
 
 
@@ -282,14 +282,14 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
         case RotateLeft =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
-              -Math.PI * 2 / level.rotationSteps / activeAction.get.maxSteps * activeAction.get.curStep
+              -Math.PI * 2 / level.board.rotationSteps / activeAction.get.maxSteps * activeAction.get.curStep
             )
           )
 
         case RotateRight =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
-              Math.PI * 2 / level.rotationSteps / activeAction.get.maxSteps * activeAction.get.curStep
+              Math.PI * 2 / level.board.rotationSteps / activeAction.get.maxSteps * activeAction.get.curStep
             )
           )
 

@@ -21,16 +21,6 @@ class GameControl(level: Level) extends Actor with ActorLogging {
 
   private var running = true
 
-  /* TODO auto-anchor at start and tell views
-  for(i <- blocks.indices) {
-    blocks(i) = blocks(i).copy(position = Point(level.width / 2, level.height / 2 + 1))
-    anchorOnRest(i)
-    AnchorHelper.blockAnchorsAround(i,
-      blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
-      LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
-      restAnchors)
-  } */
-
   private def doBlockAction(index: Int)(function: => Unit): Unit = {
     if (blocks.lift(index).isEmpty) {
       log.error("Invalid block index: " + index)
@@ -54,14 +44,14 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     case ClientMessage.RotateBlockLeft(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(-Math.PI * 2 / level.rotationSteps)
+          grid = blocks(index).grid.rotate(-Math.PI * 2 / level.board.rotationSteps)
         )
       }
 
     case ClientMessage.RotateBlockRight(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(Math.PI * 2 / level.rotationSteps)
+          grid = blocks(index).grid.rotate(Math.PI * 2 / level.board.rotationSteps)
         )
       }
 
@@ -91,16 +81,16 @@ class GameControl(level: Level) extends Actor with ActorLogging {
       AnchorHelper.blockAnchorsAround(
         i,
         blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
-        LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
+        LevelLoader.minAnchorDistanceSquare(level.board.rotationSteps),
         restAnchors)
     }
 
     val anchored = anchorOnBoard(index)
     if (!anchored) {
-      anchorOnRest(index)
+      AnchorHelper.anchorOnRest(index, blocks, restAnchors)
       AnchorHelper.blockAnchorsAround(index,
         blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
-        LevelLoader.minAnchorDistanceSquare(level.rotationSteps),
+        LevelLoader.minAnchorDistanceSquare(level.board.rotationSteps),
         restAnchors)
     }
 
@@ -120,21 +110,6 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     context.parent ! ServerMessage.LevelFinished
   }
 
-  private def anchorOnRest(index: Int): Unit = {
-    val restList = AnchorHelper.getFreeAnchors(restAnchors)
-    while (restList.nonEmpty) {
-      val anchor = AnchorHelper.findNearest(
-        blocks(index).grid.anchors.head + blocks(index).position,
-        restList)
-      assert(anchor.isDefined)
-      restList -= anchor.get
-
-      val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
-      if (anchored) {
-        return
-      }
-    }
-  }
 
   private def anchorOnBoard(index: Int): Boolean = {
     val point = blocks(index).grid.anchors.head + blocks(index).position
@@ -154,6 +129,22 @@ class GameControl(level: Level) extends Actor with ActorLogging {
 
 
 case object AnchorHelper {
+
+  def anchorOnRest(index: Int, blocks: Array[Block], restAnchors: mutable.Map[Point, Option[Int]]): Unit = {
+    val restList = AnchorHelper.getFreeAnchors(restAnchors)
+    while (restList.nonEmpty) {
+      val anchor = AnchorHelper.findNearest(
+        blocks(index).grid.anchors.head + blocks(index).position,
+        restList)
+      assert(anchor.isDefined)
+      restList -= anchor.get
+
+      val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
+      if (anchored) {
+        return
+      }
+    }
+  }
 
   def anchorOnAnchor(anchor: Point, blockIndex: Int, blocks: Array[Block], anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
     val point = blocks(blockIndex).grid.anchors.head + blocks(blockIndex).position
