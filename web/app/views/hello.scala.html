@@ -1,11 +1,13 @@
-@(name: String)
+@(messages: List[String])
 <!doctype html>
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Hello</title>
+    <title>Scongo - Console</title>
   </head>
   <body>
-    <h1>Hello <em>@name</em></h1>
+    @for(msg <- messages) {
+      <p>@msg</p>
+    }
   </body>
 </html>

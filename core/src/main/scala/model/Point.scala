@@ -6,7 +6,6 @@ object Point {
 
 case class Point(x: Double, y: Double) {
 
-
   def +(p: Point): Point = {
     Point(x + p.x, y + p.y)
   }
@@ -44,5 +43,10 @@ case class Point(x: Double, y: Double) {
     Point(x, y - 2 * y * percentage)
   }
 
-}
+  override def toString: String = {
+    val xs = BigDecimal(x).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val ys = BigDecimal(y).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
+    s"Point($xs,$ys)"
+  }
 
+}

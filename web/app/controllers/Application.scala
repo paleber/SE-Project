@@ -69,8 +69,8 @@ class Application extends Controller {
 
 
   def console = Action.async {
-    (wuiConsole ? WuiConsole.GetMessages).mapTo[WuiConsole.Messages].map { msg =>
-      Ok(msg.messages.toString)
+    (wuiConsole ? WuiConsole.GetMessages).mapTo[WuiConsole.Messages].map { msgList =>
+      Ok(views.html.hello(msgList.messages))
     }
   }
 
