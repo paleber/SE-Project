@@ -1,6 +1,7 @@
 package loader
 
 import control.AnchorHelper
+import model.plan.LevelPlan
 import model.{Block, Grid, Level, Point}
 
 import scala.collection.mutable
@@ -10,8 +11,9 @@ object LevelLoader {
 
   val rotationSteps = 4
 
-  def load(levelIndex: Int): Option[Level] = {
-
+  def load(plan: LevelPlan): Level = {
+    createLevel(plan)
+    /*
     levelIndex match {
 
       case 0 =>
@@ -21,19 +23,19 @@ object LevelLoader {
         Some(createLevel(LevelPlan(12, 9, 1000, List(1001, 1002))))
 
       case _ => None
-    }
+    } */
 
   }
 
   def createLevel(plan: LevelPlan): Level = {
-    val board = GridLoader.load(plan.boardId) + Point(plan.width / 2, plan.height / 3)
+    val board = GridLoader.load(plan.board) + Point(plan.width / 2, plan.height / 3)
     val restAnchors = buildRestAnchors(board.rotationSteps, board, plan.width, plan.height)
 
     val mid = Point(plan.width / 2, plan.height / 2)
-    val blocks = new Array[Block](plan.blockIds.length)
+    val blocks = new Array[Block](plan.blocks.length)
 
-    for (blockIndex <- plan.blockIds.indices) {
-      val block = Block(GridLoader.load(plan.blockIds(blockIndex)), mid)
+    for (blockIndex <- plan.blocks.indices) {
+      val block = Block(GridLoader.load(plan.blocks(blockIndex)), mid)
       assert(block.grid.rotationSteps == board.rotationSteps)
       blocks(blockIndex) = block
       AnchorHelper.anchorOnRest(blockIndex, blocks, restAnchors)
@@ -103,9 +105,6 @@ object LevelLoader {
 }
 
 
-case class LevelPlan(width: Double,
-                     height: Double,
-                     boardId: Int,
-                     blockIds: List[Int])
+
 
 

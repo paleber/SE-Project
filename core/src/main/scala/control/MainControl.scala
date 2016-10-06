@@ -2,8 +2,9 @@ package control
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import loader.LevelLoader
+import model.plan.LevelPlan
 import msg.{ClientMessage, ServerMessage}
-import util.{IdGenerator, DefaultActor}
+import util.{DefaultActor, IdGenerator}
 
 
 class MainControl extends Actor with ActorLogging {
@@ -23,16 +24,23 @@ class MainControl extends Actor with ActorLogging {
       subControl = context.actorOf(Props[DefaultActor], s"menu-${IdGenerator.generate()}")
       self ! ServerMessage.ShowMenu
 
-    case ClientMessage.ShowGame(levelIndex) =>
+    case ClientMessage.ShowGame(levelName) =>
+
+
       log.debug("Showing Game")
-      val level = LevelLoader.load(levelIndex)
-      if (level.isDefined) {
-        log.info(s"Start Game: ${level.get}")
+
+      val plan = LevelPlan.map.get(levelName)
+
+
+      if (plan.isDefined) {
+        val level = LevelLoader.load(plan.get)
+        log.info(s"Start Game: $level")
+
         context.stop(subControl)
-        subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
-        self ! ServerMessage.ShowGame(level.get)
+        subControl = context.actorOf(Props(new GameControl(level)), s"game-${IdGenerator.generate()}")
+        self ! ServerMessage.ShowGame(level)
       } else {
-        log.error(s"Level $levelIndex is unknown")
+        log.error(s"Level $levelName is unknown")
       }
 
     case ClientMessage.RegisterView(view) =>

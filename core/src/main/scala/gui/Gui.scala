@@ -28,7 +28,7 @@ class Gui extends Actor with ActorLogging {
 
   val main = context.actorSelection("../control")
 
-  val frame = new JFrame()
+  val frame = new JFrame("Scongo")
   frame.setLayout(null)
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
   frame.getContentPane.setPreferredSize(Gui.DEFAULT_SIZE)

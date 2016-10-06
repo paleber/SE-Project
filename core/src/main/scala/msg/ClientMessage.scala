@@ -13,7 +13,7 @@ object ClientMessage {
 
   case class RegisterView(view: ActorRef) extends ClientMessage
 
-  case class ShowGame(level: Int) extends ClientMessage
+  case class ShowGame(level: String) extends ClientMessage
 
   case class RotateBlockLeft(index: Int) extends ClientMessage
 

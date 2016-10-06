@@ -1,19 +1,20 @@
 package loader
 
+import model.plan.GridPlan
 import model.{Grid, Line, Point, Vector}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-case class GridPlan(rotationSteps: Int, shifts: List[List[Int]])
 
-case class GridWithAnchors(grid: Grid, anchors: List[Point])
 
 object GridLoader {
 
   // TODO load from files or database
-  def load(gridId: Int): Grid = {
+  def load(plan: GridPlan): Grid = {
+    buildGrid(plan)
 
+    /*
     gridId match {
 
       case 0 =>
@@ -62,7 +63,7 @@ object GridLoader {
 
       case _ => throw new IllegalArgumentException
 
-    }
+    }*/
   }
 
 

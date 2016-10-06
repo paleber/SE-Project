@@ -24,7 +24,7 @@ private[tui] object CmdShutdown extends TextCommand {
 private[tui] object CmdShowGame extends TextCommand {
   override val description = "level:INT - Show the game"
   override val numberArgs = 1
-  override def parse(args: Array[String]) = ClientMessage.ShowGame(args(1).toInt)
+  override def parse(args: Array[String]) = ClientMessage.ShowGame(args(1))
 }
 
 private[tui] object CmdShowMenu extends TextCommand {
