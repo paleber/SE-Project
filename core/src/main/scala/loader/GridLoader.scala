@@ -7,65 +7,22 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
-
 object GridLoader {
 
-  // TODO load from files or database
   def load(plan: GridPlan): Grid = {
-    buildGrid(plan)
+    val coreLines = buildCoreLines(plan.rotationSteps)
+    val dirs = buildDirections(plan.rotationSteps)
+    val anchors = buildAnchors(dirs, plan.shifts)
+    centerElements(coreLines, anchors)
 
-    /*
-    gridId match {
+    val allLines = buildAllLines(coreLines, anchors)
+    val lines = extractInnerLines(allLines)
+    optimizeLines(lines)
+    optimizeLines(allLines)
 
-      case 0 =>
-        buildGrid(GridPlan(4, List.empty))
-
-      case 1 =>
-        buildGrid(GridPlan(4, List(
-          List(0)
-        )))
-
-      case 2 =>
-        buildGrid(GridPlan(4, List(
-          List(1),
-          List(2)
-        )))
-
-      case 3 =>
-        buildGrid(GridPlan(4, List(
-          List(3),
-          List(0, 3),
-          List(0),
-          List(0, 1),
-          List(1)
-        )))
-
-      case 4 =>
-        buildGrid(GridPlan(4, List(
-          List(3),
-          List(0, 3),
-          List(0)
-        )))
-
-      case 1000  =>
-        buildGrid(GridPlan(6, List(
-          List(0),
-          List(1)
-        )))
-
-      case 1001  =>
-        buildGrid(GridPlan(6, List.empty))
-
-      case 1002  =>
-        buildGrid(GridPlan(6, List(
-          List(2)
-        )))
-
-      case _ => throw new IllegalArgumentException
-
-    }*/
+    val corners = buildCorners(allLines)
+    Grid(plan.rotationSteps, anchors.toList, corners, lines.toList)
   }
-
 
   def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {
     var xMin = anchors(0).x
@@ -84,25 +41,9 @@ object GridLoader {
     anchors.transform(a => a + v)
   }
 
-
-  def buildGrid(plan: GridPlan): Grid = {
-    val coreLines = buildCoreLines(plan.rotationSteps)
-    val dirs = buildDirections(plan.rotationSteps)
-    val anchors = buildAnchors(dirs, plan.shifts)
-    centerElements(coreLines, anchors)
-
-    val allLines = buildAllLines(coreLines, anchors)
-    val lines = extractInnerLines(allLines)
-    optimizeLines(lines)
-    optimizeLines(allLines)
-
-    val corners = buildCorners(allLines)
-    Grid(plan.rotationSteps, anchors.toList, corners, lines.toList)
-  }
-
   private def buildCoreLines(rotationSteps: Int): Array[Line] = {
     var p = Point.ORIGIN
-    var v = Vector(1, 0)
+    var v = Vector(0, 1)
     val lines = new Array[Line](rotationSteps)
 
     for (i <- 0 until rotationSteps) {
@@ -119,8 +60,6 @@ object GridLoader {
 
     lines
   }
-
-
 
   private def buildAnchors(dirs: List[Vector], shifts: List[List[Int]]): Array[Point] = {
     val anchors = mutable.ListBuffer(Point.ORIGIN)
@@ -190,7 +129,7 @@ object GridLoader {
         return allLines.remove(i)
       }
     }
-    throw new IllegalStateException("Next line not found, should never happen")
+    throw new IllegalStateException("Next line not found, inconsistent plan")
   }
 
   def optimizeLines(lines: ListBuffer[Line]): Unit = {
@@ -218,6 +157,3 @@ object GridLoader {
   }
 
 }
-
-
-
