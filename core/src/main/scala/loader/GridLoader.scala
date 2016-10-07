@@ -1,15 +1,41 @@
 package loader
 
+import java.io.File
+
 import model.plan.GridPlan
 import model.{Grid, Line, Point, Vector}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
+
+
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.read
 
 
 object GridLoader {
 
-  def load(plan: GridPlan): Grid = {
+  implicit val formats = Serialization.formats(NoTypeHints)
+
+  private val gridMap = mutable.Map.empty[String, Grid]
+  private val dirGrids = new File("core/src/main/resources/grids")
+
+  def load(gridName: String): Grid = {
+    val grid = gridMap.get(gridName)
+    if (grid.isDefined) {
+      return grid.get
+    }
+
+    val file = Source.fromFile(s"$dirGrids/$gridName.json")
+    val plan = read[GridPlan](file.mkString)
+    val newGrid = buildGrid(plan)
+    gridMap.put(gridName, newGrid)
+    newGrid
+  }
+
+  private def buildGrid(plan: GridPlan): Grid = {
     val coreLines = buildCoreLines(plan.rotationSteps)
     val dirs = buildDirections(plan.rotationSteps)
     val anchors = buildAnchors(dirs, plan.shifts)

@@ -13,12 +13,8 @@ lazy val core = (project in file("core")).
   settings(
     name := "scongo-core",
     libraryDependencies ++= Seq(
-      /*"org.scalactic" %% "scalactic" % "2.2.6",
-      "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-      "org.json4s" %% "json4s-jackson" % "3.3.0",
-      "org.mongodb" % "mongo-java-driver" % "3.2.2",
-      "org.mongodb" % "bson" % "3.2.2",*/
-      "com.typesafe.akka" %% "akka-actor" % "2.4.11"
+      "com.typesafe.akka" %% "akka-actor" % "2.4.11",
+      "org.json4s" %% "json4s-jackson" % "3.4.1"
     )
   )
 

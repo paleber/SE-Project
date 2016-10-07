@@ -13,18 +13,6 @@ object LevelLoader {
 
   def load(plan: LevelPlan): Level = {
     createLevel(plan)
-    /*
-    levelIndex match {
-
-      case 0 =>
-        Some(createLevel(LevelPlan(10, 8, 3, List(0, 1, 2))))
-
-      case 1 =>
-        Some(createLevel(LevelPlan(12, 9, 1000, List(1001, 1002))))
-
-      case _ => None
-    } */
-
   }
 
   def createLevel(plan: LevelPlan): Level = {
