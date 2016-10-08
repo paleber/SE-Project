@@ -1,12 +1,13 @@
 package model.msg
 
+import control.InitGame
 import model.element.{Block, Level}
 
 sealed trait ServerMessage
 
 object ServerMessage {
 
-  case class ShowGame(levelName: String, level: Level) extends ServerMessage
+  case class ShowGame(initGame: InitGame) extends ServerMessage
 
   case object ShowMenu extends ServerMessage
 

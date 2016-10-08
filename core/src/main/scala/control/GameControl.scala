@@ -1,79 +1,111 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import model.element.{Block, Level}
-import model.basic.{Point, Vector}
-import model.loader.LevelLoader
+import model.basic.Point
+import model.element.{Block, Grid}
+import model.loader.GridLoader
 import model.msg.{ClientMessage, ServerMessage}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-class GameControl(level: Level) extends Actor with ActorLogging {
+
+case class ExtendedLevel(name: String,
+                         width: Double,
+                         height: Double,
+                         board: Grid,
+                         blocks: List[Grid])
+
+class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val blocks = level.blocks.toArray
+  private val anchorDistanceMap = Map(
+    4 -> Math.pow(1.49, 2),
+    6 -> Math.pow(1.8, 2)
+  )
 
-  private val boardAnchors = mutable.Map[Point, Option[Int]]()
-  level.board.anchors.foreach(a => boardAnchors.put(a, None))
+  private val board: Grid = {
+    extLevel.board + Point(extLevel.width / 2, extLevel.height / 3)
+  }
 
-  private val restAnchors = mutable.Map[Point, Option[Int]]()
-  level.freeAnchors.foreach(a => restAnchors.put(a, None))
+  private val boardAnchors: mutable.Map[Point, Option[Int]] = {
+    val map = mutable.Map[Point, Option[Int]]()
+    extLevel.board.anchors.foreach(a => map.put(a, None))
+    map
+  }
+
+  private val restAnchors: mutable.Map[Point, Option[Int]] = {
+    val dirs = GridLoader.buildDirections(board.form).toArray.transform(v => v * 0.5).toList
+    val anchors = ListBuffer(board.anchors.head)
+    var index = 0
+    while (index < anchors.length) {
+      dirs.foreach(v => addAnchor(anchors(index) + v, anchors, extLevel.width, extLevel.height))
+      index += 1
+    }
+
+    val minDistanceSquare = anchorDistanceMap(board.form)
+
+    board.anchors.foreach(boardAnchor => {
+      anchors.foreach(freeAnchor => {
+        if (freeAnchor.distanceSquareTo(boardAnchor) < minDistanceSquare) {
+          anchors -= freeAnchor
+        }
+      })
+    })
+
+    val map = mutable.Map.empty[Point, Option[Int]]
+    for (a <- anchors) {
+      map.put(a, None)
+    }
+
+    map
+  }
+
+  private val blocks: Array[Block] = {
+    val list = ListBuffer.empty[Block]
+    val mid = Point(extLevel.width / 2, extLevel.height / 2)
+    for (grid <- extLevel.blocks) {
+      list += Block(grid, mid)
+    }
+    list.toArray
+  }
+
+  // TODO anchor on board
+  /*for (blockIndex <- plan.blocks.indices) {
+    val block = Block(GridLoader.load(plan.blocks(blockIndex)), mid)
+    assert(block.grid.form == board.form)
+    blocks(blockIndex) = block
+    anchorOnRest(blockIndex, blocks, restAnchors)
+    blockAnchorsAround(
+      blockIndex,
+      blocks(blockIndex).grid.anchors.toArray.transform(p => p + blocks(blockIndex).position).toList,
+      anchorDistanceMap(board.form),
+      restAnchors
+    )
+  }
+  Level(plan.width, plan.height, board, blocks.toList, restAnchors.keys.toList)
+  */
 
   private var running = true
 
-  private def doBlockAction(index: Int)(function: => Unit): Unit = {
-    if (blocks.lift(index).isEmpty) {
-      log.error("Invalid block index: " + index)
-    } else if (!running) {
-      log.warning("Action while level is finished")
-    } else {
-      function
-      anchorBlock(index)
+
+  private def addAnchor(p: Point, anchors: ListBuffer[Point], width: Double, height: Double): Unit = {
+    if (p.x < 0.99 || p.x > width - 0.99) {
+      return
     }
-  }
-
-  override def receive = {
-
-    case ClientMessage.UpdateBlockPosition(index, position) =>
-      doBlockAction(index) {
-        blocks(index) = blocks(index).copy(
-          position = position
-        )
+    if (p.y < 0.99 || p.y > height - 0.99) {
+      return
+    }
+    anchors.foreach(a =>
+      if (a.distanceSquareTo(p) < 1e-5) {
+        return
       }
-
-    case ClientMessage.RotateBlockLeft(index) =>
-      doBlockAction(index) {
-        blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(-Math.PI * 2 / level.board.form)
-        )
-      }
-
-    case ClientMessage.RotateBlockRight(index) =>
-      doBlockAction(index) {
-        blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(Math.PI * 2 / level.board.form)
-        )
-      }
-
-    case ClientMessage.MirrorBlockVertical(index) =>
-      doBlockAction(index) {
-        blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.mirrorVertical()
-        )
-      }
-
-    case ClientMessage.MirrorBlockHorizontal(index) =>
-      doBlockAction(index) {
-        blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.mirrorHorizontal()
-        )
-      }
-
-    case msg => log.warning("Unhandled message: " + msg)
+    )
+    anchors += p
   }
 
 
+  /*
   private def anchorBlock(index: Int): Unit = {
     AnchorHelper.freeAnchorsWithIndex(index, boardAnchors)
     AnchorHelper.freeAnchorsWithIndex(index, restAnchors)
@@ -99,54 +131,45 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     if (anchored) {
       checkLevelFinished()
     }
-  }
+  } */
+
 
   private def checkLevelFinished(): Unit = {
-    boardAnchors.values.foreach(f =>
-      if (f.isEmpty) {
-        return
-      }
-    )
-    running = false
-    context.parent ! ServerMessage.LevelFinished
-  }
-
-
-  private def anchorOnBoard(index: Int): Boolean = {
-    val point = blocks(index).grid.anchors.head + blocks(index).position
-    val boardAnchor = AnchorHelper.findNearest(point, AnchorHelper.getFreeAnchors(boardAnchors), 0.5)
-    if (boardAnchor.isEmpty) {
-      return false
-    }
-    AnchorHelper.anchorOnAnchor(boardAnchor.get, index, blocks, boardAnchors)
-  }
-
-
-  override def postStop = {
-    log.debug("Stopping")
-  }
-
-}
-
-
-case object AnchorHelper {
-
-  def anchorOnRest(index: Int, blocks: Array[Block], restAnchors: mutable.Map[Point, Option[Int]]): Unit = {
-    val restList = AnchorHelper.getFreeAnchors(restAnchors)
-    while (restList.nonEmpty) {
-      val anchor = AnchorHelper.findNearest(
-        blocks(index).grid.anchors.head + blocks(index).position,
-        restList)
-      assert(anchor.isDefined)
-      restList -= anchor.get
-
-      val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
-      if (anchored) {
-        return
-      }
+    if (!boardAnchors.values.exists(_.isEmpty)) {
+      running = false
+      context.parent ! ServerMessage.LevelFinished
     }
   }
 
+  /*
+    private def anchorOnBoard(index: Int): Boolean = {
+      val point = blocks(index).grid.anchors.head + blocks(index).position
+      val boardAnchor = AnchorHelper.findNearest(point, AnchorHelper.getFreeAnchors(boardAnchors), 0.5)
+      if (boardAnchor.isEmpty) {
+        return false
+      }
+      AnchorHelper.anchorOnAnchor(boardAnchor.get, index, blocks, boardAnchors)
+    }*/
+
+  /*
+    def anchorOnRest(index: Int, blocks: Array[Block], restAnchors: mutable.Map[Point, Option[Int]]): Unit = {
+      val restList = AnchorHelper.getFreeAnchors(restAnchors)
+      while (restList.nonEmpty) {
+        val anchor = AnchorHelper.findNearest(
+          blocks(index).grid.anchors.head + blocks(index).position,
+          restList)
+        assert(anchor.isDefined)
+        restList -= anchor.get
+
+        val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
+        if (anchored) {
+          return
+        }
+      }
+    }
+  */
+
+  /*
   def anchorOnAnchor(anchor: Point, blockIndex: Int, blocks: Array[Block], anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
     val point = blocks(blockIndex).grid.anchors.head + blocks(blockIndex).position
     val diff = Vector.stretch(point, anchor)
@@ -165,7 +188,7 @@ case object AnchorHelper {
     }
     blocks(blockIndex) = blockCopy
     true
-  }
+  }*/
 
 
   def freeAnchorsWithIndex(index: Int, anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
@@ -216,4 +239,80 @@ case object AnchorHelper {
 
   }
 
+
+  private def doBlockAction(index: Int)(function: => Unit): Unit = {
+    if (blocks.lift(index).isEmpty) {
+      log.error("Invalid block index: " + index)
+    } else if (!running) {
+      log.warning("Action while level is finished")
+    } else {
+      function
+      //anchorBlock(index) TODO
+    }
+  }
+
+  override def receive = {
+
+    case Init =>
+      sender ! InitGame(
+        extLevel.name,
+        extLevel.width,
+        extLevel.height,
+        extLevel.board.form,
+        board,
+        blocks.toList
+      )
+
+    case ClientMessage.UpdateBlockPosition(index, position) =>
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          position = position
+        )
+      }
+
+    case ClientMessage.RotateBlockLeft(index) =>
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.rotate(-Math.PI * 2 / extLevel.board.form)
+        )
+      }
+
+    case ClientMessage.RotateBlockRight(index) =>
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.rotate(Math.PI * 2 / extLevel.board.form)
+        )
+      }
+
+    case ClientMessage.MirrorBlockVertical(index) =>
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.mirrorVertical()
+        )
+      }
+
+    case ClientMessage.MirrorBlockHorizontal(index) =>
+      doBlockAction(index) {
+        blocks(index) = blocks(index).copy(
+          grid = blocks(index).grid.mirrorHorizontal()
+        )
+      }
+
+    case msg => log.warning("Unhandled message: " + msg)
+  }
+
+
+  override def postStop = {
+    log.debug("Stopping")
+  }
+
 }
+
+case object Init
+
+case class InitGame(name: String,
+                    width: Double,
+                    height: Double,
+                    form: Int,
+                    board: Grid,
+                    blocks: List[Block])

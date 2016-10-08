@@ -2,8 +2,8 @@ package model.element
 
 import model.basic.{Line, Point}
 
-case class Grid(form: Int,
-                anchors: List[Point],
+case class Grid(form: Int, // TODO move int ExtGrid
+                anchors: List[Point], // TODO move int ExtGrid
                 corners: List[Point],
                 lines: List[Line]) {
   assert(form == 4 || form == 6)
@@ -41,3 +41,7 @@ case class Grid(form: Int,
   }
 
 }
+
+case class ExtendedGrid(grid: Grid,
+                        form: Int,
+                        anchors: List[Point])

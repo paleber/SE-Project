@@ -7,3 +7,6 @@ case class Level(width: Double,
                  board: Grid,
                  blocks: List[Block],
                  freeAnchors: List[Point])
+
+
+

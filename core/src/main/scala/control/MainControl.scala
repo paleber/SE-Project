@@ -1,6 +1,7 @@
 package control
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.util.Timeout
 import model.general.{DefaultActor, IdGenerator}
 import model.loader.LevelLoader
 import model.msg.{ClientMessage, ServerMessage}
@@ -30,7 +31,19 @@ class MainControl extends Actor with ActorLogging {
         log.info(s"Start Game: $levelName")
         context.stop(subControl)
         subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
-        self ! ServerMessage.ShowGame(levelName, level.get)
+
+        import akka.pattern.ask
+        import scala.concurrent.duration._
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+        implicit val timeout: Timeout = 5.seconds
+
+
+        (subControl ? Init).mapTo[InitGame].map { msg =>
+          self ! ServerMessage.ShowGame(msg)
+        }
+
+
       } else {
         log.error(s"Level $levelName is unknown")
       }
@@ -45,14 +58,10 @@ class MainControl extends Actor with ActorLogging {
       System.exit(1)
 
     case msg: ClientMessage =>
-      log.debug("Forwarding ClientMessage to SubControl")
       subControl.forward(msg)
 
-
     case msg: ServerMessage =>
-      log.debug("Forwarding ServerMessage to Views: " + msg)
       views.foreach(view => view.forward(msg))
-
 
     case msg =>
       log.warning("Unhandled message: " + msg)
