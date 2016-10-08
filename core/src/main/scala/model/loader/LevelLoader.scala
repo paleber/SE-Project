@@ -1,10 +1,11 @@
-package loader
+package model.loader
 
 import java.io.File
 
 import control.AnchorHelper
-import model.plan.{GridPlan, LevelPlan}
-import model.{Block, Grid, Level, Point}
+import model.element.{Block, Grid, Level}
+import model.basic.Point
+import model.plan.LevelPlan
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
@@ -15,7 +16,7 @@ import scala.io.Source
 
 object LevelLoader {
 
-  implicit val formats = Serialization.formats(NoTypeHints)
+  private implicit val formats = Serialization.formats(NoTypeHints)
 
   private val dirLevels = new File("core/src/main/resources/levels")
   private val levelMap = mutable.Map.empty[String, Option[Level]]

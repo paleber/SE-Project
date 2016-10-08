@@ -1,4 +1,4 @@
-package model
+package model.basic
 
 object Vector {
 
@@ -19,7 +19,6 @@ case class Vector(x: Double, y: Double) {
   def *(factor: Double): Vector = {
     Vector(x * factor, y * factor)
   }
-
 
   def angle = {
     (Math.atan2(-y, x) + 2 * Math.PI) % Math.PI

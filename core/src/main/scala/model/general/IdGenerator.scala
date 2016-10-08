@@ -1,5 +1,4 @@
-package util
-
+package model.general
 
 object IdGenerator {
 

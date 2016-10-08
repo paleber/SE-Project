@@ -1,4 +1,4 @@
-package model
+package model.basic
 
 case class Line(start: Point, end: Point) {
 
@@ -8,7 +8,6 @@ case class Line(start: Point, end: Point) {
       start.distanceSquareTo(line.end) < tolerance &&
         end.distanceSquareTo(line.start) < tolerance
   }
-
 
   def +(p: Point): Line = {
     Line(start + p, end + p)

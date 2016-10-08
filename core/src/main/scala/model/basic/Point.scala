@@ -1,4 +1,4 @@
-package model
+package model.basic
 
 object Point {
   val ORIGIN = Point(0, 0)

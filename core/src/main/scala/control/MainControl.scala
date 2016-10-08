@@ -1,11 +1,9 @@
 package control
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import loader.LevelLoader
-import model.plan.LevelPlan
-import msg.{ClientMessage, ServerMessage}
-import util.{DefaultActor, IdGenerator}
-
+import model.general.{DefaultActor, IdGenerator}
+import model.loader.LevelLoader
+import model.msg.{ClientMessage, ServerMessage}
 
 class MainControl extends Actor with ActorLogging {
 

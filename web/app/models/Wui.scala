@@ -1,8 +1,8 @@
 package models
 
 import akka.actor.{Actor, ActorLogging, Props}
-import msg.{ClientMessage, ServerMessage}
-import tui.{ConsoleInput, ConsoleOutput, TextCmdParser}
+import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
+import model.msg.{ClientMessage, ServerMessage}
 
 import scala.collection.mutable.ListBuffer
 
@@ -31,4 +31,3 @@ class Wui extends Actor with ActorLogging {
   }
 
 }
-

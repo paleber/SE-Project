@@ -1,9 +1,6 @@
-package tui
+package model.console
 
-import java.util.Scanner
-
-import akka.actor.{Actor, ActorLogging, Props}
-import msg.{ClientMessage, ServerMessage}
+import akka.actor.{Actor, ActorLogging}
 
 
 

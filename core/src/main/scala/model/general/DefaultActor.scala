@@ -1,4 +1,4 @@
-package util
+package model.general
 
 import akka.actor.{Actor, ActorLogging}
 

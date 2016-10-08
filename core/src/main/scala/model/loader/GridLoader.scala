@@ -1,23 +1,23 @@
-package loader
+package model.loader
 
 import java.io.File
 
+import model.element.Grid
+import model.basic
+import model.basic.{Line, Point}
 import model.plan.GridPlan
-import model.{Grid, Line, Point, Vector}
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.read
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.read
-
-
 object GridLoader {
 
-  implicit val formats = Serialization.formats(NoTypeHints)
+  private implicit val formats = Serialization.formats(NoTypeHints)
 
   private val gridMap = mutable.Map.empty[String, Grid]
   private val dirGrids = new File("core/src/main/resources/grids")
@@ -62,14 +62,14 @@ object GridLoader {
       yMax = Math.max(yMax, anchors(i).y)
     }
 
-    val v = Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
+    val v = basic.Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
     coreLines.transform(l => l + v)
     anchors.transform(a => a + v)
   }
 
   private def buildCoreLines(rotationSteps: Int): Array[Line] = {
     var p = Point.ORIGIN
-    var v = Vector(0, 1)
+    var v = basic.Vector(0, 1)
     val lines = new Array[Line](rotationSteps)
 
     for (i <- 0 until rotationSteps) {
@@ -79,7 +79,7 @@ object GridLoader {
       v = v.rotate(Math.PI * 2 / rotationSteps)
     }
 
-    v = Vector.stretch(lines(lines.length / 2 - 1).end, Point.ORIGIN) * 0.5
+    v = basic.Vector.stretch(lines(lines.length / 2 - 1).end, Point.ORIGIN) * 0.5
     for (i <- 0 until rotationSteps) {
       lines(i) = lines(i) + v
     }
@@ -87,7 +87,7 @@ object GridLoader {
     lines
   }
 
-  private def buildAnchors(dirs: List[Vector], shifts: List[List[Int]]): Array[Point] = {
+  private def buildAnchors(dirs: List[basic.Vector], shifts: List[List[Int]]): Array[Point] = {
     val anchors = mutable.ListBuffer(Point.ORIGIN)
     shifts.foreach(shift => {
       var p = Point.ORIGIN
@@ -100,7 +100,7 @@ object GridLoader {
   def buildAllLines(coreLines: Array[Line], anchors: Array[Point]): ListBuffer[Line] = {
     val lines = ListBuffer.empty[Line]
     anchors.foreach(anchor => {
-      val v = Vector.stretch(anchors(0), anchor)
+      val v = basic.Vector.stretch(anchors(0), anchor)
       coreLines.foreach(l => lines += l + v)
     })
     lines
@@ -173,11 +173,11 @@ object GridLoader {
     }
   }
 
-  def buildDirections(rotationSteps: Int): List[Vector] = {
+  def buildDirections(rotationSteps: Int): List[basic.Vector] = {
     val lines = buildCoreLines(rotationSteps)
-    val dirs = ListBuffer.empty[Vector]
+    val dirs = ListBuffer.empty[basic.Vector]
     lines.foreach(l =>
-      dirs += Vector.stretch(Point.ORIGIN, l.mid) * 2
+      dirs += basic.Vector.stretch(Point.ORIGIN, l.mid) * 2
     )
     dirs.toList
   }

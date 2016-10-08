@@ -1,6 +1,6 @@
-package msg
+package model.msg
 
-import model.{Block, Level}
+import model.element.{Block, Level}
 
 sealed trait ServerMessage
 

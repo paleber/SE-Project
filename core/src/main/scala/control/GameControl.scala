@@ -1,9 +1,10 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import loader.LevelLoader
-import model.{Block, Level, Point, Vector}
-import msg.{ClientMessage, ServerMessage}
+import model.element.{Block, Level}
+import model.basic.{Point, Vector}
+import model.loader.LevelLoader
+import model.msg.{ClientMessage, ServerMessage}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

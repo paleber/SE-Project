@@ -1,8 +1,8 @@
 import akka.actor.{ActorSystem, Props}
 import control.MainControl
 import gui.Gui
-import msg.ClientMessage
-import msg.ClientMessage.RegisterView
+import model.msg.ClientMessage
+import model.msg.ClientMessage.RegisterView
 import tui.Tui
 
 object Scongo extends App {

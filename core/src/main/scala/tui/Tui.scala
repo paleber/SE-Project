@@ -3,7 +3,8 @@ package tui
 import java.util.Scanner
 
 import akka.actor.{Actor, ActorLogging, Props}
-import msg.{ClientMessage, ServerMessage}
+import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
+import model.msg.{ClientMessage, ServerMessage}
 
 
 class Tui extends Actor with ActorLogging {

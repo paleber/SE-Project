@@ -5,15 +5,14 @@ import akka.pattern.ask
 import akka.util.Timeout
 import control.MainControl
 import gui.Gui
+import model.msg.ClientMessage
+import model.msg.ClientMessage.RegisterView
 import models.Wui
-import msg.ClientMessage
-import msg.ClientMessage.RegisterView
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import tui.Tui
 
 import scala.concurrent.duration._
-
 
 class Application extends Controller {
 
@@ -29,7 +28,6 @@ class Application extends Controller {
   main ! RegisterView(wuiConsole)
 
   main ! ClientMessage.ShowMenu
-
 
   def index = Action {
     Ok("Hello world")

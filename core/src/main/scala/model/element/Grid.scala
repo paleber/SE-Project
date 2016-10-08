@@ -1,4 +1,6 @@
-package model
+package model.element
+
+import model.basic.{Line, Point}
 
 case class Grid(form: Int,
                 anchors: List[Point],

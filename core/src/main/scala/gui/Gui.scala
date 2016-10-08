@@ -4,14 +4,14 @@ package gui
 import java.awt.Dimension
 import javax.swing.{JFrame, JPanel}
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 import gui.Gui.SetContentPane
-import model.Level
-import msg.{ClientMessage, ServerMessage}
-import util.{IdGenerator, DefaultActor}
+import model.element.Level
+import model.general.{DefaultActor, IdGenerator}
+import model.msg.{ClientMessage, ServerMessage}
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
