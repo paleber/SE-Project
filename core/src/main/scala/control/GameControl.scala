@@ -2,7 +2,7 @@ package control
 
 import akka.actor.{Actor, ActorLogging}
 import model.basic.{Point, Vector}
-import model.element.{Block, Level, Game}
+import model.element.{Block, Game, BlockExtended, Level}
 import model.loader.GridLoader
 import model.msg.{ClientMessage, InternalMessage, ServerMessage}
 
@@ -10,7 +10,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
-class GameControl(extLevel: Game) extends Actor with ActorLogging {
+class GameControl(game: Game) extends Actor with ActorLogging {
   log.debug("Initializing")
 
   private val anchorDistanceMap = Map(
@@ -18,13 +18,13 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     6 -> Math.pow(1.8, 2)
   )
 
-  private val boardPosition = Point(extLevel.width / 2, extLevel.height / 3)
+  private val boardPosition = Point(game.width / 2, game.height / 3)
 
-  private val board = extLevel.board + boardPosition
+  private val board = game.board + boardPosition
 
   private val boardAnchors: mutable.Map[Point, Option[Int]] = {
     val map = mutable.Map[Point, Option[Int]]()
-    extLevel.board.anchors.foreach(a => map.put(a + boardPosition, Some(-1)))
+    game.board.anchors.foreach(a => map.put(a + boardPosition, Some(-1)))
     map
   }
 
@@ -33,7 +33,7 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     val anchors = ListBuffer(board.anchors.head)
     var index = 0
     while (index < anchors.length) {
-      dirs.foreach(v => addAnchor(anchors(index) + v, anchors, extLevel.width, extLevel.height))
+      dirs.foreach(v => addAnchor(anchors(index) + v, anchors, game.width, game.height))
       index += 1
     }
 
@@ -55,10 +55,10 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     map
   }
 
-  private val blocks = ListBuffer.empty[Block]
-  private val mid = Point(extLevel.width / 2, extLevel.height / 2)
-  for (grid <- extLevel.blocks) {
-    blocks += Block(grid, mid)
+  private val blocks = ListBuffer.empty[BlockExtended]
+  private val mid = Point(game.width / 2, game.height / 2)
+  for (grid <- game.blocks) {
+    blocks += BlockExtended(grid, mid)
     anchorBlock(blocks.size - 1)
   }
 
@@ -91,8 +91,8 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     for (i <- blocks.indices if i != index) {
       blockAnchorsAround(
         i,
-        blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
-        anchorDistanceMap(extLevel.board.form),
+        blocks(i).gridExt.anchors.toArray.transform(p => p + blocks(i).position).toList,
+        anchorDistanceMap(game.board.form),
         restAnchors)
     }
 
@@ -100,15 +100,12 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     if (!anchored) {
       anchorOnRest(index)
       blockAnchorsAround(index,
-        blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
-        anchorDistanceMap(extLevel.board.form),
+        blocks(index).gridExt.anchors.toArray.transform(p => p + blocks(index).position).toList,
+        anchorDistanceMap(game.board.form),
         restAnchors)
     }
 
-    context.parent ! ServerMessage.UpdateBlock(index, blocks(index))
-    if (anchored) {
-      checkLevelFinished()
-    }
+
   }
 
 
@@ -121,12 +118,12 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
 
 
   private def anchorOnBoard(index: Int): Boolean = {
-    val point = blocks(index).grid.anchors.head + blocks(index).position
-    val boardAnchor = findNextAnchor(point, getFreeAnchors(boardAnchors), 0.5)
+    val point = blocks(index).gridExt.anchors.head + blocks(index).position
+    val boardAnchor = findNextAnchor(point, getFreeAnchors(boardAnchors), 1)
     if (boardAnchor.isEmpty) {
       return false
     }
-    anchorOnAnchor(boardAnchor.get, index, blocks, boardAnchors)
+    anchorOnAnchor(boardAnchor.get, index, boardAnchors)
   }
 
 
@@ -134,12 +131,12 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     val restList = getFreeAnchors(restAnchors)
     while (restList.nonEmpty) {
       val anchor = findNextAnchor(
-        blocks(index).grid.anchors.head + blocks(index).position,
+        blocks(index).gridExt.anchors.head + blocks(index).position,
         restList)
       assert(anchor.isDefined)
       restList -= anchor.get
 
-      val anchored = anchorOnAnchor(anchor.get, index, blocks, restAnchors)
+      val anchored = anchorOnAnchor(anchor.get, index, restAnchors)
       if (anchored) {
         return
       }
@@ -147,14 +144,14 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
   }
 
 
-  def anchorOnAnchor(anchor: Point, blockIndex: Int, blocks: ListBuffer[Block], anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
-    val point = blocks(blockIndex).grid.anchors.head + blocks(blockIndex).position
+  def anchorOnAnchor(anchor: Point, blockIndex: Int, anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
+    val point = blocks(blockIndex).gridExt.anchors.head + blocks(blockIndex).position
     val diff = Vector.stretch(point, anchor)
     val blockCopy = blocks(blockIndex).copy(
       position = blocks(blockIndex).position + diff
     )
 
-    for (blockAnchor <- blockCopy.grid.anchors) {
+    for (blockAnchor <- blockCopy.gridExt.anchors) {
       val boardAnchor = findNextAnchor(blockAnchor + blockCopy.position, getFreeAnchors(anchorMap), 1e-3)
       if (boardAnchor.isEmpty || anchorMap(boardAnchor.get).isDefined) {
         freeAnchorsWithIndex(blockIndex, anchorMap)
@@ -218,26 +215,32 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
 
 
   private def doBlockAction(index: Int)(function: => Unit): Unit = {
-    if (blocks.lift(index).isEmpty) {
-      log.error("Invalid block index: " + index)
-    } else if (!running) {
+    if (!running) {
       log.warning("Action while level is finished")
+    } else if (blocks.lift(index).isEmpty) {
+      log.error("Invalid block index: " + index)
     } else {
       function
       anchorBlock(index)
+      context.parent ! ServerMessage.UpdateBlock(index, blocks(index).block)
+      checkLevelFinished()
     }
   }
 
   override def receive = {
 
     case InternalMessage.GetGame =>
+      val b = ListBuffer.empty[Block]
+      for (block <- blocks) {
+        b += block.block
+      }
       sender ! Level(
-        extLevel.name,
-        extLevel.width,
-        extLevel.height,
-        extLevel.board.form,
-        board,
-        blocks.toList
+        game.name,
+        game.width,
+        game.height,
+        game.board.form,
+        board.grid,
+        b.toList
       )
 
     case ClientMessage.UpdateBlockPosition(index, position) =>
@@ -250,28 +253,28 @@ class GameControl(extLevel: Game) extends Actor with ActorLogging {
     case ClientMessage.RotateBlockLeft(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(-Math.PI * 2 / extLevel.board.form)
+          gridExt = blocks(index).gridExt.rotate(-Math.PI * 2 / game.board.form)
         )
       }
 
     case ClientMessage.RotateBlockRight(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(Math.PI * 2 / extLevel.board.form)
+          gridExt = blocks(index).gridExt.rotate(Math.PI * 2 / game.board.form)
         )
       }
 
     case ClientMessage.MirrorBlockVertical(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.mirrorVertical()
+          gridExt = blocks(index).gridExt.mirrorVertical()
         )
       }
 
     case ClientMessage.MirrorBlockHorizontal(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.mirrorHorizontal()
+          gridExt = blocks(index).gridExt.mirrorHorizontal()
         )
       }
 

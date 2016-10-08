@@ -2,10 +2,9 @@ package model.loader
 
 import java.io.File
 
-import model.element.Grid
+import model.element.{GridExtended, Grid, GridPlan}
 import model.basic
 import model.basic.{Line, Point}
-import model.plan.GridPlan
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
@@ -19,10 +18,10 @@ object GridLoader {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val gridMap = mutable.Map.empty[String, Grid]
+  private val gridMap = mutable.Map.empty[String, GridExtended]
   private val dirGrids = new File("core/src/main/resources/grids")
 
-  def load(gridName: String): Grid = {
+  def load(gridName: String): GridExtended = {
     val grid = gridMap.get(gridName)
     if (grid.isDefined) {
       return grid.get
@@ -35,7 +34,7 @@ object GridLoader {
     newGrid
   }
 
-  private def buildGrid(plan: GridPlan): Grid = {
+  private def buildGrid(plan: GridPlan): GridExtended = {
     val coreLines = buildCoreLines(plan.form)
     val dirs = buildDirections(plan.form)
     val anchors = buildAnchors(dirs, plan.shifts)
@@ -47,7 +46,7 @@ object GridLoader {
     optimizeLines(allLines)
 
     val corners = buildCorners(allLines)
-    Grid(plan.form, anchors.toList, corners, lines.toList)
+    GridExtended(Grid(corners, lines.toList), plan.form, anchors.toList)
   }
 
   def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {

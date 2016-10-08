@@ -1,4 +1,4 @@
-package model.plan
+package model.element
 
 case class LevelPlan(width: Double,
                      height: Double,
