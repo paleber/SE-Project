@@ -1,12 +1,8 @@
 package model.element
 
-import model.basic.Point
-
-case class Level(width: Double,
+case class Level(name: String,
+                 width: Double,
                  height: Double,
+                 form: Int,
                  board: Grid,
-                 blocks: List[Block],
-                 freeAnchors: List[Point])
-
-
-
+                 blocks: List[Block])

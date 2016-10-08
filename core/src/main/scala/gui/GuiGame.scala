@@ -6,9 +6,8 @@ import java.awt.{BasicStroke, Color, Cursor, Graphics, Graphics2D, Polygon, Tool
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging}
-import control.InitGame
 import model.basic.Point
-import model.element.{Block, Grid}
+import model.element.{Block, Level, Grid}
 import model.msg.{ClientMessage, ServerMessage}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,10 +15,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-case class GuiGame(initGame: InitGame) extends JPanel with Actor with ActorLogging {
+case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val blocks = initGame.blocks.toArray
+  private val blocks = game.blocks.toArray
   private val blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
 
   private val boardPoly = new Polygon()
@@ -92,7 +91,7 @@ case class GuiGame(initGame: InitGame) extends JPanel with Actor with ActorLoggi
     }
   })
 
-  context.parent ! Gui.SetContentPane(this, initGame.name)
+  context.parent ! Gui.SetContentPane(this, game.name)
 
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
@@ -108,12 +107,12 @@ case class GuiGame(initGame: InitGame) extends JPanel with Actor with ActorLoggi
   override def paint(g: Graphics): Unit = {
 
     // Calculate scaleFactor and offsets
-    scaleFactor = Math.min(getWidth / initGame.width, getHeight / initGame.height)
-    xOffset = (getWidth - initGame.width * scaleFactor) / 2
-    yOffset = (getHeight - initGame.height * scaleFactor) / 2
+    scaleFactor = Math.min(getWidth / game.width, getHeight / game.height)
+    xOffset = (getWidth - game.width * scaleFactor) / 2
+    yOffset = (getHeight - game.height * scaleFactor) / 2
 
     // Convert corners to polygon
-    convertCornersToPoly(initGame.board.corners, Point.ORIGIN, boardPoly)
+    convertCornersToPoly(game.board.corners, Point.ORIGIN, boardPoly)
     for (i <- blocks.indices) {
       convertCornersToPoly(blocks(i).grid.corners, blocks(i).position, blockPolys(i))
     }
@@ -123,13 +122,13 @@ case class GuiGame(initGame: InitGame) extends JPanel with Actor with ActorLoggi
     g.fillRect(0, 0, getWidth, getHeight)
 
     g.setColor(Color.WHITE)
-    g.fillRect(scaleX(0), scaleY(0), scale(initGame.width), scale(initGame.height))
+    g.fillRect(scaleX(0), scaleY(0), scale(game.width), scale(game.height))
 
     g.setColor(Color.GRAY)
-    for (y <- 1 until initGame.height.toInt) {
+    for (y <- 1 until game.height.toInt) {
       g.drawLine(0, scaleY(y), getWidth, scaleY(y))
     }
-    for (x <- 1 until initGame.width.toInt) {
+    for (x <- 1 until game.width.toInt) {
       g.drawLine(scaleX(x), 0, scaleX(x), getHeight)
     }
 
@@ -144,7 +143,7 @@ case class GuiGame(initGame: InitGame) extends JPanel with Actor with ActorLoggi
     g.setColor(Color.GRAY)
     g.drawPolygon(boardPoly)
 
-    for (line <- initGame.board.lines) {
+    for (line <- game.board.lines) {
       g.drawLine(
         scaleX(line.start.x),
         scaleY(line.start.y),
@@ -284,14 +283,14 @@ case class GuiGame(initGame: InitGame) extends JPanel with Actor with ActorLoggi
         case RotateLeft =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
-              -Math.PI * 2 / initGame.board.form / activeAction.get.maxSteps * activeAction.get.curStep
+              -Math.PI * 2 / game.board.form / activeAction.get.maxSteps * activeAction.get.curStep
             )
           )
 
         case RotateRight =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
-              Math.PI * 2 / initGame.board.form / activeAction.get.maxSteps * activeAction.get.curStep
+              Math.PI * 2 / game.board.form / activeAction.get.maxSteps * activeAction.get.curStep
             )
           )
 

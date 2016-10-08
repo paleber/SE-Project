@@ -4,14 +4,23 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import model.general.{DefaultActor, IdGenerator}
 import model.loader.LevelLoader
-import model.msg.{ClientMessage, ServerMessage}
+import model.msg.{ClientMessage, InternalMessage, ServerMessage}
+import akka.pattern.ask
+import model.element.Level
+import model.msg.ServerMessage.ShowGame
+
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 class MainControl extends Actor with ActorLogging {
 
-  var subControl: ActorRef = context.actorOf(Props[DefaultActor], "init")
+  private implicit val timeout: Timeout = 5.seconds
 
-  var views = List.empty[ActorRef]
+  private var subControl: ActorRef = context.actorOf(Props[DefaultActor], "init")
 
+  private var views = ListBuffer.empty[ActorRef]
 
   override def receive = {
 
@@ -32,15 +41,8 @@ class MainControl extends Actor with ActorLogging {
         context.stop(subControl)
         subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
 
-        import akka.pattern.ask
-        import scala.concurrent.duration._
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-        implicit val timeout: Timeout = 5.seconds
-
-
-        (subControl ? Init).mapTo[InitGame].map { msg =>
-          self ! ServerMessage.ShowGame(msg)
+        (subControl ? InternalMessage.GetGame).mapTo[Level].map { game =>
+          views.foreach(view => view ! ShowGame(game))
         }
 
 
@@ -50,7 +52,7 @@ class MainControl extends Actor with ActorLogging {
 
     case ClientMessage.RegisterView(view) =>
       log.debug("Registering view: " + context.sender.path)
-      views = view :: views
+      views += view
 
     case ClientMessage.Shutdown =>
       log.info("Shutdown")

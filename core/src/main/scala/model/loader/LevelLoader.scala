@@ -2,8 +2,7 @@ package model.loader
 
 import java.io.File
 
-import control.ExtendedLevel
-import model.element.Grid
+import model.element.{Game, Grid}
 import model.plan.LevelPlan
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
@@ -18,7 +17,7 @@ object LevelLoader {
   private implicit val formats = Serialization.formats(NoTypeHints)
 
   private val dirLevels = new File("core/src/main/resources/levels")
-  private val levelMap = mutable.Map.empty[String, Option[ExtendedLevel]]
+  private val levelMap = mutable.Map.empty[String, Option[Game]]
 
   for(file <- dirLevels.listFiles) {
     levelMap.put(file.getName.replace(".json", ""), None)
@@ -26,7 +25,7 @@ object LevelLoader {
 
   val LEVEL_NAMES = levelMap.keys.toList.sorted
 
-  def load(levelName: String): Option[ExtendedLevel] = {
+  def load(levelName: String): Option[Game] = {
     val level = levelMap.get(levelName)
     if(level.isEmpty) {
       return None
@@ -42,7 +41,7 @@ object LevelLoader {
       blocks += GridLoader.load(block)
     }
 
-    val newLevel = Some(ExtendedLevel(
+    val newLevel = Some(Game(
       levelName,
       plan.width,
       plan.height,

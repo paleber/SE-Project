@@ -5,7 +5,6 @@ import java.awt.Dimension
 import javax.swing.{JFrame, JPanel}
 
 import akka.actor.{Actor, ActorLogging, Props}
-import control.InitGame
 import gui.Gui.SetContentPane
 import model.element.Level
 import model.general.{DefaultActor, IdGenerator}
@@ -59,8 +58,8 @@ class Gui extends Actor with ActorLogging {
       context.stop(content)
       content = context.actorOf(Props[GuiMenu], s"menu-${IdGenerator.generate()}")
 
-    case ServerMessage.ShowGame(level: InitGame) =>
-      content = context.actorOf(Props(GuiGame(level)), s"game-${IdGenerator.generate()}")
+    case ServerMessage.ShowGame(game:  Level) =>
+      content = context.actorOf(Props(GuiGame(game)), s"game-${IdGenerator.generate()}")
 
     case msg: ServerMessage => content ! msg
 

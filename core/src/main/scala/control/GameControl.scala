@@ -1,22 +1,16 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import model.basic.Point
-import model.element.{Block, Grid}
+import model.basic.{Point, Vector}
+import model.element.{Block, Level, Game}
 import model.loader.GridLoader
-import model.msg.{ClientMessage, ServerMessage}
+import model.msg.{ClientMessage, InternalMessage, ServerMessage}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
-case class ExtendedLevel(name: String,
-                         width: Double,
-                         height: Double,
-                         board: Grid,
-                         blocks: List[Grid])
-
-class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
+class GameControl(extLevel: Game) extends Actor with ActorLogging {
   log.debug("Initializing")
 
   private val anchorDistanceMap = Map(
@@ -24,13 +18,13 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     6 -> Math.pow(1.8, 2)
   )
 
-  private val board: Grid = {
-    extLevel.board + Point(extLevel.width / 2, extLevel.height / 3)
-  }
+  private val boardPosition = Point(extLevel.width / 2, extLevel.height / 3)
+
+  private val board = extLevel.board + boardPosition
 
   private val boardAnchors: mutable.Map[Point, Option[Int]] = {
     val map = mutable.Map[Point, Option[Int]]()
-    extLevel.board.anchors.foreach(a => map.put(a, None))
+    extLevel.board.anchors.foreach(a => map.put(a + boardPosition, Some(-1)))
     map
   }
 
@@ -61,30 +55,15 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     map
   }
 
-  private val blocks: Array[Block] = {
-    val list = ListBuffer.empty[Block]
-    val mid = Point(extLevel.width / 2, extLevel.height / 2)
-    for (grid <- extLevel.blocks) {
-      list += Block(grid, mid)
-    }
-    list.toArray
+  private val blocks = ListBuffer.empty[Block]
+  private val mid = Point(extLevel.width / 2, extLevel.height / 2)
+  for (grid <- extLevel.blocks) {
+    blocks += Block(grid, mid)
+    anchorBlock(blocks.size - 1)
   }
 
-  // TODO anchor on board
-  /*for (blockIndex <- plan.blocks.indices) {
-    val block = Block(GridLoader.load(plan.blocks(blockIndex)), mid)
-    assert(block.grid.form == board.form)
-    blocks(blockIndex) = block
-    anchorOnRest(blockIndex, blocks, restAnchors)
-    blockAnchorsAround(
-      blockIndex,
-      blocks(blockIndex).grid.anchors.toArray.transform(p => p + blocks(blockIndex).position).toList,
-      anchorDistanceMap(board.form),
-      restAnchors
-    )
-  }
-  Level(plan.width, plan.height, board, blocks.toList, restAnchors.keys.toList)
-  */
+  boardAnchors.transform((k, v) => None)
+
 
   private var running = true
 
@@ -105,25 +84,24 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
   }
 
 
-  /*
   private def anchorBlock(index: Int): Unit = {
-    AnchorHelper.freeAnchorsWithIndex(index, boardAnchors)
-    AnchorHelper.freeAnchorsWithIndex(index, restAnchors)
+    freeAnchorsWithIndex(index, boardAnchors)
+    freeAnchorsWithIndex(index, restAnchors)
 
     for (i <- blocks.indices if i != index) {
-      AnchorHelper.blockAnchorsAround(
+      blockAnchorsAround(
         i,
         blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
-        LevelLoader.minAnchorDistanceSquare(level.board.form),
+        anchorDistanceMap(extLevel.board.form),
         restAnchors)
     }
 
     val anchored = anchorOnBoard(index)
     if (!anchored) {
-      AnchorHelper.anchorOnRest(index, blocks, restAnchors)
-      AnchorHelper.blockAnchorsAround(index,
+      anchorOnRest(index)
+      blockAnchorsAround(index,
         blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
-        LevelLoader.minAnchorDistanceSquare(level.board.form),
+        anchorDistanceMap(extLevel.board.form),
         restAnchors)
     }
 
@@ -131,7 +109,7 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     if (anchored) {
       checkLevelFinished()
     }
-  } */
+  }
 
 
   private def checkLevelFinished(): Unit = {
@@ -141,36 +119,35 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     }
   }
 
-  /*
-    private def anchorOnBoard(index: Int): Boolean = {
-      val point = blocks(index).grid.anchors.head + blocks(index).position
-      val boardAnchor = AnchorHelper.findNearest(point, AnchorHelper.getFreeAnchors(boardAnchors), 0.5)
-      if (boardAnchor.isEmpty) {
-        return false
-      }
-      AnchorHelper.anchorOnAnchor(boardAnchor.get, index, blocks, boardAnchors)
-    }*/
 
-  /*
-    def anchorOnRest(index: Int, blocks: Array[Block], restAnchors: mutable.Map[Point, Option[Int]]): Unit = {
-      val restList = AnchorHelper.getFreeAnchors(restAnchors)
-      while (restList.nonEmpty) {
-        val anchor = AnchorHelper.findNearest(
-          blocks(index).grid.anchors.head + blocks(index).position,
-          restList)
-        assert(anchor.isDefined)
-        restList -= anchor.get
+  private def anchorOnBoard(index: Int): Boolean = {
+    val point = blocks(index).grid.anchors.head + blocks(index).position
+    val boardAnchor = findNextAnchor(point, getFreeAnchors(boardAnchors), 0.5)
+    if (boardAnchor.isEmpty) {
+      return false
+    }
+    anchorOnAnchor(boardAnchor.get, index, blocks, boardAnchors)
+  }
 
-        val anchored = AnchorHelper.anchorOnAnchor(anchor.get, index, blocks, restAnchors)
-        if (anchored) {
-          return
-        }
+
+  def anchorOnRest(index: Int): Unit = {
+    val restList = getFreeAnchors(restAnchors)
+    while (restList.nonEmpty) {
+      val anchor = findNextAnchor(
+        blocks(index).grid.anchors.head + blocks(index).position,
+        restList)
+      assert(anchor.isDefined)
+      restList -= anchor.get
+
+      val anchored = anchorOnAnchor(anchor.get, index, blocks, restAnchors)
+      if (anchored) {
+        return
       }
     }
-  */
+  }
 
-  /*
-  def anchorOnAnchor(anchor: Point, blockIndex: Int, blocks: Array[Block], anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
+
+  def anchorOnAnchor(anchor: Point, blockIndex: Int, blocks: ListBuffer[Block], anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
     val point = blocks(blockIndex).grid.anchors.head + blocks(blockIndex).position
     val diff = Vector.stretch(point, anchor)
     val blockCopy = blocks(blockIndex).copy(
@@ -178,9 +155,9 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     )
 
     for (blockAnchor <- blockCopy.grid.anchors) {
-      val boardAnchor = AnchorHelper.findNearest(blockAnchor + blockCopy.position, AnchorHelper.getFreeAnchors(anchorMap), 1e-3)
+      val boardAnchor = findNextAnchor(blockAnchor + blockCopy.position, getFreeAnchors(anchorMap), 1e-3)
       if (boardAnchor.isEmpty || anchorMap(boardAnchor.get).isDefined) {
-        AnchorHelper.freeAnchorsWithIndex(blockIndex, anchorMap)
+        freeAnchorsWithIndex(blockIndex, anchorMap)
         return false
       }
       anchorMap(boardAnchor.get) = Some(blockIndex)
@@ -188,7 +165,7 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     }
     blocks(blockIndex) = blockCopy
     true
-  }*/
+  }
 
 
   def freeAnchorsWithIndex(index: Int, anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
@@ -199,9 +176,9 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
     }
   }
 
-  def findNearest(point: Point,
-                  anchors: ListBuffer[Point],
-                  maxDistance: Double = Double.PositiveInfinity): Option[Point] = {
+  def findNextAnchor(point: Point,
+                     anchors: ListBuffer[Point],
+                     maxDistance: Double = Double.PositiveInfinity): Option[Point] = {
     var minDistanceSquare = maxDistance * maxDistance
     var nearestAnchor: Option[Point] = None
     anchors.foreach(a => {
@@ -247,14 +224,14 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
       log.warning("Action while level is finished")
     } else {
       function
-      //anchorBlock(index) TODO
+      anchorBlock(index)
     }
   }
 
   override def receive = {
 
-    case Init =>
-      sender ! InitGame(
+    case InternalMessage.GetGame =>
+      sender ! Level(
         extLevel.name,
         extLevel.width,
         extLevel.height,
@@ -308,11 +285,4 @@ class GameControl(extLevel: ExtendedLevel) extends Actor with ActorLogging {
 
 }
 
-case object Init
 
-case class InitGame(name: String,
-                    width: Double,
-                    height: Double,
-                    form: Int,
-                    board: Grid,
-                    blocks: List[Block])
