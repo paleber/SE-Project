@@ -7,6 +7,7 @@ case class LevelPlan(width: Double,
                      board: String,
                      blocks: List[String])
 
+/*
 object LevelPlan {
 
   val map = Map(
@@ -42,3 +43,4 @@ object LevelPlan {
   )
 
 }
+*/

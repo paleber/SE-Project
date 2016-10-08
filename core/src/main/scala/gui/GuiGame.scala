@@ -282,14 +282,14 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
         case RotateLeft =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
-              -Math.PI * 2 / level.board.rotationSteps / activeAction.get.maxSteps * activeAction.get.curStep
+              -Math.PI * 2 / level.board.form / activeAction.get.maxSteps * activeAction.get.curStep
             )
           )
 
         case RotateRight =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
-              Math.PI * 2 / level.board.rotationSteps / activeAction.get.maxSteps * activeAction.get.curStep
+              Math.PI * 2 / level.board.form / activeAction.get.maxSteps * activeAction.get.curStep
             )
           )
 

@@ -44,14 +44,14 @@ class GameControl(level: Level) extends Actor with ActorLogging {
     case ClientMessage.RotateBlockLeft(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(-Math.PI * 2 / level.board.rotationSteps)
+          grid = blocks(index).grid.rotate(-Math.PI * 2 / level.board.form)
         )
       }
 
     case ClientMessage.RotateBlockRight(index) =>
       doBlockAction(index) {
         blocks(index) = blocks(index).copy(
-          grid = blocks(index).grid.rotate(Math.PI * 2 / level.board.rotationSteps)
+          grid = blocks(index).grid.rotate(Math.PI * 2 / level.board.form)
         )
       }
 
@@ -81,7 +81,7 @@ class GameControl(level: Level) extends Actor with ActorLogging {
       AnchorHelper.blockAnchorsAround(
         i,
         blocks(i).grid.anchors.toArray.transform(p => p + blocks(i).position).toList,
-        LevelLoader.minAnchorDistanceSquare(level.board.rotationSteps),
+        LevelLoader.minAnchorDistanceSquare(level.board.form),
         restAnchors)
     }
 
@@ -90,7 +90,7 @@ class GameControl(level: Level) extends Actor with ActorLogging {
       AnchorHelper.anchorOnRest(index, blocks, restAnchors)
       AnchorHelper.blockAnchorsAround(index,
         blocks(index).grid.anchors.toArray.transform(p => p + blocks(index).position).toList,
-        LevelLoader.minAnchorDistanceSquare(level.board.rotationSteps),
+        LevelLoader.minAnchorDistanceSquare(level.board.form),
         restAnchors)
     }
 

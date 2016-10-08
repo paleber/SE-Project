@@ -1,10 +1,10 @@
 package model
 
-case class Grid(rotationSteps: Int,
+case class Grid(form: Int,
                 anchors: List[Point],
                 corners: List[Point],
                 lines: List[Line]) {
-  assert(rotationSteps == 4 || rotationSteps == 6)
+  assert(form == 4 || form == 6)
 
   def +(p: Point): Grid = {
     copy(

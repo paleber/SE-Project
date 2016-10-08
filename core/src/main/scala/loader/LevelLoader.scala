@@ -1,36 +1,62 @@
 package loader
 
+import java.io.File
+
 import control.AnchorHelper
-import model.plan.LevelPlan
+import model.plan.{GridPlan, LevelPlan}
 import model.{Block, Grid, Level, Point}
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization._
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
 
 object LevelLoader {
 
-  val rotationSteps = 4
+  implicit val formats = Serialization.formats(NoTypeHints)
 
-  def load(plan: LevelPlan): Level = {
-    createLevel(plan)
+  private val dirLevels = new File("core/src/main/resources/levels")
+  private val levelMap = mutable.Map.empty[String, Option[Level]]
+
+  for(file <- dirLevels.listFiles) {
+    levelMap.put(file.getName.replace(".json", ""), None)
+  }
+
+  val LEVEL_NAMES = levelMap.keys.toList.sorted
+
+  def load(levelName: String): Option[Level] = {
+    val level = levelMap.get(levelName)
+    if(level.isEmpty) {
+      return None
+    }
+
+    val file = Source.fromFile(s"$dirLevels/$levelName.json")
+    val plan = read[LevelPlan](file.mkString)
+
+    val newLevel = Some(createLevel(plan))
+    levelMap.update(levelName, newLevel)
+    newLevel
+
   }
 
   def createLevel(plan: LevelPlan): Level = {
     val board = GridLoader.load(plan.board) + Point(plan.width / 2, plan.height / 3)
-    val restAnchors = buildRestAnchors(board.rotationSteps, board, plan.width, plan.height)
+    val restAnchors = buildRestAnchors(board.form, board, plan.width, plan.height)
 
     val mid = Point(plan.width / 2, plan.height / 2)
     val blocks = new Array[Block](plan.blocks.length)
 
     for (blockIndex <- plan.blocks.indices) {
       val block = Block(GridLoader.load(plan.blocks(blockIndex)), mid)
-      assert(block.grid.rotationSteps == board.rotationSteps)
+      assert(block.grid.form == board.form)
       blocks(blockIndex) = block
       AnchorHelper.anchorOnRest(blockIndex, blocks, restAnchors)
       AnchorHelper.blockAnchorsAround(
         blockIndex,
         blocks(blockIndex).grid.anchors.toArray.transform(p => p + blocks(blockIndex).position).toList,
-        minAnchorDistanceSquare(board.rotationSteps),
+        minAnchorDistanceSquare(board.form),
         restAnchors
       )
       restAnchors.foreach { case (k, v) => if (v.isDefined) println(k + " - " + v) }

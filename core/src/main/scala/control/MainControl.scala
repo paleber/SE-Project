@@ -25,20 +25,14 @@ class MainControl extends Actor with ActorLogging {
       self ! ServerMessage.ShowMenu
 
     case ClientMessage.ShowGame(levelName) =>
-
-
       log.debug("Showing Game")
 
-      val plan = LevelPlan.map.get(levelName)
-
-
-      if (plan.isDefined) {
-        val level = LevelLoader.load(plan.get)
-        log.info(s"Start Game: $level")
-
+      val level = LevelLoader.load(levelName)
+      if (level.isDefined) {
+        log.info(s"Start Game: $levelName")
         context.stop(subControl)
-        subControl = context.actorOf(Props(new GameControl(level)), s"game-${IdGenerator.generate()}")
-        self ! ServerMessage.ShowGame(level)
+        subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
+        self ! ServerMessage.ShowGame(level.get)
       } else {
         log.error(s"Level $levelName is unknown")
       }

@@ -31,13 +31,13 @@ object GridLoader {
     val file = Source.fromFile(s"$dirGrids/$gridName.json")
     val plan = read[GridPlan](file.mkString)
     val newGrid = buildGrid(plan)
-    gridMap.put(gridName, newGrid)
+    gridMap.update(gridName, newGrid)
     newGrid
   }
 
   private def buildGrid(plan: GridPlan): Grid = {
-    val coreLines = buildCoreLines(plan.rotationSteps)
-    val dirs = buildDirections(plan.rotationSteps)
+    val coreLines = buildCoreLines(plan.form)
+    val dirs = buildDirections(plan.form)
     val anchors = buildAnchors(dirs, plan.shifts)
     centerElements(coreLines, anchors)
 
@@ -47,7 +47,7 @@ object GridLoader {
     optimizeLines(allLines)
 
     val corners = buildCorners(allLines)
-    Grid(plan.rotationSteps, anchors.toList, corners, lines.toList)
+    Grid(plan.form, anchors.toList, corners, lines.toList)
   }
 
   def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {
