@@ -6,7 +6,7 @@ sealed trait ServerMessage
 
 object ServerMessage {
 
-  case class ShowGame(level: Level) extends ServerMessage
+  case class ShowGame(levelName: String, level: Level) extends ServerMessage
 
   case object ShowMenu extends ServerMessage
 

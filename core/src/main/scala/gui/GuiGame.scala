@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
+case class GuiGame(levelName: String, level: Level) extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
   private val blocks = level.blocks.toArray
@@ -90,7 +90,7 @@ case class GuiGame(level: Level) extends JPanel with Actor with ActorLogging {
     }
   })
 
-  context.parent ! Gui.SetContentPane(this)
+  context.parent ! Gui.SetContentPane(this, levelName)
 
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {

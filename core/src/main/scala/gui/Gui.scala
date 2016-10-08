@@ -19,7 +19,7 @@ object Gui {
 
   private val DEFAULT_SIZE = new Dimension(800, 600)
 
-  private[gui] case class SetContentPane(c: JPanel)
+  private[gui] case class SetContentPane(c: JPanel, name: String)
 
 }
 
@@ -28,7 +28,7 @@ class Gui extends Actor with ActorLogging {
 
   val main = context.actorSelection("../control")
 
-  val frame = new JFrame("Scongo")
+  val frame = new JFrame()
   frame.setLayout(null)
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
   frame.getContentPane.setPreferredSize(Gui.DEFAULT_SIZE)
@@ -44,7 +44,8 @@ class Gui extends Actor with ActorLogging {
 
   override def receive = {
 
-    case SetContentPane(panel) =>
+    case SetContentPane(panel, name) =>
+      frame.setTitle(s"scongo - $name")
       panel.setSize(frame.getContentPane.getSize)
       frame.setContentPane(panel)
       context.system.scheduler.scheduleOnce(100 millis) {
@@ -57,8 +58,8 @@ class Gui extends Actor with ActorLogging {
       context.stop(content)
       content = context.actorOf(Props[GuiMenu], s"menu-${IdGenerator.generate()}")
 
-    case ServerMessage.ShowGame(level: Level) =>
-      content = context.actorOf(Props(GuiGame(level)), s"game-${IdGenerator.generate()}")
+    case ServerMessage.ShowGame(levelName: String, level: Level) =>
+      content = context.actorOf(Props(GuiGame(levelName,level)), s"game-${IdGenerator.generate()}")
 
     case msg: ServerMessage => content ! msg
 

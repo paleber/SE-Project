@@ -32,7 +32,7 @@ class MainControl extends Actor with ActorLogging {
         log.info(s"Start Game: $levelName")
         context.stop(subControl)
         subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
-        self ! ServerMessage.ShowGame(level.get)
+        self ! ServerMessage.ShowGame(levelName, level.get)
       } else {
         log.error(s"Level $levelName is unknown")
       }

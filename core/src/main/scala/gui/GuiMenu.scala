@@ -10,7 +10,7 @@ import msg.ClientMessage
 
 class GuiMenu extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
-  context.parent ! Gui.SetContentPane(this)
+  context.parent ! Gui.SetContentPane(this, "menu")
 
   private case class StartLevelEvent(level: String) extends ActionListener {
     override def actionPerformed(e: ActionEvent): Unit = {
