@@ -59,7 +59,6 @@ object LevelLoader {
         minAnchorDistanceSquare(board.form),
         restAnchors
       )
-      restAnchors.foreach { case (k, v) => if (v.isDefined) println(k + " - " + v) }
     }
 
     Level(plan.width, plan.height, board, blocks.toList, restAnchors.keys.toList)
@@ -72,7 +71,6 @@ object LevelLoader {
       case 6 => Math.pow(1.8, 2)
     }
   }
-
 
   private def buildRestAnchors(rotationSteps: Int, board: Grid, width: Double, height: Double): mutable.Map[Point, Option[Int]] = {
     val dirs = GridLoader.buildDirections(rotationSteps).toArray.transform(v => v * 0.5).toList
@@ -117,8 +115,3 @@ object LevelLoader {
   }
 
 }
-
-
-
-
-
