@@ -26,9 +26,9 @@ object Gui {
 class Gui extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  val main = context.actorSelection("../control")
+  private val main = context.actorSelection("../control")
 
-  val frame = new JFrame()
+  private val frame = new JFrame()
   frame.setLayout(null)
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
   frame.getContentPane.setPreferredSize(Gui.DEFAULT_SIZE)
@@ -40,7 +40,7 @@ class Gui extends Actor with ActorLogging {
     frame.repaint()
   }
 
-  var content = context.actorOf(Props[DefaultActor], "init")
+  private var content = context.actorOf(Props[DefaultActor], "init")
 
   override def receive = {
 

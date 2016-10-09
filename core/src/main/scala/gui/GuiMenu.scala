@@ -25,8 +25,6 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
     add(bnLevel)
   }
 
-
-
   override def receive = {
     case msg => log.warning("Unhandled message: " + msg)
   }

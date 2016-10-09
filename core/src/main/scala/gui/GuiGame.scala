@@ -29,14 +29,13 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
 
   private var finished: Option[Double] = None
 
-  val defaultCursor = Cursor.getDefaultCursor
+  private val defaultCursor = Cursor.getDefaultCursor
 
-  val blankCursor = Toolkit.getDefaultToolkit.createCustomCursor(
+  private val blankCursor = Toolkit.getDefaultToolkit.createCustomCursor(
     new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
     new AwtPoint(0, 0),
     null
   )
-
 
   private class Selected(var index: Int, var block: Block) {
     val poly = new Polygon()
@@ -49,7 +48,6 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
   private case class SelectBlock(p: AwtPoint)
 
   private case object ReleaseBlock
-
 
   private sealed trait Action
 
@@ -64,6 +62,13 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
   private case object BackToMenu
 
   private case object BackToMenuWhenFinished
+
+  private var activeAction: Option[BlockAction] = None
+
+  private case class BlockAction(action: Action, startGrid: Grid, curStep: Int = 0, maxSteps: Int = 6)
+
+  private case object HandleBlockAction
+
 
   addMouseMotionListener(new MouseAdapter {
     override def mouseDragged(e: MouseEvent) = self ! MoveBlock(e.getPoint)
@@ -99,7 +104,6 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
   })
 
   context.parent ! Gui.SetContentPane(this, game.name)
-
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
     poly.reset()
@@ -185,24 +189,24 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
 
     if (finished.isDefined) {
       g.setColor(Color.BLUE)
-      g.setFont(new Font("Arial Black", Font.BOLD, (0.6 * scaleFactor).toInt))
-      val fm = g.getFontMetrics
+      g.setFont(new Font("Arial Black", Font.BOLD, (0.7 * scaleFactor).toInt))
 
       val sFinish = "LEVEL COMPLETED"
       g.drawString(
         sFinish,
-        (getWidth - fm.stringWidth(sFinish)) / 2,
-        (getHeight - 7 * fm.getHeight) / 2
+        (getWidth - g.getFontMetrics.stringWidth(sFinish)) / 2,
+        (getHeight - 6 * g.getFontMetrics.getHeight) / 2
       )
 
+      g.setFont(new Font("Arial Black", Font.BOLD, (0.5 * scaleFactor).toInt))
       val sTime = s"${finished.get} SECONDS"
       g.drawString(
         sTime,
-        (getWidth - fm.stringWidth(sTime)) / 2,
-        (getHeight - 5 * fm.getHeight) / 2
+        (getWidth - g.getFontMetrics.stringWidth(sTime)) / 2,
+        (getHeight - 6 * g.getFontMetrics.getHeight) / 2
       )
 
-      g.setFont(new Font("Arial Black", Font.PLAIN, (0.4 * scaleFactor).toInt))
+      g.setFont(new Font("Arial Black", Font.BOLD, (0.4 * scaleFactor).toInt))
       val sEnter = s"PRESS ENTER"
       g.drawString(
         sEnter,
@@ -210,8 +214,6 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
         getHeight / 2
       )
     }
-
-
   }
 
   private def scale(z: Double): Int = {
@@ -225,7 +227,6 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
   private def scaleY(z: Double): Int = {
     (z * scaleFactor + yOffset + 0.5).toInt
   }
-
 
   override def receive = {
 
@@ -304,19 +305,20 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
       context.parent ! ClientMessage.ShowMenu
 
     case BackToMenuWhenFinished =>
-      if(finished.isDefined) {
+      if (finished.isDefined) {
         context.parent ! ClientMessage.ShowMenu
       }
 
     case HandleBlockAction =>
       handleBlockAction()
 
-    case msg => log.warning("Unhandled message: " + msg)
+    case msg =>
+      log.warning("Unhandled message: " + msg)
+
   }
 
   private def handleBlockAction(): Unit = {
     if (activeAction.isDefined) {
-
       activeAction.get.action match {
 
         case RotateLeft =>
@@ -362,12 +364,4 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
       }
     }
   }
-
-
-  private var activeAction: Option[BlockAction] = None
-
-  private case class BlockAction(action: Action, startGrid: Grid, curStep: Int = 0, maxSteps: Int = 6)
-
-  private case object HandleBlockAction
-
 }

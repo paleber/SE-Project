@@ -115,7 +115,6 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     }
   }
 
-
   private def anchorOnBoard(index: Int): Boolean = {
     val point = blocks(index).gridExt.anchors.head + blocks(index).position
     val boardAnchor = findNextAnchor(point, getFreeAnchors(boardAnchors), 1)
@@ -124,7 +123,6 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     }
     anchorOnAnchor(boardAnchor.get, index, boardAnchors)
   }
-
 
   def anchorOnRest(index: Int): Unit = {
     val restList = getFreeAnchors(restAnchors)

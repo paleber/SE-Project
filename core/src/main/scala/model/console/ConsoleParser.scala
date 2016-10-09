@@ -2,9 +2,6 @@ package model.console
 
 import akka.actor.{Actor, ActorLogging}
 
-
-
-
 case class ConsoleInput(cmd: String)
 
 case class ConsoleOutput(cmd: String)
@@ -14,7 +11,12 @@ private object ConsoleCmdParser {
   val cmdMap = Map(
     "exit" -> CmdShutdown,
     "menu" -> CmdShowMenu,
-    "game" -> CmdShowGame
+    "game" -> CmdShowGame,
+    "left" -> CmdRotateBlockLeft,
+    "right" -> CmdRotateBlockRight,
+    "vertical" -> CmdMirrorBlockVertical,
+    "horizontal" -> CmdMirrorBlockHorizontal,
+    "move" -> CmdMoveBlock
   )
 
 }
@@ -69,10 +71,3 @@ class TextCmdParser extends Actor with ActorLogging {
   }
 
 }
-
-
-
-
-
-
-
