@@ -2,12 +2,12 @@ package gui
 
 import java.awt.event.{KeyAdapter, KeyEvent, MouseAdapter, MouseEvent}
 import java.awt.image.BufferedImage
-import java.awt.{BasicStroke, Color, Cursor, Graphics, Graphics2D, Polygon, Toolkit, Point => AwtPoint}
+import java.awt.{BasicStroke, Color, Cursor, Font, Graphics, Graphics2D, Polygon, Toolkit, Point => AwtPoint}
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging}
 import model.basic.Point
-import model.element.{Block, Level, Grid}
+import model.element.{Block, Grid, Level}
 import model.msg.{ClientMessage, ServerMessage}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -26,6 +26,8 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
   private var scaleFactor: Double = 1
   private var xOffset, yOffset: Double = 0
   private var lastX, lastY: Int = 0
+
+  private var finished: Option[Double] = None
 
   val defaultCursor = Cursor.getDefaultCursor
 
@@ -61,6 +63,8 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
 
   private case object BackToMenu
 
+  private case object BackToMenuWhenFinished
+
   addMouseMotionListener(new MouseAdapter {
     override def mouseDragged(e: MouseEvent) = self ! MoveBlock(e.getPoint)
   })
@@ -86,6 +90,9 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
       case KeyEvent.VK_DOWN => self ! MirrorHorizontal
 
       case KeyEvent.VK_ESCAPE => self ! BackToMenu
+
+      case KeyEvent.VK_ENTER => self ! BackToMenuWhenFinished
+      case KeyEvent.VK_SPACE => self ! BackToMenuWhenFinished
 
       case msg => log.warning(s"Ignoring Key: ${e.getKeyCode} - ${e.getKeyChar}")
     }
@@ -176,11 +183,34 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
       g.drawPolygon(selected.get.poly)
     }
 
-    /* Draw anchors
-    g.setColor(Color.GRAY)
-    level.freeAnchors.foreach(anchor => {
-      g.fillOval(scaleX(anchor.x) - 2, scaleY(anchor.y) - 2, 4, 4)
-    }) */
+    if (finished.isDefined) {
+      g.setColor(Color.BLUE)
+      g.setFont(new Font("Arial Black", Font.BOLD, (0.6 * scaleFactor).toInt))
+      val fm = g.getFontMetrics
+
+      val sFinish = "LEVEL COMPLETED"
+      g.drawString(
+        sFinish,
+        (getWidth - fm.stringWidth(sFinish)) / 2,
+        (getHeight - 7 * fm.getHeight) / 2
+      )
+
+      val sTime = s"${finished.get} SECONDS"
+      g.drawString(
+        sTime,
+        (getWidth - fm.stringWidth(sTime)) / 2,
+        (getHeight - 5 * fm.getHeight) / 2
+      )
+
+      g.setFont(new Font("Arial Black", Font.PLAIN, (0.4 * scaleFactor).toInt))
+      val sEnter = s"PRESS ENTER"
+      g.drawString(
+        sEnter,
+        (getWidth - g.getFontMetrics.stringWidth(sEnter)) / 2,
+        getHeight / 2
+      )
+    }
+
 
   }
 
@@ -202,6 +232,9 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
     case ServerMessage.UpdateBlock(index, block) =>
       blocks(index) = block
 
+    case ServerMessage.LevelFinished(timeMillis) =>
+      finished = Some((timeMillis / 100).toDouble / 10)
+
     case MoveBlock(position) =>
       if (selected.isDefined) {
         val delta = Point((position.x - lastX) / scaleFactor, (position.y - lastY) / scaleFactor)
@@ -213,14 +246,16 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
       }
 
     case SelectBlock(position) =>
-      selected = None
-      for (poly <- blockPolys) {
-        if (poly.contains(position)) {
-          lastX = position.x
-          lastY = position.y
-          val index = blockPolys.indexOf(poly)
-          selected = Some(new Selected(index, blocks(index)))
-          setCursor(blankCursor)
+      if (finished.isEmpty) {
+        selected = None
+        for (poly <- blockPolys) {
+          if (poly.contains(position)) {
+            lastX = position.x
+            lastY = position.y
+            val index = blockPolys.indexOf(poly)
+            selected = Some(new Selected(index, blocks(index)))
+            setCursor(blankCursor)
+          }
         }
       }
 
@@ -265,9 +300,13 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
         self ! HandleBlockAction
       }
 
-
     case BackToMenu =>
       context.parent ! ClientMessage.ShowMenu
+
+    case BackToMenuWhenFinished =>
+      if(finished.isDefined) {
+        context.parent ! ClientMessage.ShowMenu
+      }
 
     case HandleBlockAction =>
       handleBlockAction()

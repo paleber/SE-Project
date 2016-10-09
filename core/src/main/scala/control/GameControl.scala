@@ -23,25 +23,23 @@ class GameControl(game: Game) extends Actor with ActorLogging {
   private val board = game.board + boardPosition
 
   private val boardAnchors: mutable.Map[Point, Option[Int]] = {
-    val map = mutable.Map[Point, Option[Int]]()
+    val map = mutable.Map.empty[Point, Option[Int]]
     game.board.anchors.foreach(a => map.put(a + boardPosition, Some(-1)))
     map
   }
 
-  private val restAnchors: mutable.Map[Point, Option[Int]] = {
+  private val restAnchors = {
     val dirs = GridLoader.buildDirections(board.form).toArray.transform(v => v * 0.5).toList
     val anchors = ListBuffer(board.anchors.head)
     var index = 0
     while (index < anchors.length) {
-      dirs.foreach(v => addAnchor(anchors(index) + v, anchors, game.width, game.height))
+      dirs.foreach(v => addAnchor(anchors(index) + v, anchors))
       index += 1
     }
 
-    val minDistanceSquare = anchorDistanceMap(board.form)
-
     board.anchors.foreach(boardAnchor => {
       anchors.foreach(freeAnchor => {
-        if (freeAnchor.distanceSquareTo(boardAnchor) < minDistanceSquare) {
+        if (freeAnchor.distanceSquareTo(boardAnchor) < anchorDistanceMap(board.form)) {
           anchors -= freeAnchor
         }
       })
@@ -66,20 +64,20 @@ class GameControl(game: Game) extends Actor with ActorLogging {
 
 
   private var running = true
+  private val startTime = System.currentTimeMillis
 
-
-  private def addAnchor(p: Point, anchors: ListBuffer[Point], width: Double, height: Double): Unit = {
-    if (p.x < 0.99 || p.x > width - 0.99) {
+  private def addAnchor(p: Point, anchors: ListBuffer[Point]): Unit = {
+    if (p.x < 0.99 || p.x > game.width - 0.99) {
       return
     }
-    if (p.y < 0.99 || p.y > height - 0.99) {
+    if (p.y < 0.99 || p.y > game.height - 0.99) {
       return
     }
-    anchors.foreach(a =>
-      if (a.distanceSquareTo(p) < 1e-5) {
+    for(anchor <- anchors) {
+      if (anchor.distanceSquareTo(p) < 1e-5) {
         return
       }
-    )
+    }
     anchors += p
   }
 
@@ -112,7 +110,8 @@ class GameControl(game: Game) extends Actor with ActorLogging {
   private def checkLevelFinished(): Unit = {
     if (!boardAnchors.values.exists(_.isEmpty)) {
       running = false
-      context.parent ! ServerMessage.LevelFinished
+      val time = (System.currentTimeMillis - startTime).toInt
+      context.parent ! ServerMessage.LevelFinished(time)
     }
   }
 
@@ -287,5 +286,3 @@ class GameControl(game: Game) extends Actor with ActorLogging {
   }
 
 }
-
-
