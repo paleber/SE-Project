@@ -2,7 +2,7 @@ package model.loader
 
 import java.io.File
 
-import model.element.{GridExtended, Game, Grid, LevelPlan}
+import model.element.{Game, GridExtended, LevelPlan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._

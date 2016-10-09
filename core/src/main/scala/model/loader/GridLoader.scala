@@ -49,7 +49,7 @@ object GridLoader {
     GridExtended(Grid(corners, lines.toList), plan.form, anchors.toList)
   }
 
-  def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {
+  private def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {
     var xMin = anchors(0).x
     var xMax = anchors(0).x
     var yMin = anchors(0).y
@@ -96,7 +96,7 @@ object GridLoader {
     anchors.toArray
   }
 
-  def buildAllLines(coreLines: Array[Line], anchors: Array[Point]): ListBuffer[Line] = {
+  private def buildAllLines(coreLines: Array[Line], anchors: Array[Point]): ListBuffer[Line] = {
     val lines = ListBuffer.empty[Line]
     anchors.foreach(anchor => {
       val v = basic.Vector.stretch(anchors(0), anchor)
@@ -105,12 +105,10 @@ object GridLoader {
     lines
   }
 
-  def extractInnerLines(allLines: ListBuffer[Line]): ListBuffer[Line] = {
+  private def extractInnerLines(allLines: ListBuffer[Line]): ListBuffer[Line] = {
     val innerLines = ListBuffer.empty[Line]
-
     var index = 0
     while (index < allLines.length) {
-
       val line = extractEqualLine(allLines, index)
       if (line.isDefined) {
         innerLines += line.get
@@ -118,7 +116,6 @@ object GridLoader {
         index += 1
       }
     }
-
     innerLines
   }
 
@@ -157,7 +154,7 @@ object GridLoader {
     throw new IllegalStateException("Next line not found, inconsistent plan")
   }
 
-  def optimizeLines(lines: ListBuffer[Line]): Unit = {
+  private def optimizeLines(lines: ListBuffer[Line]): Unit = {
     for (i <- lines.indices) {
       for (j <- (i + 1) until lines.length) {
         val line = lines(i).connect(lines(j), 1e-5)

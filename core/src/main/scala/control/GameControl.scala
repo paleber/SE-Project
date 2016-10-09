@@ -73,7 +73,7 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     if (p.y < 0.99 || p.y > game.height - 0.99) {
       return
     }
-    for(anchor <- anchors) {
+    for (anchor <- anchors) {
       if (anchor.distanceSquareTo(p) < 1e-5) {
         return
       }
@@ -81,31 +81,20 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     anchors += p
   }
 
-
   private def anchorBlock(index: Int): Unit = {
     freeAnchorsWithIndex(index, boardAnchors)
     freeAnchorsWithIndex(index, restAnchors)
 
     for (i <- blocks.indices if i != index) {
-      blockAnchorsAround(
-        i,
-        blocks(i).gridExt.anchors.toArray.transform(p => p + blocks(i).position).toList,
-        anchorDistanceMap(game.board.form),
-        restAnchors)
+      blockAnchorsAround(i)
     }
 
     val anchored = anchorOnBoard(index)
     if (!anchored) {
       anchorOnRest(index)
-      blockAnchorsAround(index,
-        blocks(index).gridExt.anchors.toArray.transform(p => p + blocks(index).position).toList,
-        anchorDistanceMap(game.board.form),
-        restAnchors)
+      blockAnchorsAround(index)
     }
-
-
   }
-
 
   private def checkLevelFinished(): Unit = {
     if (!boardAnchors.values.exists(_.isEmpty)) {
@@ -140,7 +129,6 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     }
   }
 
-
   def anchorOnAnchor(anchor: Point, blockIndex: Int, anchorMap: mutable.Map[Point, Option[Int]]): Boolean = {
     val point = blocks(blockIndex).gridExt.anchors.head + blocks(blockIndex).position
     val diff = Vector.stretch(point, anchor)
@@ -161,9 +149,8 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     true
   }
 
-
   def freeAnchorsWithIndex(index: Int, anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
-    anchorMap.foreach { case (k, v) =>
+    for ((k, v) <- anchorMap) {
       if (v.isDefined && index == v.get) {
         anchorMap(k) = None
       }
@@ -195,21 +182,17 @@ class GameControl(game: Game) extends Actor with ActorLogging {
     anchorList
   }
 
-  def blockAnchorsAround(index: Int,
-                         anchors: List[Point],
-                         maxDistanceSquare: Double,
-                         anchorMap: mutable.Map[Point, Option[Int]]): Unit = {
-
-    anchors.foreach(a => {
-      anchorMap.foreach { case (k, v) =>
-        if (v.isEmpty && a.distanceSquareTo(k) < maxDistanceSquare) {
-          anchorMap(k) = Some(index)
+  def blockAnchorsAround(index: Int): Unit = {
+    val anchors = blocks(index).gridExt.anchors.toArray.transform(p => p + blocks(index).position).toList
+    val minDistanceSquare = anchorDistanceMap(game.board.form)
+    for (anchor <- anchors) {
+      for ((k, v) <- restAnchors) {
+        if (v.isEmpty && anchor.distanceSquareTo(k) < minDistanceSquare) {
+          restAnchors(k) = Some(index)
         }
       }
-    })
-
+    }
   }
-
 
   private def doBlockAction(index: Int)(function: => Unit): Unit = {
     if (!running) {
@@ -275,9 +258,10 @@ class GameControl(game: Game) extends Actor with ActorLogging {
         )
       }
 
-    case msg => log.warning("Unhandled message: " + msg)
-  }
+    case msg =>
+      log.warning("Unhandled message: " + msg)
 
+  }
 
   override def postStop = {
     log.debug("Stopping")

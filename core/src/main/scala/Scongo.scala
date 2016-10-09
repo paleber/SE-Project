@@ -7,7 +7,7 @@ import tui.Tui
 
 object Scongo extends App {
 
-  private val system = ActorSystem()
+  private val system = ActorSystem("scongo")
   private val main = system.actorOf(Props[MainControl], "control")
 
   main ! RegisterView(system.actorOf(Props[Tui], "tui"))
