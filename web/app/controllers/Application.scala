@@ -58,7 +58,9 @@ class Application extends Controller {
     print(request)
     val command = commandForm.bindFromRequest.get
 
-    print(command.command)
+
+
+    print("" + command.command)
 
     Ok("" + command.command)
   }
