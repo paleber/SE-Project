@@ -3,3 +3,5 @@ GET        /               controllers.Application.index()
 GET        /hello          controllers.Application.hello(n: String)
 
 GET        /console        controllers.Application.console
+
+POST       /cmd            controllers.Application.command

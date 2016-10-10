@@ -5,9 +5,13 @@ import akka.pattern.ask
 import akka.util.Timeout
 import control.MainControl
 import gui.Gui
+import model.console.ConsoleInput
 import model.msg.ClientMessage
 import model.msg.ClientMessage.RegisterView
 import models.Wui
+import models.forms.CommandForm
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import tui.Tui
@@ -29,6 +33,12 @@ class Application extends Controller {
 
   main ! ClientMessage.ShowMenu
 
+  val commandForm: Form[CommandForm] = Form {
+    mapping(
+      "command" -> text
+    )(CommandForm.apply)(CommandForm.unapply)
+  }
+
   def index = Action {
     Ok("Hello world")
   }
@@ -42,6 +52,14 @@ class Application extends Controller {
     future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
       Ok(views.html.hello(msgBuffer.messages))
     }
+  }
+
+  def command = Action { implicit request =>
+
+    val command = commandForm.bindFromRequest.get.command
+    wuiConsole ! ConsoleInput(command)
+    Redirect(routes.Application.console())
+
   }
 
 }

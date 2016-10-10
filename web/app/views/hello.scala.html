@@ -6,8 +6,16 @@
     <title>Scongo - Console</title>
   </head>
   <body>
-    @for(msg <- messages) {
+      <form method="post" id="commandForm" action="http://localhost:9000/cmd">
+        <input id="command" name="command" type="text" title="title">
+        <input type="submit">
+      </form>
+
+      @for(msg <- messages) {
       <p>@msg</p>
     }
+
+
+
   </body>
 </html>
