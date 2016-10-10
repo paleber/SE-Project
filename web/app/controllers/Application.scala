@@ -5,6 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import control.MainControl
 import gui.Gui
+import model.console.ConsoleInput
 import model.msg.ClientMessage
 import model.msg.ClientMessage.RegisterView
 import models.Wui
@@ -55,14 +56,10 @@ class Application extends Controller {
 
   def command = Action { implicit request =>
 
-    print(request)
-    val command = commandForm.bindFromRequest.get
+    val command = commandForm.bindFromRequest.get.command
+    wuiConsole ! ConsoleInput(command)
+    Redirect(routes.Application.console())
 
-
-
-    print("" + command.command)
-
-    Ok("" + command.command)
   }
 
 }
