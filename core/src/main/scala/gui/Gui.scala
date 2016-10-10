@@ -48,9 +48,6 @@ class Gui extends Actor with ActorLogging {
       frame.setTitle(s"scongo - $name")
       panel.setSize(frame.getContentPane.getSize)
       frame.setContentPane(panel)
-      context.system.scheduler.scheduleOnce(100 millis) {
-        panel.revalidate()
-      }
       panel.setFocusable(true)
       panel.requestFocusInWindow()
 

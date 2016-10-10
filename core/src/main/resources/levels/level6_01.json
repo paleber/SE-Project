@@ -1,0 +1,21 @@
+{
+  "width": 14,
+  "height": 11,
+  "board": {
+    "form": 6,
+    "shifts": [
+      [0],
+      [2],
+      [3],
+      [4],
+      [5]
+    ]
+  },
+  "variants": [
+    [
+      "block6_01",
+      "block6_02",
+      "block6_03"
+    ]
+  ]
+}

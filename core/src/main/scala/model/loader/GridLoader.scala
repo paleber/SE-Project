@@ -18,23 +18,33 @@ object GridLoader {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val gridMap = mutable.Map.empty[String, GridExtended]
-  private val dirGrids = new File("core/src/main/resources/grids")
+  private case class MapItem(plan: GridPlan,
+                             grid: Option[GridExtended] = None)
 
-  def load(gridName: String): GridExtended = {
-    val grid = gridMap.get(gridName)
-    if (grid.isDefined) {
-      return grid.get
+  private val map = {
+    val dirGrids = new File("core/src/main/resources/grids")
+    val map = mutable.Map.empty[String, MapItem]
+    for (file <- dirGrids.listFiles()) {
+      val source = Source.fromFile(file).mkString
+      val plan = read[GridPlan](source)
+      val name = file.getName.replace(".json", "")
+      map.update(name, MapItem(plan))
     }
-
-    val file = Source.fromFile(s"$dirGrids/$gridName.json")
-    val plan = read[GridPlan](file.mkString)
-    val newGrid = buildGrid(plan)
-    gridMap.update(gridName, newGrid)
-    newGrid
+    map
   }
 
-  private def buildGrid(plan: GridPlan): GridExtended = {
+  def load(name: String): GridExtended = {
+    assert(map.contains(name))
+    val item = map(name)
+    if (item.grid.isDefined) {
+      return item.grid.get
+    }
+    val grid = buildGrid(item.plan)
+    map.update(name, item.copy(grid = Some(grid)))
+    grid
+  }
+
+  private[loader] def buildGrid(plan: GridPlan): GridExtended = {
     val coreLines = buildCoreLines(plan.form)
     val dirs = buildDirections(plan.form)
     val anchors = buildAnchors(dirs, plan.shifts)
@@ -141,7 +151,6 @@ object GridLoader {
       }
       line = extractNextLine(allLines, corners.last)
     }
-
     corners.toList
   }
 

@@ -15,40 +15,67 @@ object LevelLoader {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val dirLevels = new File("core/src/main/resources/levels")
-  private val levelMap = mutable.Map.empty[String, Option[Game]]
+  private case class MapItem(plan: LevelPlan,
+                             level: Option[Game] = None)
 
-  for (file <- dirLevels.listFiles) {
-    levelMap.put(file.getName.replace(".json", ""), None)
+
+  private val levelMap = {
+    val dirGrids = new File("core/src/main/resources/levels")
+    val map = mutable.Map.empty[String, MapItem]
+    for (file <- dirGrids.listFiles()) {
+      val source = Source.fromFile(file).mkString
+      val plan = read[LevelPlan](source)
+
+      for (b <- plan.variants.indices) {
+        val name = file.getName.replace(".json", "") + (b + 'A').toChar
+        map.update(name, MapItem(plan))
+      }
+
+    }
+    map
   }
 
   val LEVEL_NAMES = levelMap.keys.toList.sorted
 
   def load(levelName: String): Option[Game] = {
-    val level = levelMap.get(levelName)
-    if (level.isEmpty) {
+    val item = levelMap.get(levelName)
+    if (item.isEmpty) {
       return None
     }
 
-    val file = Source.fromFile(s"$dirLevels/$levelName.json")
-    val plan = read[LevelPlan](file.mkString)
-
-
-    val board = GridLoader.load(plan.board)
-    val blocks = ListBuffer.empty[GridExtended]
-    for (block <- plan.blocks) {
-      blocks += GridLoader.load(block)
+    if (item.get.level.isDefined) {
+      return item.get.level
     }
 
-    val newLevel = Some(Game(
+    val blocks = ListBuffer.empty[GridExtended]
+
+    val variant = {
+      try {
+        item.get.plan.variants(levelName.last - 'A')
+      } catch {
+        case e: IndexOutOfBoundsException => return None
+      }
+    }
+
+
+      for (block <- variant) {
+        blocks += GridLoader.load(block)
+      }
+
+
+    val board = GridLoader.buildGrid(item.get.plan.board)
+
+
+    val level = Some(Game(
       levelName,
-      plan.width,
-      plan.height,
+      item.get.plan.width,
+      item.get.plan.height,
       board,
       blocks.toList
     ))
-    levelMap.update(levelName, newLevel)
-    newLevel
+    levelMap.update(levelName, item.get.copy(level = level))
+    level
   }
-
 }
+
+
