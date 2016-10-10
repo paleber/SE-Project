@@ -2,9 +2,9 @@ package control
 
 import akka.actor.{Actor, ActorLogging}
 import model.basic.{Point, Vector}
-import model.element.{Block, Game, BlockExtended, Level}
+import model.element.{Block, BlockExtended, Game, Level}
 import model.loader.GridLoader
-import model.msg.{ClientMessage, InternalMessage, ServerMessage}
+import model.msg.{ClientMessage, ErrorMessage, InternalMessage, ServerMessage}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -196,9 +196,9 @@ class GameControl(game: Game) extends Actor with ActorLogging {
 
   private def doBlockAction(index: Int)(function: => Unit): Unit = {
     if (!running) {
-      log.warning("Action while level is finished")
+      sender ! ErrorMessage("Action while level is finished")
     } else if (blocks.lift(index).isEmpty) {
-      log.error("Invalid block index: " + index)
+      sender ! ErrorMessage("Invalid block index: " + index)
     } else {
       function
       anchorBlock(index)

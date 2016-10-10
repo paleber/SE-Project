@@ -4,7 +4,7 @@ import java.util.Scanner
 
 import akka.actor.{Actor, ActorLogging, Props}
 import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
-import model.msg.{ClientMessage, ServerMessage}
+import model.msg.{ClientMessage, ErrorMessage, ServerMessage}
 
 
 class Tui extends Actor with ActorLogging {
@@ -36,6 +36,9 @@ class Tui extends Actor with ActorLogging {
 
     case msg: ConsoleOutput =>
       log.info(msg.toString)
+
+    case ErrorMessage(msg) =>
+      log.error(msg)
 
     case msg =>
       log.warning("Unhandled message: " + msg)
