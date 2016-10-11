@@ -14,8 +14,8 @@ class GameControl(game: Game) extends Actor with ActorLogging {
   log.debug("Initializing")
 
   private val anchorDistanceMap = Map(
-    4 -> Math.pow(1.49, 2),
-    6 -> Math.pow(1.8, 2)
+    4 -> 1.43,
+    6 -> 1.75
   )
 
   private val boardPosition = Point(game.width / 2, game.height / 3)
@@ -37,9 +37,10 @@ class GameControl(game: Game) extends Actor with ActorLogging {
       index += 1
     }
 
+    val minDistance = Math.pow(anchorDistanceMap(board.form), 2)
     board.anchors.foreach(boardAnchor => {
       anchors.foreach(freeAnchor => {
-        if (freeAnchor.distanceSquareTo(boardAnchor) < anchorDistanceMap(board.form)) {
+        if (freeAnchor.distanceSquareTo(boardAnchor) < minDistance) {
           anchors -= freeAnchor
         }
       })
@@ -67,16 +68,15 @@ class GameControl(game: Game) extends Actor with ActorLogging {
   private val startTime = System.currentTimeMillis
 
   private def addAnchor(p: Point, anchors: ListBuffer[Point]): Unit = {
-    if (p.x < 0.99 || p.x > game.width - 0.99) {
+    val border = anchorDistanceMap(game.board.form)
+    if (p.x < border || p.x > game.width - border) {
       return
     }
-    if (p.y < 0.99 || p.y > game.height - 0.99) {
+    if (p.y < border || p.y > game.height - border) {
       return
     }
-    for (anchor <- anchors) {
-      if (anchor.distanceSquareTo(p) < 1e-5) {
-        return
-      }
+    for (a <- anchors if a.distanceSquareTo(p) < 1e-5) {
+      return
     }
     anchors += p
   }
@@ -184,7 +184,7 @@ class GameControl(game: Game) extends Actor with ActorLogging {
 
   def blockAnchorsAround(index: Int): Unit = {
     val anchors = blocks(index).gridExt.anchors.toArray.transform(p => p + blocks(index).position).toList
-    val minDistanceSquare = anchorDistanceMap(game.board.form)
+    val minDistanceSquare = Math.pow(anchorDistanceMap(game.board.form), 2)
     for (anchor <- anchors) {
       for ((k, v) <- restAnchors) {
         if (v.isEmpty && anchor.distanceSquareTo(k) < minDistanceSquare) {
