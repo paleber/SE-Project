@@ -40,7 +40,7 @@ class Application extends Controller {
   }
 
   def index = Action {
-    Ok("Hello world")
+    Redirect(routes.Application.console())
   }
 
   def hello(name: String) = Action {
@@ -50,7 +50,7 @@ class Application extends Controller {
   def console = Action.async {
     val future = wuiConsole ? Wui.ReadMsgBuffer
     future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
-      Ok(views.html.hello(msgBuffer.messages))
+      Ok(views.html.console(msgBuffer.messages))
     }
   }
 
