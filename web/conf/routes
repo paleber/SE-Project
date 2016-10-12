@@ -1,7 +1,9 @@
-GET        /               controllers.Application.index()
+GET         /               controllers.Application.index()
 
-GET        /hello          controllers.Application.hello(n: String)
+GET         /hello          controllers.Application.hello(n: String)
+GET         /guide          controllers.Application.guide
 
-GET        /console        controllers.Application.console
+GET         /console        controllers.Application.console
 
-POST       /cmd            controllers.Application.command
+POST        /cmd            controllers.Application.command
+
