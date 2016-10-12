@@ -9,9 +9,7 @@ import model.console.ConsoleInput
 import model.msg.ClientMessage
 import model.msg.ClientMessage.RegisterView
 import models.Wui
-import models.forms.CommandForm
-import play.api.data.Form
-import play.api.data.Forms._
+import models.forms.Forms
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import tui.Tui
@@ -28,16 +26,11 @@ class Application extends Controller {
   main ! RegisterView(system.actorOf(Props[Tui], "tui"))
   main ! RegisterView(system.actorOf(Props[Gui], "gui"))
 
-  private val wuiConsole = system.actorOf(Props[Wui], "console")
-  main ! RegisterView(wuiConsole)
+  private val wui = system.actorOf(Props[Wui], "wui")
+  main ! RegisterView(wui)
 
   main ! ClientMessage.ShowMenu
 
-  val commandForm: Form[CommandForm] = Form {
-    mapping(
-      "command" -> text
-    )(CommandForm.apply)(CommandForm.unapply)
-  }
 
   def index = Action {
     Redirect(routes.Application.console())
@@ -52,18 +45,16 @@ class Application extends Controller {
   }
 
   def console = Action.async {
-    val future = wuiConsole ? Wui.ReadMsgBuffer
+    val future = wui ? Wui.ReadMsgBuffer
     future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
       Ok(views.html.console(msgBuffer.messages))
     }
   }
 
   def command = Action { implicit request =>
-
-    val command = commandForm.bindFromRequest.get.command
-    wuiConsole ! ConsoleInput(command)
+    val command = Forms.command.bindFromRequest.get.command
+    wui ! ConsoleInput(command)
     Redirect(routes.Application.console())
-
   }
 
 }
