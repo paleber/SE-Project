@@ -6,9 +6,9 @@ import javax.swing.{JFrame, JPanel}
 
 import akka.actor.{Actor, ActorLogging, Props}
 import gui.Gui.SetContentPane
-import model.element.Level
+import model.element.Game
 import model.general.{DefaultActor, IdGenerator}
-import model.msg.{ClientMessage, ServerMessage}
+import model.msg.{ClientMsg, ServerMsg}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -51,16 +51,16 @@ class Gui extends Actor with ActorLogging {
       panel.setFocusable(true)
       panel.requestFocusInWindow()
 
-    case ServerMessage.ShowMenu =>
+    case ServerMsg.ShowMenu =>
       context.stop(content)
       content = context.actorOf(Props[GuiMenu], s"menu-${IdGenerator.generate()}")
 
-    case ServerMessage.ShowGame(game:  Level) =>
+    case ServerMsg.ShowGame(game:  Game) =>
       content = context.actorOf(Props(GuiGame(game)), s"game-${IdGenerator.generate()}")
 
-    case msg: ServerMessage => content ! msg
+    case msg: ServerMsg => content ! msg
 
-    case msg: ClientMessage => main ! msg
+    case msg: ClientMsg => main ! msg
 
     case msg => log.warning("Unhandled message: " + msg)
 

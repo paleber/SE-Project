@@ -7,15 +7,15 @@ import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging}
 import model.basic.Point
-import model.element.{Block, Grid, Level}
-import model.msg.{ClientMessage, ServerMessage}
+import model.element.{Block, Grid, Game}
+import model.msg.{ClientMsg, ServerMsg}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
+case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
   private val blocks = game.blocks.toArray
@@ -103,7 +103,7 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
     }
   })
 
-  context.parent ! Gui.SetContentPane(this, game.name)
+  context.parent ! Gui.SetContentPane(this, game.levelName)
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
     poly.reset()
@@ -230,10 +230,10 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
 
   override def receive = {
 
-    case ServerMessage.UpdateBlock(index, block) =>
+    case ServerMsg.UpdateBlock(index, block) =>
       blocks(index) = block
 
-    case ServerMessage.LevelFinished(timeMillis) =>
+    case ServerMsg.LevelFinished(timeMillis) =>
       finished = Some((timeMillis / 100).toDouble / 10)
 
     case MoveBlock(position) =>
@@ -262,7 +262,7 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
 
     case ReleaseBlock =>
       if (selected.isDefined) {
-        val msg = ClientMessage.UpdateBlockPosition(
+        val msg = ClientMsg.UpdateBlockPosition(
           selected.get.index,
           selected.get.block.position
         )
@@ -275,38 +275,38 @@ case class GuiGame(game: Level) extends JPanel with Actor with ActorLogging {
 
     case RotateLeft =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMessage.RotateBlockLeft(selected.get.index)
+        context.parent ! ClientMsg.RotateBlockLeft(selected.get.index)
         activeAction = Some(BlockAction(RotateLeft, selected.get.block.grid))
         self ! HandleBlockAction
       }
 
     case RotateRight =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMessage.RotateBlockRight(selected.get.index)
+        context.parent ! ClientMsg.RotateBlockRight(selected.get.index)
         activeAction = Some(BlockAction(RotateRight, selected.get.block.grid))
         self ! HandleBlockAction
       }
 
     case MirrorVertical =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMessage.MirrorBlockVertical(selected.get.index)
+        context.parent ! ClientMsg.MirrorBlockVertical(selected.get.index)
         activeAction = Some(BlockAction(MirrorVertical, selected.get.block.grid))
         self ! HandleBlockAction
       }
 
     case MirrorHorizontal =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMessage.MirrorBlockHorizontal(selected.get.index)
+        context.parent ! ClientMsg.MirrorBlockHorizontal(selected.get.index)
         activeAction = Some(BlockAction(MirrorHorizontal, selected.get.block.grid))
         self ! HandleBlockAction
       }
 
     case BackToMenu =>
-      context.parent ! ClientMessage.ShowMenu
+      context.parent ! ClientMsg.ShowMenu
 
     case BackToMenuWhenFinished =>
       if (finished.isDefined) {
-        context.parent ! ClientMessage.ShowMenu
+        context.parent ! ClientMsg.ShowMenu
       }
 
     case HandleBlockAction =>

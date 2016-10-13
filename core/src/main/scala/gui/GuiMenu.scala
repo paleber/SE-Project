@@ -4,9 +4,8 @@ import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JPanel}
 
 import akka.actor.{Actor, ActorLogging}
-import model.element.LevelPlan
 import model.loader.LevelLoader
-import model.msg.ClientMessage
+import model.msg.ClientMsg
 
 class GuiMenu extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
@@ -15,7 +14,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
   private case class StartLevelEvent(level: String) extends ActionListener {
     override def actionPerformed(e: ActionEvent): Unit = {
       log.info(s"Button clicked: Level $level")
-      context.parent ! ClientMessage.ShowGame(level)
+      context.parent ! ClientMsg.ShowGame(level)
     }
   }
 

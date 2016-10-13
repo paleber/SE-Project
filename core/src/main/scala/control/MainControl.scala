@@ -4,10 +4,9 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import model.general.{DefaultActor, IdGenerator}
 import model.loader.LevelLoader
-import model.msg.{ClientMessage, ErrorMessage, InternalMessage, ServerMessage}
+import model.msg.{ClientMsg, ErrorMsg, InternalMsg, ServerMsg}
 import akka.pattern.ask
-import model.element.Level
-import model.msg.ServerMessage.ShowGame
+import model.element.Game
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -24,15 +23,15 @@ class MainControl extends Actor with ActorLogging {
 
   override def receive = {
 
-    case ClientMessage.ShowMenu =>
+    case ClientMsg.ShowMenu =>
       log.debug("Showing Menu")
 
       context.stop(subControl)
 
       subControl = context.actorOf(Props[DefaultActor], s"menu-${IdGenerator.generate()}")
-      self ! ServerMessage.ShowMenu
+      self ! ServerMsg.ShowMenu
 
-    case ClientMessage.ShowGame(levelName) =>
+    case ClientMsg.ShowGame(levelName) =>
       log.debug("Showing Game")
 
       val level = LevelLoader.load(levelName)
@@ -41,27 +40,27 @@ class MainControl extends Actor with ActorLogging {
         context.stop(subControl)
         subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
 
-        (subControl ? InternalMessage.GetGame).mapTo[Level].map { game =>
-          views.foreach(view => view ! ShowGame(game))
+        (subControl ? InternalMsg.GetGame).mapTo[Game].map { game =>
+          views.foreach(view => view ! ServerMsg.ShowGame(game))
         }
 
       } else {
-        sender ! ErrorMessage(s"Level $levelName is unknown")
+        sender ! ErrorMsg(s"Level $levelName is unknown")
       }
 
-    case ClientMessage.RegisterView(view) =>
+    case ClientMsg.RegisterView(view) =>
       log.debug("Registering view: " + context.sender.path)
       views += view
 
-    case ClientMessage.Shutdown =>
+    case ClientMsg.Shutdown =>
       log.info("Shutdown")
       context.system.terminate
       System.exit(1)
 
-    case msg: ClientMessage =>
+    case msg: ClientMsg =>
       subControl.forward(msg)
 
-    case msg: ServerMessage =>
+    case msg: ServerMsg =>
       views.foreach(view => view.forward(msg))
 
     case msg =>

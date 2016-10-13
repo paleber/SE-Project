@@ -1,7 +1,8 @@
 package model.element
 
-case class Game(name: String,
+case class Game(levelName: String,
                 width: Double,
                 height: Double,
-                board: GridExtended,
-                blocks: List[GridExtended])
+                form: Int,
+                board: Grid,
+                blocks: List[Block])

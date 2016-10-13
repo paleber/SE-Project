@@ -6,8 +6,8 @@ import akka.util.Timeout
 import control.MainControl
 import gui.Gui
 import model.console.ConsoleInput
-import model.msg.ClientMessage
-import model.msg.ClientMessage.RegisterView
+import model.msg.ClientMsg
+import model.msg.ClientMsg.RegisterView
 import models.Wui
 import models.forms.Forms
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -29,7 +29,7 @@ class Application extends Controller {
   private val wui = system.actorOf(Props[Wui], "wui")
   main ! RegisterView(wui)
 
-  main ! ClientMessage.ShowMenu
+  main ! ClientMsg.ShowMenu
 
 
   def index = Action {

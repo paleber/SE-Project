@@ -1,8 +1,8 @@
 import akka.actor.{ActorSystem, Props}
 import control.MainControl
 import gui.Gui
-import model.msg.ClientMessage
-import model.msg.ClientMessage.RegisterView
+import model.msg.ClientMsg.ShowMenu
+import model.msg.ClientMsg.RegisterView
 import tui.Tui
 
 object Scongo extends App {
@@ -13,6 +13,6 @@ object Scongo extends App {
   main ! RegisterView(system.actorOf(Props[Tui], "tui"))
   main ! RegisterView(system.actorOf(Props[Gui], "gui"))
 
-  main ! ClientMessage.ShowMenu
+  main ! ShowMenu
 
 }

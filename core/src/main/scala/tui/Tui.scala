@@ -4,7 +4,7 @@ import java.util.Scanner
 
 import akka.actor.{Actor, ActorLogging, Props}
 import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
-import model.msg.{ClientMessage, ErrorMessage, ServerMessage}
+import model.msg.{ClientMsg, ErrorMsg, ServerMsg}
 
 
 class Tui extends Actor with ActorLogging {
@@ -28,16 +28,16 @@ class Tui extends Actor with ActorLogging {
 
   override def receive = {
 
-    case msg: ClientMessage =>
+    case msg: ClientMsg =>
       main ! msg
 
-    case msg: ServerMessage =>
+    case msg: ServerMsg =>
       log.info(msg.toString)
 
     case msg: ConsoleOutput =>
       log.info(msg.toString)
 
-    case ErrorMessage(msg) =>
+    case ErrorMsg(msg) =>
       log.error(msg)
 
     case msg =>
