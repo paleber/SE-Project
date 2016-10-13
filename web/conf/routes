@@ -2,8 +2,9 @@ GET         /               controllers.Application.index()
 
 GET         /hello          controllers.Application.hello(n: String)
 GET         /guide          controllers.Application.guide
-
 GET         /console        controllers.Application.console
+GET         /menu           controllers.Application.menu
+GET         /level/:name    controllers.Application.level(name: String)
 
 POST        /cmd            controllers.Application.command
 

@@ -8,6 +8,7 @@ import gui.Gui
 import model.console.ConsoleInput
 import model.msg.ClientMsg
 import model.msg.ClientMsg.RegisterView
+import model.loader.LevelLoader
 import models.Wui
 import models.forms.Forms
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -49,6 +50,18 @@ class Application extends Controller {
     future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
       Ok(views.html.console(msgBuffer.messages))
     }
+  }
+
+  def level(name: String) = Action {
+
+    main ! ClientMessage.ShowGame(name)
+    Ok(name)
+  }
+
+  def menu = Action {
+    val levels = LevelLoader.LEVEL_NAMES
+
+    Ok(views.html.menu(levels))
   }
 
   def command = Action { implicit request =>
