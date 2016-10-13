@@ -4,8 +4,8 @@ import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JPanel}
 
 import akka.actor.{Actor, ActorLogging}
-import model.loader.LevelLoader
 import model.msg.ClientMsg
+import persistence.LevelManager
 
 class GuiMenu extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
@@ -18,7 +18,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
     }
   }
 
-  for(level <- LevelLoader.LEVEL_NAMES) {
+  for(level <- LevelManager.LEVEL_NAMES) {
     val bnLevel = new JButton(level)
     bnLevel.addActionListener(StartLevelEvent(level))
     add(bnLevel)

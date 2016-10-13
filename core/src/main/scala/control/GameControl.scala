@@ -2,8 +2,9 @@ package control
 
 import akka.actor.{Actor, ActorLogging}
 import model.basic.{Point, Vector}
-import model.element.{Block, BlockExtended, Level, Game}
-import model.loader.GridLoader
+import model.builder.GridBuilder
+import model.element.{Block, BlockExtended, Game, Level}
+import persistence.GridManager
 import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 
 import scala.collection.mutable
@@ -29,7 +30,7 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   }
 
   private val restAnchors = {
-    val dirs = GridLoader.buildDirections(board.form).toArray.transform(v => v * 0.5).toList
+    val dirs = GridBuilder.buildDirections(board.form).toArray.transform(v => v * 0.5).toList
     val anchors = ListBuffer(board.anchors.head)
     var index = 0
     while (index < anchors.length) {

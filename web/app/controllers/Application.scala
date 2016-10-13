@@ -8,9 +8,9 @@ import gui.Gui
 import model.console.ConsoleInput
 import model.msg.ClientMsg
 import model.msg.ClientMsg.RegisterView
-import model.loader.LevelLoader
 import models.Wui
 import models.forms.Forms
+import persistence.LevelManager
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import tui.Tui
@@ -59,7 +59,7 @@ class Application extends Controller {
   }
 
   def menu = Action {
-    val levels = LevelLoader.LEVEL_NAMES
+    val levels = LevelManager.LEVEL_NAMES
 
     Ok(views.html.menu(levels))
   }

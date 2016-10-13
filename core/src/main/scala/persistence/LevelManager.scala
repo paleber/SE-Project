@@ -1,8 +1,8 @@
-package model.loader
+package persistence
 
 import java.io.File
 
-import model.element.{Level, GridExtended, LevelPlan}
+import model.element.{GridExtended, Level, LevelPlan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
@@ -11,7 +11,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
-object LevelLoader {
+object LevelManager {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -24,12 +24,11 @@ object LevelLoader {
     for (file <- dirGrids.listFiles()) {
       val source = Source.fromFile(file).mkString
       val plan = read[LevelPlan](source)
-
+      val name = file.getName.replace(".json", "")
+      GridManager.gridMap += ((name, GridManager.MapItem(plan.board)))
       for (b <- plan.variants.indices) {
-        val name = file.getName.replace(".json", "") + (b + 'A').toChar
-        map.update(name, MapItem(plan))
+        map.update(name + (b + 'a').toChar, MapItem(plan))
       }
-
     }
     map
   }
@@ -46,24 +45,21 @@ object LevelLoader {
       return item.get.level
     }
 
-    val blocks = ListBuffer.empty[GridExtended]
-
     val variant = {
       try {
-        item.get.plan.variants(levelName.last - 'A')
+        item.get.plan.variants(levelName.last - 'a')
       } catch {
         case e: IndexOutOfBoundsException => return None
       }
     }
 
+    val blocks = ListBuffer.empty[GridExtended]
+    for (block <- variant) {
+      blocks += GridManager.load(block)
+    }
 
-      for (block <- variant) {
-        blocks += GridLoader.load(block)
-      }
-
-
-    val board = GridLoader.buildGrid(item.get.plan.board)
-
+    val name = levelName.substring(0, levelName.length - 1)
+    val board = GridManager.load(name)
 
     val level = Some(Level(
       levelName,

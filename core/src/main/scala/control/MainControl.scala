@@ -3,10 +3,10 @@ package control
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import model.general.{DefaultActor, IdGenerator}
-import model.loader.LevelLoader
 import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 import akka.pattern.ask
 import model.element.Game
+import persistence.LevelManager
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -34,7 +34,7 @@ class MainControl extends Actor with ActorLogging {
     case ClientMsg.ShowGame(levelName) =>
       log.debug("Showing Game")
 
-      val level = LevelLoader.load(levelName)
+      val level = LevelManager.load(levelName)
       if (level.isDefined) {
         log.info(s"Start Game: $levelName")
         context.stop(subControl)

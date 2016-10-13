@@ -1,50 +1,16 @@
-package model.loader
+package model.builder
 
-import java.io.File
-
-import model.element.{GridExtended, Grid, GridPlan}
 import model.basic
 import model.basic.{Line, Point}
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.read
+import model.element.{Grid, GridExtended, GridPlan}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 
 
-object GridLoader {
+object GridBuilder {
 
-  private implicit val formats = Serialization.formats(NoTypeHints)
-
-  private case class MapItem(plan: GridPlan,
-                             grid: Option[GridExtended] = None)
-
-  private val map = {
-    val dirGrids = new File("core/src/main/resources/blocks")
-    val map = mutable.Map.empty[String, MapItem]
-    for (file <- dirGrids.listFiles()) {
-      val source = Source.fromFile(file).mkString
-      val plan = read[GridPlan](source)
-      val name = file.getName.replace(".json", "")
-      map.update(name, MapItem(plan))
-    }
-    map
-  }
-
-  def load(name: String): GridExtended = {
-    assert(map.contains(name))
-    val item = map(name)
-    if (item.grid.isDefined) {
-      return item.grid.get
-    }
-    val grid = buildGrid(item.plan)
-    map.update(name, item.copy(grid = Some(grid)))
-    grid
-  }
-
-  private[loader] def buildGrid(plan: GridPlan): GridExtended = {
+  def build(plan: GridPlan): GridExtended = {
     val coreLines = buildCoreLines(plan.form)
     val dirs = buildDirections(plan.form)
     val anchors = buildAnchors(dirs, plan.shifts)
