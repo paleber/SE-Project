@@ -54,7 +54,7 @@ class Application extends Controller {
 
   def level(name: String) = Action {
 
-    main ! ClientMessage.ShowGame(name)
+    main ! ClientMsg.ShowGame(name)
     Ok(name)
   }
 
