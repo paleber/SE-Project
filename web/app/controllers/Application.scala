@@ -6,6 +6,7 @@ import akka.util.Timeout
 import control.MainControl
 import gui.Gui
 import model.console.ConsoleInput
+import model.loader.LevelLoader
 import model.msg.ClientMessage
 import model.msg.ClientMessage.RegisterView
 import models.Wui
@@ -56,6 +57,18 @@ class Application extends Controller {
     future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
       Ok(views.html.console(msgBuffer.messages))
     }
+  }
+
+  def level(name: String) = Action {
+
+    main ! ClientMessage.ShowGame(name)
+    Ok(name)
+  }
+
+  def menu = Action {
+    val levels = LevelLoader.LEVEL_NAMES
+
+    Ok(views.html.menu(levels))
   }
 
   def command = Action { implicit request =>

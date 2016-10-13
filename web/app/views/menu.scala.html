@@ -1,0 +1,14 @@
+@(levels: List[String])
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Scongo - Menu</title>
+  </head>
+  <body>
+
+    @for(lvl <- levels) {
+      <a href="http://localhost:9000/level/@lvl"><button type="button">@lvl</button></a><br>
+    }
+  </body>
+</html>
