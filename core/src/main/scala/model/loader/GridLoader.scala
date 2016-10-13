@@ -22,7 +22,7 @@ object GridLoader {
                              grid: Option[GridExtended] = None)
 
   private val map = {
-    val dirGrids = new File("core/src/main/resources/grids")
+    val dirGrids = new File("core/src/main/resources/blocks")
     val map = mutable.Map.empty[String, MapItem]
     for (file <- dirGrids.listFiles()) {
       val source = Source.fromFile(file).mkString
