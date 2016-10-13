@@ -2,7 +2,7 @@ package models
 
 import akka.actor.{Actor, ActorLogging, Props}
 import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
-import model.msg.{ClientMsg, ErrorMsg, ServerMsg}
+import model.msg.{ClientMsg, ServerMsg}
 
 import scala.collection.mutable.ListBuffer
 
@@ -26,7 +26,6 @@ class Wui extends Actor with ActorLogging {
     case msg: ClientMsg => main ! msg
     case msg: ConsoleOutput => msgBuffer += msg.toString
     case msg: ServerMsg => msgBuffer += msg.toString
-    case msg: ErrorMsg => msgBuffer += msg.toString
     case Wui.ReadMsgBuffer => sender ! Wui.MsgBuffer(msgBuffer.toList)
     case msg => log.warning("Unhandled message: " + msg)
   }

@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import model.general.{DefaultActor, IdGenerator}
 import model.loader.LevelLoader
-import model.msg.{ClientMsg, ErrorMsg, InternalMsg, ServerMsg}
+import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 import akka.pattern.ask
 import model.element.Game
 
@@ -45,7 +45,7 @@ class MainControl extends Actor with ActorLogging {
         }
 
       } else {
-        sender ! ErrorMsg(s"Level $levelName is unknown")
+        log.error(s"Level $levelName is unknown")
       }
 
     case ClientMsg.RegisterView(view) =>
