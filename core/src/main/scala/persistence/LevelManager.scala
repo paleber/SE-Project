@@ -63,8 +63,8 @@ object LevelManager {
 
     val level = Some(Level(
       levelName,
-      item.get.plan.width,
-      item.get.plan.height,
+      item.get.plan.size,
+      item.get.plan.size * 0.75,
       board,
       blocks.toList
     ))

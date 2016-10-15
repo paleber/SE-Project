@@ -1,6 +1,5 @@
 {
-  "width": 20,
-  "height": 15,
+  "size": 20,
   "board": {
     "form": 6,
     "shifts": [

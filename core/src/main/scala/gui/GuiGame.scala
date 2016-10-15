@@ -136,10 +136,10 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
     g.fillRect(scaleX(0), scaleY(0), scale(game.width), scale(game.height))
 
     g.setColor(Color.GRAY)
-    for (y <- 1 until game.height.toInt) {
+    for (y <- 1 to game.height.toInt) {
       g.drawLine(0, scaleY(y), getWidth, scaleY(y))
     }
-    for (x <- 1 until game.width.toInt) {
+    for (x <- 1 to game.width.toInt) {
       g.drawLine(scaleX(x), 0, scaleX(x), getHeight)
     }
 

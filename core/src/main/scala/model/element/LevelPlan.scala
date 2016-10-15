@@ -1,6 +1,5 @@
 package model.element
 
-case class LevelPlan(width: Double,
-                     height: Double,
+case class LevelPlan(size: Double,
                      board: GridPlan,
                      variants: List[List[String]])
