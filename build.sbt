@@ -24,4 +24,4 @@ lazy val web = (project in file("web")).
     name := "scongo-web"
   ).
   dependsOn(core).
-  enablePlugins(PlayScala)
+  enablePlugins(PlayScala, SbtWeb)

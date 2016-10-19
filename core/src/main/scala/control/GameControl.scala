@@ -4,7 +4,6 @@ import akka.actor.{Actor, ActorLogging}
 import model.basic.{Point, Vector}
 import model.builder.GridBuilder
 import model.element.{Block, BlockExtended, Game, Level}
-import persistence.GridManager
 import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 
 import scala.collection.mutable
