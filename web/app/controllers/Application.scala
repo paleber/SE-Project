@@ -45,6 +45,10 @@ class Application extends Controller {
     Ok(views.html.guide())
   }
 
+  def game = Action {
+    Ok(views.html.game())
+  }
+
   def console = Action.async {
     val future = wui ? Wui.ReadMsgBuffer
     future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
