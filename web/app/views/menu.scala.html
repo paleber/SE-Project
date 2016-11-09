@@ -2,8 +2,12 @@
 
 @main("Menu") {
 
-    @for(lvl <- levels) {
-        <a href="http://localhost:9000/game/@lvl"><button type="button">@lvl</button></a> <br>
-    }
+    <div class="container-fluid">
+        <div class="well">
+        @for(lvl <- levels) {
+            <a href="http://localhost:9000/game/@lvl"><button type="button">@lvl</button></a>
+        }
+        </div>
+    </div>
 
 }

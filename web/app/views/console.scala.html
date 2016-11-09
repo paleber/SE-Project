@@ -1,14 +1,17 @@
-@(messages: List[String])
+@(messages: List[Any])
 
 @main("Console") {
 
-    <form method="post" id="commandForm" action="http://localhost:9000/cmd">
-        <input id="command" name="command" type="text" title="title">
-        <input type="submit">
-    </form>
+    <div class="container-fluid">
+        <div class="well">
+            <form method="post" id="commandForm" action="http://localhost:9000/cmd">
+                <input id="command" name="command" type="text" title="title">
+                <input type="submit">
+            </form>
+        </div>
 
-    @for(msg <- messages) {
-        <p>@msg</p>
-    }
-
+        @for(msg <- messages) {
+            <div class="well">@msg</div>
+        }
+    </div>
 }
