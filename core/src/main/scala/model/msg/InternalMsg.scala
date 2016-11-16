@@ -1,6 +1,6 @@
 package model.msg
 
-sealed trait InternalMsg
+sealed trait InternalMsg extends ScongoMsg
 
 object InternalMsg {
 

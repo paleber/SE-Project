@@ -1,13 +1,11 @@
 GET         /                    controllers.Application.index()
 
-GET         /hello               controllers.Application.hello(n: String)
 GET         /guide               controllers.Application.guide
 GET         /console             controllers.Application.console
-GET         /menu                controllers.Application.menu
 GET         /game                controllers.Application.game
-GET         /level/:name         controllers.Application.level(name: String)
 
 POST        /cmd                 controllers.Application.command
 
-GET         /assets/*file        controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file        controllers.Assets.at(path="/public", file)
 
+GET         /loadState           controllers.Application.loadState

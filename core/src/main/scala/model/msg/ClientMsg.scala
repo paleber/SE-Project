@@ -3,7 +3,7 @@ package model.msg
 import akka.actor.ActorRef
 import model.basic.Point
 
-sealed trait ClientMsg
+sealed trait ClientMsg extends ScongoMsg
 
 object ClientMsg {
 

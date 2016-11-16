@@ -2,7 +2,7 @@ package model.msg
 
 import model.element.{Block, Game}
 
-sealed trait ServerMsg
+sealed trait ServerMsg extends ScongoMsg
 
 object ServerMsg {
 

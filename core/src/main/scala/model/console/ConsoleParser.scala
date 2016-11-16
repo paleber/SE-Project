@@ -1,10 +1,11 @@
 package model.console
 
 import akka.actor.{Actor, ActorLogging}
+import model.msg.ScongoMsg
 
-case class ConsoleInput(cmd: String)
+case class ConsoleInput(cmd: String) extends ScongoMsg
 
-case class ConsoleOutput(cmd: String)
+case class ConsoleOutput(cmd: String) extends ScongoMsg
 
 private object ConsoleCmdParser {
 

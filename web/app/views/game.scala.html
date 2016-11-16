@@ -1,26 +1,40 @@
 @main("Game") {
 
+    <script src='@routes.Assets.at("javascripts/game.js")'></script>
+
     <style>
     canvas {
         background-color: lightgrey;
         height: 80vh;
         width: 100%;
     }
+
+    .btn-primary {
+        width: 8em;
+        margin: 0.2em 0.1em;
+    }
+
+    .content {
+        display: none;
+    }
     </style>
 
     <div class="container-fluid" >
 
-        <div id="menu">
-
-
-
+        <div id="menu" class="content">
+            <div class="well">
+            @for(level <- persistence.LevelManager.LEVEL_NAMES) {
+                <a href="#" class="btn btn-primary" role="button">@level</a>
+            }
+            </div>
         </div>
 
-        <div id="level">
+        <div id="level" class="content">
             <canvas></canvas>
         </div>
-
 
     </div>
 
 }
+
+
