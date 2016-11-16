@@ -8,10 +8,10 @@ object Scongo extends App {
 
   private val system = ActorSystem("scongo")
 
-  private val main = system.actorOf(MainControl.props(Map(
-    "tui" -> Props[Tui],
-    "gui" -> Props[Gui])
-  ), "main")
+  private val main = system.actorOf(MainControl.props, "main")
+
+  system.actorOf(Tui.props(main), "tui")
+  system.actorOf(Gui.props(main), "gui")
 
   main ! ShowMenu
 

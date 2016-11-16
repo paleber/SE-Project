@@ -24,13 +24,19 @@
         <div id="menu" class="content">
             <div class="well">
             @for(level <- persistence.LevelManager.LEVEL_NAMES) {
-                <a href="#" class="btn btn-primary" role="button">@level</a>
+                <button type="button" class="btn btn-primary" onclick="showLevel('@level')">@level</button>
             }
             </div>
         </div>
 
         <div id="level" class="content">
             <canvas></canvas>
+        </div>
+
+        <div id="closed" class="content">
+            <div class="alert alert-info">
+                <strong>Connection closed! <a href="@routes.Application.game" class="alert-link">Reconnect</a></strong>
+            </div>
         </div>
 
     </div>

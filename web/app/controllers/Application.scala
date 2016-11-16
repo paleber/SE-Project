@@ -2,28 +2,21 @@ package controllers
 
 import javax.inject.Inject
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.Timeout
 import control.MainControl
 import gui.Gui
-import model.console.ConsoleInput
-import model.msg.{ClientMsg, ScongoMsg}
 import models.Wui
 import models.forms.Forms
-import org.json4s.ShortTypeHints
-import org.json4s.jackson.Serialization
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
 
 import scala.concurrent.duration._
 
-class Application @Inject()(implicit mat: Materializer) extends Controller {
+class Application @Inject()(implicit system: ActorSystem, mat: Materializer) extends Controller {
 
   private implicit val timeout: Timeout = 5.seconds
-  private implicit val formats = Serialization.formats(ShortTypeHints(List(classOf[ScongoMsg])))
-
-  private implicit val system = ActorSystem()
 
 
   def index = Action {
@@ -66,27 +59,10 @@ class Application @Inject()(implicit mat: Materializer) extends Controller {
     Redirect(routes.Application.console())
   }
 
-  def loadState = Action {
-    Ok("TODO")
-  }
-
-  import play.api.mvc._
-  import play.api.libs.streams._
-
-
   def socket = WebSocket.accept[String, String] { request =>
-    ActorFlow.actorRef(out => MainControl.props(Map(
-      "gui" -> Props[Gui],
-      "wui" -> Wui.props(out)
-    )))
+    val control = system.actorOf(MainControl.props)
+    system.actorOf(Gui.props(control))
+    ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
-
-
-  /*def loadState = Action.async {
-    val future = wui ? Wui.ReadMsgBuffer
-    future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
-      Ok(Serialization.write(msgBuffer.messages))
-    }
-  }*/
 
 }

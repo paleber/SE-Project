@@ -2,15 +2,20 @@ package tui
 
 import java.io.{BufferedReader, InputStreamReader}
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import control.MainControl
 import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
 import model.msg.{ClientMsg, ServerMsg}
 
+object Tui {
+  def props(control: ActorRef) = Props(new Tui(control))
+}
 
-class Tui extends Actor with ActorLogging {
+private class Tui(control: ActorRef) extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val main = context.parent
+  control ! MainControl.RegisterView(self)
+
   private val parser = context.actorOf(Props[TextCmdParser], "parser")
 
   private val readConsoleThread = new Thread(new Runnable {
@@ -37,10 +42,10 @@ class Tui extends Actor with ActorLogging {
   override def receive = {
 
     case ClientMsg.Shutdown =>
-      main ! PoisonPill
+      control ! PoisonPill
 
     case msg: ClientMsg =>
-      main ! msg
+      control ! msg
 
     case msg: ServerMsg =>
       log.info(msg.toString)

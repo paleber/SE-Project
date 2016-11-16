@@ -3,26 +3,34 @@ package control
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import control.MainControl.RegisterView
 import model.element.Game
 import model.general.{DefaultActor, IdGenerator}
 import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 import persistence.LevelManager
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 object MainControl {
-  def props(viewProps: Map[String, Props]) = Props(new MainControl(viewProps))
+
+  case class RegisterView(view: ActorRef)
+
+  def props = Props[MainControl]
+
 }
 
-class MainControl(viewProps: Map[String, Props]) extends Actor with ActorLogging {
+private class MainControl extends Actor with ActorLogging {
 
   private implicit val timeout: Timeout = 5.seconds
 
-  private val views = viewProps.map { case (name, props) => context.actorOf(props, name) }
-  private var subControl: ActorRef = context.actorOf(Props[DefaultActor], "init")
+  private val views = ListBuffer.empty[ActorRef]
+  private var subControl = context.actorOf(Props[DefaultActor], "init")
 
   override def receive = {
+    case RegisterView(view) =>
+      views += view
 
     case ClientMsg.ShowMenu =>
       log.debug("Showing Menu")

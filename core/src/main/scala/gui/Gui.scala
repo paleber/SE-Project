@@ -2,9 +2,11 @@ package gui
 
 
 import java.awt.Dimension
-import javax.swing.{JFrame, JPanel}
+import java.awt.event.{WindowAdapter, WindowEvent}
+import javax.swing.{JFrame, JPanel, WindowConstants}
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import control.MainControl
 import gui.Gui.SetContentPane
 import model.element.Game
 import model.general.{DefaultActor, IdGenerator}
@@ -21,20 +23,26 @@ object Gui {
 
   private[gui] case class SetContentPane(c: JPanel, name: String)
 
+  def props(control: ActorRef) = Props(new Gui(control))
+
 }
 
-class Gui extends Actor with ActorLogging {
+private class Gui(control: ActorRef) extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val main = context.parent
+  control ! MainControl.RegisterView(self)
 
   private val frame = new JFrame()
   frame.setLayout(null)
-  frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
   frame.getContentPane.setPreferredSize(Gui.DEFAULT_SIZE)
   frame.pack()
   frame.setLocationRelativeTo(null)
   frame.setVisible(true)
+  frame.addWindowListener(new WindowAdapter {
+    override def windowClosing(e: WindowEvent) = {
+      control ! PoisonPill
+    }
+  })
 
   context.system.scheduler.schedule(0 millis, 16 millis) {
     frame.repaint()
@@ -60,7 +68,7 @@ class Gui extends Actor with ActorLogging {
 
     case msg: ServerMsg => content ! msg
 
-    case msg: ClientMsg => main ! msg
+    case msg: ClientMsg => control ! msg
 
     case msg => log.warning("Unhandled message: " + msg)
 
