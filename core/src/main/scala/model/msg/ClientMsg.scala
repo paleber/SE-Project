@@ -11,8 +11,6 @@ object ClientMsg {
 
   case object ShowMenu extends ClientMsg
 
-  case class RegisterView(view: ActorRef) extends ClientMsg
-
   case class ShowGame(level: String) extends ClientMsg
 
   case class RotateBlockLeft(index: Int) extends ClientMsg

@@ -23,7 +23,7 @@ private[console] object CmdShutdown extends TextCommand {
 }
 
 private[console] object CmdShowGame extends TextCommand {
-  override val description = "level:INT - Show the game"
+  override val description = "level:STRING - Show the game"
   override val numberArgs = 1
 
   override def parse(args: Array[String]) = ClientMsg.ShowGame(args(1))

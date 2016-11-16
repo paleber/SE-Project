@@ -8,4 +8,4 @@ POST        /cmd                 controllers.Application.command
 
 GET         /assets/*file        controllers.Assets.at(path="/public", file)
 
-GET         /loadState           controllers.Application.loadState
+GET         /socket              controllers.Application.socket

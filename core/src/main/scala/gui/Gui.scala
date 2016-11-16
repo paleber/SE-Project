@@ -26,7 +26,7 @@ object Gui {
 class Gui extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val main = context.actorSelection("../control")
+  private val main = context.parent
 
   private val frame = new JFrame()
   frame.setLayout(null)
@@ -55,7 +55,7 @@ class Gui extends Actor with ActorLogging {
       context.stop(content)
       content = context.actorOf(Props[GuiMenu], s"menu-${IdGenerator.generate()}")
 
-    case ServerMsg.ShowGame(game:  Game) =>
+    case ServerMsg.ShowGame(game: Game) =>
       content = context.actorOf(Props(GuiGame(game)), s"game-${IdGenerator.generate()}")
 
     case msg: ServerMsg => content ! msg
@@ -64,6 +64,10 @@ class Gui extends Actor with ActorLogging {
 
     case msg => log.warning("Unhandled message: " + msg)
 
+  }
+
+  override def postStop = {
+    frame.dispose()
   }
 
 }

@@ -1,8 +1,8 @@
 package tui
 
-import java.util.Scanner
+import java.io.{BufferedReader, InputStreamReader}
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
 import model.msg.{ClientMsg, ServerMsg}
 
@@ -10,23 +10,34 @@ import model.msg.{ClientMsg, ServerMsg}
 class Tui extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val main = context.actorSelection("../control")
+  private val main = context.parent
   private val parser = context.actorOf(Props[TextCmdParser], "parser")
 
-  new Thread(new Runnable {
-    override def run(): Unit = {
-      val scanner = new Scanner(System.in)
-      while (true) {
-        try {
-          parser ! ConsoleInput(scanner.nextLine)
-        } catch {
-          case e: NoSuchElementException => return
+  private val readConsoleThread = new Thread(new Runnable {
+    override def run() = {
+      val reader = new BufferedReader(new InputStreamReader(System.in))
+      try {
+        while (!Thread.currentThread.isInterrupted) {
+          if (reader.ready) {
+            parser ! ConsoleInput(reader.readLine)
+          } else {
+            Thread.sleep(10)
+          }
         }
+      } catch {
+        case e: InterruptedException =>
+        case e: NoSuchElementException =>
+      } finally {
+        reader.close()
       }
     }
-  }).start()
+  })
+  readConsoleThread.start()
 
   override def receive = {
+
+    case ClientMsg.Shutdown =>
+      main ! PoisonPill
 
     case msg: ClientMsg =>
       main ! msg
@@ -40,6 +51,10 @@ class Tui extends Actor with ActorLogging {
     case msg =>
       log.warning("Unhandled message: " + msg)
 
+  }
+
+  override def postStop = {
+    readConsoleThread.interrupt()
   }
 
 }

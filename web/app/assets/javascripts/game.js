@@ -1,13 +1,14 @@
 $(() => {
+    /*
     $.ajax({
-        url: '/loadState',
+        url: '/socket',
         success: msgBuffer => {
             JSON.parse(msgBuffer).forEach(msg => handleMsg(msg))
         },
         error: () => {
             alert('An error occurred')
         }
-    });
+    });*/
 
     let socket = new WebSocket('ws://localhost:9000/socket');
     socket.onopen = () => alert('onopen');

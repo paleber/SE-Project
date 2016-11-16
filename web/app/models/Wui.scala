@@ -1,23 +1,26 @@
 package models
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
 import model.msg.ServerMsg.{ShowGame, ShowMenu, UpdateBlock}
 import model.msg.{ClientMsg, ScongoMsg, ServerMsg}
 
 import scala.collection.mutable.ListBuffer
 
-case object Wui {
+object Wui {
 
   case object ReadMsgBuffer
 
   case class MsgBuffer(messages: List[ScongoMsg])
 
+  def props(out: ActorRef) = Props(new Wui(out))
+
 }
 
-class Wui extends Actor with ActorLogging {
+class Wui(out: ActorRef) extends Actor with ActorLogging {
+  log.info("Initializing")
 
-  private val main = context.actorSelection("../control")
+  private val main = context.parent
   private val parser = context.actorOf(Props[TextCmdParser], "parser")
 
   private val msgBuffer = ListBuffer.empty[ScongoMsg]
