@@ -36,16 +36,9 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
   }
 
   def console = Action {
-    Ok("TODO")
+    Ok(views.html.console())
   }
 
-  /*
-  def console = Action.async {
-    val future = wui ? Wui.ReadMsgBuffer
-    future.mapTo[Wui.MsgBuffer].map { msgBuffer =>
-      Ok(views.html.console(msgBuffer.messages))
-    }
-  }*/
 
   def level(name: String) = Action {
 

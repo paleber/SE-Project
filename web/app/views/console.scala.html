@@ -1,18 +1,27 @@
-@(messages: List[Any])
-
 @main("Console") {
 
+    <script src='@routes.Assets.at("javascripts/console.js")'></script>
+
+    <style>
+    #closed {
+        display: none;
+    }
+    </style>
+
     <div class="container-fluid">
-        <div class="well">
-            <form method="post" id="commandForm" action="http://localhost:9000/cmd">
-                <input id="command" name="command" type="text" title="title">
-                <input type="submit">
-            </form>
+        <div id="cmdWell" class="well input-group">
+            <input id="inputCmd" type="text" class="form-control" title="send">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button" onclick="sendCmd()">Send</button>
+            </span>
         </div>
 
-        @for(msg <- messages) {
-            <div class="well">@msg</div>
-        }
+        <div id="closed">
+            <div class="alert alert-info">
+                <strong>Connection closed! <a href="@routes.Application.console" class="alert-link">Reconnect</a></strong>
+            </div>
+        </div>
+        <div id="messages"></div>
     </div>
 
 }
