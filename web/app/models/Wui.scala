@@ -25,52 +25,27 @@ class Wui(control: ActorRef, socket: ActorRef) extends Actor with ActorLogging {
   private val parser = context.actorOf(Props[TextCmdParser], "parser")
 
   private implicit val formats = Serialization.formats(ShortTypeHints(List(classOf[ScongoMsg])))
-  // private val msgBuffer = ListBuffer.empty[ScongoMsg]
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
 
     case msg: ClientMsg =>
       control ! msg
 
     case msg: ConsoleOutput =>
       socket ! Serialization.write(msg)
-    //msgBuffer += msg
 
     case msg: ServerMsg =>
       socket ! Serialization.write(msg)
 
     case msg: String  =>
       parser ! ConsoleInput(msg)
-    /*
-  case ShowMenu =>
-    msgBuffer.clear()
-    msgBuffer += ShowMenu
-
-  case msg: ShowGame =>
-    msgBuffer.clear()
-    msgBuffer += msg
-
-  case msg: UpdateBlock =>
-    msgBuffer.foreach {
-      case oldMsg: UpdateBlock if oldMsg.index == msg.index =>
-        msgBuffer -= oldMsg
-      case _ =>
-    }
-    msgBuffer += msg
-
-  case msg: ServerMsg =>
-    msgBuffer += msg
-
-
-  case Wui.ReadMsgBuffer =>
-    sender ! Wui.MsgBuffer(msgBuffer.toList)*/
 
     case msg =>
       log.warning("Unhandled message: " + msg)
 
   }
 
-  override def postStop = {
+  override def postStop: Unit = {
     control ! PoisonPill
   }
 

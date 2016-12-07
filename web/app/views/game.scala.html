@@ -1,7 +1,9 @@
-@main("Game") {
-
+@head = {
+    <link rel="import" href="@routes.Application.scongoBoard">
     <script src='@routes.Assets.at("javascripts/game.js")'></script>
+}
 
+@main("Game", head) {
     <style>
     canvas {
         background-color: lightgrey;
@@ -39,6 +41,10 @@
             </div>
         </div>
 
-    </div>
+        <div class="well">
+            <scongo-board></scongo-board>
+            <scongo-board></scongo-board>
+        </div>
 
+    </div>
 }

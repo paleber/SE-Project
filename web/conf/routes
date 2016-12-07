@@ -1,11 +1,11 @@
-GET         /                    controllers.Application.index()
+GET        /                    controllers.Application.index
 
-GET         /guide               controllers.Application.guide
-GET         /console             controllers.Application.console
-GET         /game                controllers.Application.game
+GET        /guide               controllers.Application.guide
+GET        /console             controllers.Application.console
+GET        /game                controllers.Application.game
 
-POST        /cmd                 controllers.Application.command
+GET        /scongoBoard         controllers.Application.scongoBoard
 
-GET         /assets/*file        controllers.Assets.at(path="/public", file)
+GET        /socket              controllers.Application.socket
 
-GET         /socket              controllers.Application.socket
+GET        /assets/*file        controllers.Assets.at(path="/public", file)
