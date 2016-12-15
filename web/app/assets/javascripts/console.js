@@ -10,7 +10,7 @@ $(() => {
 
     socket.onmessage = msg => {
         let data = JSON.parse(msg.data);
-        let type =  data.jsonClass;
+        let type = data.jsonClass;
         delete data.jsonClass;
         let value = JSON.stringify(data).slice(1, -1);
         if(value.length > 0) {
@@ -36,7 +36,7 @@ $(() => {
     };
 
     $('#inputCmd').keypress( event => {
-        var keycode = (event.keyCode ? event.keyCode : event.which);
+        const keycode = (event.keyCode ? event.keyCode : event.which);
         if(keycode == '13'){
             sendCmd();
         }
