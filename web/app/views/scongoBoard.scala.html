@@ -5,16 +5,30 @@
 <dom-module id='scongo-board' attributes="name">
 
     <template>
-        <h1>Test, {{name}}</h1>
 
-
-        @for(level <- persistence.LevelManager.LEVEL_NAMES) {
-            <paper-button raised toggles onclick="showLevel('@level')">@level</paper-button>
+        <style>
+        canvas {
+            background-color: lightgrey;
+            width: 1000px; /*100%;*/
+            height: 600px; /*/80vh;*/
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
         }
 
+        .content {
+            display: none;
+        }
+        </style>
+
+        <div id="menu" class="content">
+        @for(level <- persistence.LevelManager.LEVEL_NAMES) {
+            <paper-button raised on-click="showLevel" level="@level">@level</paper-button>
+        }
+        </div>
 
         <div id="level" class="content">
-            <canvas></canvas>
+            <canvas id="can" width="1000" height="600"></canvas>
         </div>
 
         <div id="closed" class="content">
@@ -24,81 +38,72 @@
         </div>
     </template>
 
-    <style>
-    canvas {
-        background-color: lightgrey;
-        height: 80vh;
-        width: 100%;
-    }
 
-    .btn-primary {
-        width: 8em;
-        margin: 0.2em 0.1em;
-    }
+    <script>
+            Polymer({
+                is: "scongo-board",
 
-    .content {
-        display: none;
-    }
-    </style>
+                properties: {
+                    socket: WebSocket
+                },
+
+                ready: function () {
+                    this.socket = new WebSocket('ws://localhost:9000/socket');
+
+                    this.socket.onopen = () => {
+                        console.log("socket opened");
+                        this.socket.send("menu");
+                    };
+
+                    this.socket.onerror = msg => {
+                        console.log("socket error: " + msg);
+                    };
+
+                    this.socket.onmessage = msg => {
+                        this.handleMsg(msg);
+                        console.log("message received: " + msg)
+                    };
+
+                    this.socket.onclose = () => {
+                        console.log("socket closed")
+                    };
+                },
+
+                showLevel: function (e) {
+                    this.socket.send("game " + e.target.getAttribute("level"));
+                },
+
+                handleMsg: function (msg) {
+                    const data = JSON.parse(msg.data);
+                    //let type = data.jsonClass;
+                    //delete data.jsonClass;
+
+                    switch (data.jsonClass) {
+                        case 'ServerMsg$ShowMenu$':
+                            $('.content').hide();
+                            $('#menu').show();
+                            break;
+                        case 'ServerMsg$ShowGame':
+                            $('.content').hide();
+                            $('#level').show();
+                            this.drawBoard();
+                            break;
+                        default:
+                            alert("Unhandled message: " + msg.data)
+                    }
+                },
+
+                drawBoard: function() {
+                    let canvas = document.getElementById("can");
+                    let ctx = canvas.getContext("2d");
+                    ctx.moveTo(0,0);
+                    ctx.lineTo(200,100);
+                    ctx.stroke();
+                    console.log(canvas.width + " " + canvas.height);
+
+                }
+
+            });
+    </script>
 
 </dom-module>
-
-
-<script>
-        // register a new element called proto-element
-
-        Polymer({
-            is: "scongo-board",
-
-            properties: {
-                socket: WebSocket
-            },
-
-            ready: function () {
-                this.socket = new WebSocket('ws://localhost:9000/socket');
-
-                this.socket.onopen = () => {
-                    console.log("socket opened");
-                    this.socket.send("menu");
-                };
-
-                this.socket.onerror = msg => {
-                    console.log("socket error: " + msg);
-                };
-
-                this.socket.onmessage = msg => {
-                    this.handleMsg(msg);
-                    console.log("message received: " + msg)
-                };
-
-                this.socket.onclose = () => {
-                    console.log("socket closed")
-                };
-            },
-
-            showLevel: function (level) {
-                this.socket.send("game " + level);
-            },
-
-            handleMsg: function (msg) {
-                let data = JSON.parse(msg.data);
-                //let type = data.jsonClass;
-                //delete data.jsonClass;
-
-                switch (data.jsonClass) {
-                    case 'ServerMsg$ShowMenu$':
-                        $('.content').hide();
-                        $('#menu').show();
-                        break;
-                    case 'ServerMsg$ShowGame':
-                        $('.content').hide();
-                        $('#level').show();
-                        break;
-                    default:
-                        alert("Unhandled message: " + msg.data)
-                }
-            }
-
-
-        });
-</script>
