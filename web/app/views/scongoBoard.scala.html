@@ -9,11 +9,15 @@
         <style>
         canvas {
             background-color: lightgrey;
-            width: 1000px; /*100%;*/
-            height: 600px; /*/80vh;*/
+            width: 1000px;
+            height: 625px;
             margin-left: auto;
             margin-right: auto;
             display: block;
+        }
+
+        .hideCursor {
+            cursor: none;
         }
 
         .content {
@@ -23,12 +27,12 @@
 
         <div id="menu" class="content">
         @for(level <- persistence.LevelManager.LEVEL_NAMES) {
-            <paper-button raised on-click="showLevel" level="@level">@level</paper-button>
+            <paper-button raised on-click="levelClicked" level="@level">@level</paper-button>
         }
         </div>
 
         <div id="level" class="content">
-            <canvas id="can" width="1000" height="600"></canvas>
+            <canvas id="can" width="1000" height="625"></canvas>
         </div>
 
         <div id="closed" class="content">
@@ -44,7 +48,14 @@
                 is: "scongo-board",
 
                 properties: {
-                    socket: WebSocket
+                    socket: WebSocket,
+                    width: Number,
+                    height: Number,
+                    form: Number,
+                    board: Object,
+                    blocks: Object,
+                    selectedIndex: Number,
+                    selectedBlock: Object
                 },
 
                 ready: function () {
@@ -60,8 +71,8 @@
                     };
 
                     this.socket.onmessage = msg => {
+                        console.log("message received: " + JSON.parse(msg.data).jsonClass);
                         this.handleMsg(msg);
-                        console.log("message received: " + msg)
                     };
 
                     this.socket.onclose = () => {
@@ -69,7 +80,7 @@
                     };
                 },
 
-                showLevel: function (e) {
+                levelClicked: function (e) {
                     this.socket.send("game " + e.target.getAttribute("level"));
                 },
 
@@ -86,21 +97,149 @@
                         case 'ServerMsg$ShowGame':
                             $('.content').hide();
                             $('#level').show();
-                            this.drawBoard();
+                            this.initGame(data.game);
                             break;
                         default:
                             alert("Unhandled message: " + msg.data)
                     }
                 },
 
-                drawBoard: function() {
+                initGame: function (game) {
+                    this.height = game.height;
+                    this.width = game.width;
+                    this.form = game.form;
+                    this.board = game.board;
+                    this.blocks = game.blocks;
+                    console.log("board size: " + this.width + " " + this.height);
+                    console.log("board form: " + this.form);
+                    console.log("board: " + JSON.stringify(this.board));
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        console.log("board " + i + ": " + JSON.stringify(this.blocks[i]));
+                    }
+
+                    this.selectedIndex = -1;
+
+                    //let canvas = $("can")
+                    let canvas = document.getElementById("can");
+                    canvas.onmousedown = function (e) {
+                        document.querySelector("scongo-board").selectBlock(e);
+                    };
+
+                    canvas.onmouseup = function () {
+                        console.log("up");
+                        document.querySelector("scongo-board").releaseBlock();
+                    };
+
+                    canvas.onmouseout = function () {
+                        console.log("out");
+                        document.querySelector("scongo-board").releaseBlock();
+                    };
+
+                    canvas.onmousemove = function () {
+                        // TODO move when selected
+                    };
+
+                    this.drawBoard();
+                },
+
+                drawBoard: function () {
                     let canvas = document.getElementById("can");
                     let ctx = canvas.getContext("2d");
-                    ctx.moveTo(0,0);
-                    ctx.lineTo(200,100);
-                    ctx.stroke();
-                    console.log(canvas.width + " " + canvas.height);
 
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    let sf = canvas.width / this.width;
+
+                    // Draw the board
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#5d5d5d';
+                    ctx.fillStyle = '#969696';
+
+                    this.drawPolygon(ctx, sf, this.board, 0, 0);
+
+                    for (let i = 0; i < this.board.lines.length; i++) {
+                        let x1 = Math.round(sf * this.board.lines[i].start.x);
+                        let y1 = Math.round(sf * this.board.lines[i].start.y);
+                        let x2 = Math.round(sf * this.board.lines[i].end.x);
+                        let y2 = Math.round(sf * this.board.lines[i].end.y);
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+
+                    // Draw the blocks
+                    ctx.strokeStyle = '#009d9d';
+                    ctx.fillStyle = '#00ffff';
+
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        if (i != this.selectedIndex) {
+                            this.drawPolygon(ctx, sf,
+                                    this.blocks[i].grid,
+                                    this.blocks[i].position.x,
+                                    this.blocks[i].position.y);
+                        }
+                    }
+
+                    ctx.strokeStyle = '#007f00';
+                    ctx.fillStyle = '#00ff00';
+
+                    if (this.selectedIndex != -1) {
+                        this.drawPolygon(ctx, sf,
+                                this.blocks[this.selectedIndex].grid,
+                                this.blocks[this.selectedIndex].position.x,
+                                this.blocks[this.selectedIndex].position.y);
+                    }
+                },
+
+                selectBlock: function (e) {
+                    let canvas = document.getElementById("can");
+                    let sf = canvas.width / this.width;
+
+                    let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
+                    let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
+                    console.log("canvas clicked at (" + x + "|" + y + ")");
+
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        if (this.pointInsidePoly(this.blocks[i].grid.corners,
+                                        x - this.blocks[i].position.x, y - this.blocks[i].position.y)) {
+                            console.log("Select Block " + i);
+                            this.selectedIndex = i;
+                            this.drawBoard();
+                        }
+                    }
+                },
+
+                releaseBlock: function () {
+                    this.selectedIndex = -1;
+                    this.drawBoard();
+                },
+
+                drawPolygon: function (ctx, sf, poly, xPos, yPos) {
+                    ctx.beginPath();
+                    let xStart = Math.round(sf * (poly.corners[0].x + xPos));
+                    let yStart = Math.round(sf * (poly.corners[0].y + yPos));
+                    ctx.moveTo(xStart, yStart);
+                    for (let i = 1; i < poly.corners.length; i++) {
+                        let x = Math.round(sf * (poly.corners[i].x + xPos));
+                        let y = Math.round(sf * (poly.corners[i].y + yPos));
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                },
+
+                pointInsidePoly: function (poly, x, y) {
+                    let c = false;
+                    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                        if (( ( poly[i].y > y ) != ( poly[j].y > y ) ) && ( x < ( poly[j].x - poly[i].x ) *
+                                ( y - poly[i].y ) / ( poly[j].y - poly[i].y ) + poly[i].x )) {
+                            c = !c;
+                        }
+                    }
+                    return c;
                 }
 
             });
