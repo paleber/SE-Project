@@ -54,8 +54,17 @@
                     form: Number,
                     board: Object,
                     blocks: Object,
-                    selectedIndex: Number,
-                    selectedBlock: Object
+
+                    selIndex: Number,
+                    selectedBlock: Object,
+
+                    actionStartGrid: Object,
+                    actionCounter: Number,
+                    timer: Object,
+
+                    // Coordinates of last mouse-position
+                    lastX: Number,
+                    lastY: Number
                 },
 
                 ready: function () {
@@ -78,6 +87,12 @@
                     this.socket.onclose = () => {
                         console.log("socket closed")
                     };
+
+                    window.addEventListener('keydown', this.keyDown, false);
+
+                    function check(e) {
+                        alert(e.keyCode);
+                    }
                 },
 
                 levelClicked: function (e) {
@@ -97,19 +112,22 @@
                         case 'ServerMsg$ShowGame':
                             $('.content').hide();
                             $('#level').show();
-                            this.initGame(data.game);
+                            this.initGame(data);
+                            break;
+                        case 'ServerMsg$UpdateBlock':
+                            this.updateBlock(data);
                             break;
                         default:
                             alert("Unhandled message: " + msg.data)
                     }
                 },
 
-                initGame: function (game) {
-                    this.height = game.height;
-                    this.width = game.width;
-                    this.form = game.form;
-                    this.board = game.board;
-                    this.blocks = game.blocks;
+                initGame: function (data) {
+                    this.height = data.game.height;
+                    this.width = data.game.width;
+                    this.form = data.game.form;
+                    this.board = data.game.board;
+                    this.blocks = data.game.blocks;
                     console.log("board size: " + this.width + " " + this.height);
                     console.log("board form: " + this.form);
                     console.log("board: " + JSON.stringify(this.board));
@@ -117,9 +135,8 @@
                         console.log("board " + i + ": " + JSON.stringify(this.blocks[i]));
                     }
 
-                    this.selectedIndex = -1;
+                    this.selIndex = -1;
 
-                    //let canvas = $("can")
                     let canvas = document.getElementById("can");
                     canvas.onmousedown = function (e) {
                         document.querySelector("scongo-board").selectBlock(e);
@@ -135,10 +152,15 @@
                         document.querySelector("scongo-board").releaseBlock();
                     };
 
-                    canvas.onmousemove = function () {
-                        // TODO move when selected
+                    canvas.onmousemove = function (e) {
+                        document.querySelector("scongo-board").moveBlock(e);
                     };
 
+                    this.drawBoard();
+                },
+
+                updateBlock: function (data) {
+                    this.blocks[data.index] = data.block;
                     this.drawBoard();
                 },
 
@@ -174,7 +196,7 @@
                     ctx.fillStyle = '#00ffff';
 
                     for (let i = 0; i < this.blocks.length; i++) {
-                        if (i != this.selectedIndex) {
+                        if (i != this.selIndex) {
                             this.drawPolygon(ctx, sf,
                                     this.blocks[i].grid,
                                     this.blocks[i].position.x,
@@ -185,11 +207,11 @@
                     ctx.strokeStyle = '#007f00';
                     ctx.fillStyle = '#00ff00';
 
-                    if (this.selectedIndex != -1) {
+                    if (this.selIndex != -1) {
                         this.drawPolygon(ctx, sf,
-                                this.blocks[this.selectedIndex].grid,
-                                this.blocks[this.selectedIndex].position.x,
-                                this.blocks[this.selectedIndex].position.y);
+                                this.selectedBlock.grid,
+                                this.selectedBlock.position.x,
+                                this.selectedBlock.position.y);
                     }
                 },
 
@@ -205,14 +227,51 @@
                         if (this.pointInsidePoly(this.blocks[i].grid.corners,
                                         x - this.blocks[i].position.x, y - this.blocks[i].position.y)) {
                             console.log("Select Block " + i);
-                            this.selectedIndex = i;
+                            this.selIndex = i;
+                            this.selectedBlock = this.blocks[i];
+                            this.lastX = x;
+                            this.lastY = y;
                             this.drawBoard();
                         }
                     }
+
+                    console.log("Selected block: " + this.selIndex);
+
                 },
 
                 releaseBlock: function () {
-                    this.selectedIndex = -1;
+                    if (this.selIndex != -1) {
+                        if (this.timer != undefined) {
+                            clearTimeout(this.timer);
+                        }
+                        this.blocks[this.selIndex] = this.selectedBlock;
+                        this.socket.send(
+                                "move " +
+                                this.selIndex + " " +
+                                this.selectedBlock.position.x + " " +
+                                this.selectedBlock.position.y);
+                        this.selIndex = -1;
+                        this.drawBoard();
+                    }
+
+                },
+
+                moveBlock: function (e) {
+                    if (this.selIndex == -1) {
+                        return;
+                    }
+
+                    let canvas = document.getElementById("can");
+                    let sf = canvas.width / this.width;
+                    let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
+                    let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
+
+                    this.selectedBlock.position.x += x - this.lastX ;
+                    this.selectedBlock.position.y += y - this.lastY;
+
+                    this.lastX = x;
+                    this.lastY = y;
+
                     this.drawBoard();
                 },
 
@@ -240,6 +299,77 @@
                         }
                     }
                     return c;
+                },
+
+                keyDown: function(e) {
+                    document.querySelector("scongo-board").handleKeyCode(e.keyCode);
+                },
+
+                handleKeyCode: function (code) {
+                    if(this.selIndex == -1) {
+                        return;
+                    }
+                    switch (code) {
+                        case 65:
+                        case 37:
+                            // left - rotate
+                        case 68:
+                        case 39:
+                            // right - rotate
+                        case 87:
+                        case 38:
+                            // up - mirror vertical axis
+                            this.socket.send("vertical " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.mirrorVertical(1);
+                            break;
+                        case 83:
+                        case 40:
+                            // down - mirror horizontal axis
+                            this.socket.send("horizontal " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.mirrorHorizontal(1);
+                            break;
+                        default:
+                            return;
+                    }
+                },
+
+                mirrorVertical: function (counter) {
+                    let factor = 1 - 0.2 * counter;
+                    for(let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        this.selectedBlock.grid.corners[i].x = this.actionStartGrid.corners[i].x * factor;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'vertical');
+                    }
+                },
+
+                mirrorHorizontal: function (counter) {
+                    let factor = 1 - 0.2 * counter;
+                    for(let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        this.selectedBlock.grid.corners[i].y = this.actionStartGrid.corners[i].y * factor;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'horizontal');
+                    }
+                },
+
+                timerEvent: function(counter, action) {
+                    switch (action) {
+                        case 'vertical':
+                            document.querySelector("scongo-board").mirrorVertical(counter);
+                            break;
+                        case 'horizontal':
+                            document.querySelector("scongo-board").mirrorHorizontal(counter);
+                            break;
+                        default:
+                            return;
+
+                    }
+
                 }
 
             });
