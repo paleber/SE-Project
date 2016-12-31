@@ -1,4 +1,5 @@
 @()
+<link rel="import" href="@routes.Application.scongoFinish">
 <link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
 <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
 
@@ -7,22 +8,22 @@
     <template>
 
         <style>
-        canvas {
-            background-color: lightgrey;
-            width: 1000px;
-            height: 625px;
-            margin-left: auto;
-            margin-right: auto;
-            display: block;
-        }
+                canvas {
+                    background-color: lightgrey;
+                    width: 1000px;
+                    height: 625px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    display: block;
+                }
 
-        .hideCursor {
-            cursor: none;
-        }
+                .hideCursor {
+                    cursor: none;
+                }
 
-        .content {
-            display: none;
-        }
+                .content {
+                    display: none;
+                }
         </style>
 
         <div id="menu" class="content">
@@ -40,8 +41,9 @@
                 <strong>Connection closed! <a href="@routes.Application.game" class="alert-link">Reconnect</a></strong>
             </div>
         </div>
-    </template>
 
+        <scongo-finish time="123"></scongo-finish>
+    </template>
 
     <script>
             Polymer({
@@ -90,6 +92,10 @@
 
                     window.addEventListener('keydown', this.keyDown, false);
 
+                    //$("#popup1").modal("show"); // TODO
+                    location.href = "#popup1";
+                    location.href = "#popup1";
+
                     function check(e) {
                         alert(e.keyCode);
                     }
@@ -116,6 +122,9 @@
                             break;
                         case 'ServerMsg$UpdateBlock':
                             this.updateBlock(data);
+                            break;
+                        case 'ServerMsg$LevelFinished':
+                            $("#popupFinish").addClass("show");
                             break;
                         default:
                             alert("Unhandled message: " + msg.data)
@@ -231,12 +240,11 @@
                             this.selectedBlock = this.blocks[i];
                             this.lastX = x;
                             this.lastY = y;
+                            $("#can").addClass("hideCursor");
                             this.drawBoard();
+                            console.log("Selected block: " + this.selIndex);
                         }
                     }
-
-                    console.log("Selected block: " + this.selIndex);
-
                 },
 
                 releaseBlock: function () {
@@ -251,6 +259,7 @@
                                 this.selectedBlock.position.x + " " +
                                 this.selectedBlock.position.y);
                         this.selIndex = -1;
+                        $("#can").removeClass("hideCursor");
                         this.drawBoard();
                     }
 
@@ -301,21 +310,29 @@
                     return c;
                 },
 
-                keyDown: function(e) {
+                keyDown: function (e) {
                     document.querySelector("scongo-board").handleKeyCode(e.keyCode);
                 },
 
                 handleKeyCode: function (code) {
-                    if(this.selIndex == -1) {
+                    if (this.selIndex == -1) {
                         return;
                     }
                     switch (code) {
                         case 65:
                         case 37:
                             // left - rotate
+                            this.socket.send("left " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.rotateLeft(1);
+                            break;
                         case 68:
                         case 39:
                             // right - rotate
+                            this.socket.send("right " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.rotateRight(1);
+                            break;
                         case 87:
                         case 38:
                             // up - mirror vertical axis
@@ -337,7 +354,7 @@
 
                 mirrorVertical: function (counter) {
                     let factor = 1 - 0.2 * counter;
-                    for(let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
                         this.selectedBlock.grid.corners[i].x = this.actionStartGrid.corners[i].x * factor;
                     }
                     this.drawBoard();
@@ -348,7 +365,7 @@
 
                 mirrorHorizontal: function (counter) {
                     let factor = 1 - 0.2 * counter;
-                    for(let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
                         this.selectedBlock.grid.corners[i].y = this.actionStartGrid.corners[i].y * factor;
                     }
                     this.drawBoard();
@@ -357,19 +374,56 @@
                     }
                 },
 
-                timerEvent: function(counter, action) {
+                rotateLeft: function (counter) {
+                    let angle = -Math.PI * 2 / this.form / 10 * counter;
+                    let sin = Math.sin(angle);
+                    let cos = Math.cos(angle);
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        let x = this.actionStartGrid.corners[i].x;
+                        let y = this.actionStartGrid.corners[i].y;
+                        this.selectedBlock.grid.corners[i].x = x * cos - y * sin;
+                        this.selectedBlock.grid.corners[i].y = x * sin + y * cos;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'left');
+                    }
+                },
+
+                rotateRight: function (counter) {
+                    let angle = Math.PI * 2 / this.form / 10 * counter;
+                    let sin = Math.sin(angle);
+                    let cos = Math.cos(angle);
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        let x = this.actionStartGrid.corners[i].x;
+                        let y = this.actionStartGrid.corners[i].y;
+                        this.selectedBlock.grid.corners[i].x = x * cos - y * sin;
+                        this.selectedBlock.grid.corners[i].y = x * sin + y * cos;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'right');
+                    }
+                },
+
+                timerEvent: function (counter, action) {
+                    let scongo = document.querySelector("scongo-board");
                     switch (action) {
                         case 'vertical':
-                            document.querySelector("scongo-board").mirrorVertical(counter);
+                            scongo.mirrorVertical(counter);
                             break;
                         case 'horizontal':
-                            document.querySelector("scongo-board").mirrorHorizontal(counter);
+                            scongo.mirrorHorizontal(counter);
+                            break;
+                        case 'left':
+                            scongo.rotateLeft(counter);
+                            break;
+                        case 'right':
+                            scongo.rotateRight(counter);
                             break;
                         default:
                             return;
-
                     }
-
                 }
 
             });

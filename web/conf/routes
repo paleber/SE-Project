@@ -5,6 +5,7 @@ GET        /console             controllers.Application.console
 GET        /game                controllers.Application.game
 
 GET        /scongoBoard         controllers.Application.scongoBoard
+GET        /scongoFinish        controllers.Application.scongoFinish
 
 GET        /socket              controllers.Application.socket
 

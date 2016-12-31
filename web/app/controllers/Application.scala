@@ -37,6 +37,10 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
     Ok(views.html.scongoBoard())
   }
 
+  def scongoFinish = Action {
+    Ok(views.html.scongoFinish())
+  }
+
   def socket: WebSocket = WebSocket.accept[String, String] { _ =>
     val control = system.actorOf(MainControl.props)
     system.actorOf(Gui.props(control))
