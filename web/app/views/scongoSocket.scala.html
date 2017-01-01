@@ -1,0 +1,392 @@
+@()
+<link rel="import" href="@routes.Application.scongoFinish">
+<link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
+<link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
+
+<dom-module id='scongo-board' attributes="name">
+
+    <template>
+
+    </template>
+
+    <script>
+            Polymer({
+                is: "scongo-board",
+
+                properties: {
+                    socket: WebSocket,
+
+                    menu: Object,
+                    game: Object,
+
+                    /*width: Number,
+                    height: Number,
+                    form: Number,
+                    board: Object,
+                    blocks: Object,
+
+                    selIndex: Number,
+                    selectedBlock: Object,
+
+                    actionStartGrid: Object,
+                    actionCounter: Number,
+                    timer: Object,
+
+                    // Coordinates of last mouse-position
+                    lastX: Number,
+                    lastY: Number */
+                },
+
+                ready: function () {
+                    this.socket = new WebSocket('@routes.Application.socket()');
+
+                    this.socket.onopen = () => {
+                        console.log("socket opened");
+                        this.socket.send("menu");
+                    };
+
+                    this.socket.onerror = msg => {
+                        console.log("socket error: " + msg);
+                    };
+
+                    this.socket.onmessage = msg => {
+                        console.log("message received: " + JSON.parse(msg.data).jsonClass);
+                        this.handleMsg(msg);
+                    };
+
+                    this.socket.onclose = () => {
+                        console.log("socket closed")
+                    };
+
+                    window.addEventListener('keydown', this.keyDown, false);
+                },
+
+                levelClicked: function (e) {
+                    this.socket.send("game " + e.target.getAttribute("level"));
+                },
+
+                handleMsg: function (msg) {
+                    const data = JSON.parse(msg.data);
+                    //let type = data.jsonClass;
+                    //delete data.jsonClass;
+
+                    switch (data.jsonClass) {
+                        case 'ServerMsg$ShowMenu$':
+                            $('.content').hide();
+                            $('#menu').show();
+                            break;
+                        case 'ServerMsg$ShowGame':
+                            $('.content').hide();
+                            $('#level').show();
+                            this.initGame(data);
+                            break;
+                        case 'ServerMsg$UpdateBlock':
+                            this.updateBlock(data);
+                            break;
+                        case 'ServerMsg$LevelFinished':
+                            $("#popupFinish").addClass("show");
+                            break;
+                        default:
+                            alert("Unhandled message: " + msg.data)
+                    }
+                },
+
+                initGame: function (data) {
+                    this.height = data.game.height;
+                    this.width = data.game.width;
+                    this.form = data.game.form;
+                    this.board = data.game.board;
+                    this.blocks = data.game.blocks;
+                    console.log("board size: " + this.width + " " + this.height);
+                    console.log("board form: " + this.form);
+                    console.log("board: " + JSON.stringify(this.board));
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        console.log("board " + i + ": " + JSON.stringify(this.blocks[i]));
+                    }
+
+                    this.selIndex = -1;
+
+                    let canvas = document.getElementById("can");
+                    canvas.onmousedown = function (e) {
+                        document.querySelector("scongo-board").selectBlock(e);
+                    };
+
+                    canvas.onmouseup = function () {
+                        console.log("up");
+                        document.querySelector("scongo-board").releaseBlock();
+                    };
+
+                    canvas.onmouseout = function () {
+                        console.log("out");
+                        document.querySelector("scongo-board").releaseBlock();
+                    };
+
+                    canvas.onmousemove = function (e) {
+                        document.querySelector("scongo-board").moveBlock(e);
+                    };
+
+                    this.drawBoard();
+                },
+
+                updateBlock: function (data) {
+                    this.blocks[data.index] = data.block;
+                    this.drawBoard();
+                },
+
+                drawBoard: function () {
+                    let canvas = document.getElementById("can");
+                    let ctx = canvas.getContext("2d");
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    let sf = canvas.width / this.width;
+
+                    // Draw the board
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#5d5d5d';
+                    ctx.fillStyle = '#969696';
+
+                    this.drawPolygon(ctx, sf, this.board, 0, 0);
+
+                    for (let i = 0; i < this.board.lines.length; i++) {
+                        let x1 = Math.round(sf * this.board.lines[i].start.x);
+                        let y1 = Math.round(sf * this.board.lines[i].start.y);
+                        let x2 = Math.round(sf * this.board.lines[i].end.x);
+                        let y2 = Math.round(sf * this.board.lines[i].end.y);
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+
+                    // Draw the blocks
+                    ctx.strokeStyle = '#009d9d';
+                    ctx.fillStyle = '#00ffff';
+
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        if (i != this.selIndex) {
+                            this.drawPolygon(ctx, sf,
+                                    this.blocks[i].grid,
+                                    this.blocks[i].position.x,
+                                    this.blocks[i].position.y);
+                        }
+                    }
+
+                    ctx.strokeStyle = '#007f00';
+                    ctx.fillStyle = '#00ff00';
+
+                    if (this.selIndex != -1) {
+                        this.drawPolygon(ctx, sf,
+                                this.selectedBlock.grid,
+                                this.selectedBlock.position.x,
+                                this.selectedBlock.position.y);
+                    }
+                },
+
+                selectBlock: function (e) {
+                    let canvas = document.getElementById("can");
+                    let sf = canvas.width / this.width;
+
+                    let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
+                    let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
+                    console.log("canvas clicked at (" + x + "|" + y + ")");
+
+                    for (let i = 0; i < this.blocks.length; i++) {
+                        if (this.pointInsidePoly(this.blocks[i].grid.corners,
+                                        x - this.blocks[i].position.x, y - this.blocks[i].position.y)) {
+                            console.log("Select Block " + i);
+                            this.selIndex = i;
+                            this.selectedBlock = this.blocks[i];
+                            this.lastX = x;
+                            this.lastY = y;
+                            $("#can").addClass("hideCursor");
+                            this.drawBoard();
+                            console.log("Selected block: " + this.selIndex);
+                        }
+                    }
+                },
+
+                releaseBlock: function () {
+                    if (this.selIndex != -1) {
+                        if (this.timer != undefined) {
+                            clearTimeout(this.timer);
+                        }
+                        this.blocks[this.selIndex] = this.selectedBlock;
+                        this.socket.send(
+                                "move " +
+                                this.selIndex + " " +
+                                this.selectedBlock.position.x + " " +
+                                this.selectedBlock.position.y);
+                        this.selIndex = -1;
+                        $("#can").removeClass("hideCursor");
+                        this.drawBoard();
+                    }
+
+                },
+
+                moveBlock: function (e) {
+                    if (this.selIndex == -1) {
+                        return;
+                    }
+
+                    let canvas = document.getElementById("can");
+                    let sf = canvas.width / this.width;
+                    let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
+                    let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
+
+                    this.selectedBlock.position.x += x - this.lastX ;
+                    this.selectedBlock.position.y += y - this.lastY;
+
+                    this.lastX = x;
+                    this.lastY = y;
+
+                    this.drawBoard();
+                },
+
+                drawPolygon: function (ctx, sf, poly, xPos, yPos) {
+                    ctx.beginPath();
+                    let xStart = Math.round(sf * (poly.corners[0].x + xPos));
+                    let yStart = Math.round(sf * (poly.corners[0].y + yPos));
+                    ctx.moveTo(xStart, yStart);
+                    for (let i = 1; i < poly.corners.length; i++) {
+                        let x = Math.round(sf * (poly.corners[i].x + xPos));
+                        let y = Math.round(sf * (poly.corners[i].y + yPos));
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                },
+
+                pointInsidePoly: function (poly, x, y) {
+                    let c = false;
+                    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                        if (( ( poly[i].y > y ) != ( poly[j].y > y ) ) && ( x < ( poly[j].x - poly[i].x ) *
+                                ( y - poly[i].y ) / ( poly[j].y - poly[i].y ) + poly[i].x )) {
+                            c = !c;
+                        }
+                    }
+                    return c;
+                },
+
+                keyDown: function (e) {
+                    document.querySelector("scongo-board").handleKeyCode(e.keyCode);
+                },
+
+                handleKeyCode: function (code) {
+                    if (this.selIndex == -1) {
+                        return;
+                    }
+                    switch (code) {
+                        case 65:
+                        case 37:
+                            // left - rotate
+                            this.socket.send("left " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.rotateLeft(1);
+                            break;
+                        case 68:
+                        case 39:
+                            // right - rotate
+                            this.socket.send("right " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.rotateRight(1);
+                            break;
+                        case 87:
+                        case 38:
+                            // up - mirror vertical axis
+                            this.socket.send("vertical " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.mirrorVertical(1);
+                            break;
+                        case 83:
+                        case 40:
+                            // down - mirror horizontal axis
+                            this.socket.send("horizontal " + this.selIndex);
+                            this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
+                            this.mirrorHorizontal(1);
+                            break;
+                        default:
+                            return;
+                    }
+                },
+
+                mirrorVertical: function (counter) {
+                    let factor = 1 - 0.2 * counter;
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        this.selectedBlock.grid.corners[i].x = this.actionStartGrid.corners[i].x * factor;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'vertical');
+                    }
+                },
+
+                mirrorHorizontal: function (counter) {
+                    let factor = 1 - 0.2 * counter;
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        this.selectedBlock.grid.corners[i].y = this.actionStartGrid.corners[i].y * factor;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'horizontal');
+                    }
+                },
+
+                rotateLeft: function (counter) {
+                    let angle = -Math.PI * 2 / this.form / 10 * counter;
+                    let sin = Math.sin(angle);
+                    let cos = Math.cos(angle);
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        let x = this.actionStartGrid.corners[i].x;
+                        let y = this.actionStartGrid.corners[i].y;
+                        this.selectedBlock.grid.corners[i].x = x * cos - y * sin;
+                        this.selectedBlock.grid.corners[i].y = x * sin + y * cos;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'left');
+                    }
+                },
+
+                rotateRight: function (counter) {
+                    let angle = Math.PI * 2 / this.form / 10 * counter;
+                    let sin = Math.sin(angle);
+                    let cos = Math.cos(angle);
+                    for (let i = 0; i < this.actionStartGrid.corners.length; i++) {
+                        let x = this.actionStartGrid.corners[i].x;
+                        let y = this.actionStartGrid.corners[i].y;
+                        this.selectedBlock.grid.corners[i].x = x * cos - y * sin;
+                        this.selectedBlock.grid.corners[i].y = x * sin + y * cos;
+                    }
+                    this.drawBoard();
+                    if (counter < 10) {
+                        this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'right');
+                    }
+                },
+
+                timerEvent: function (counter, action) {
+                    let scongo = document.querySelector("scongo-board");
+                    switch (action) {
+                        case 'vertical':
+                            scongo.mirrorVertical(counter);
+                            break;
+                        case 'horizontal':
+                            scongo.mirrorHorizontal(counter);
+                            break;
+                        case 'left':
+                            scongo.rotateLeft(counter);
+                            break;
+                        case 'right':
+                            scongo.rotateRight(counter);
+                            break;
+                        default:
+                            return;
+                    }
+                }
+
+            });
+    </script>
+
+</dom-module>
