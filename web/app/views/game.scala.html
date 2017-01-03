@@ -1,11 +1,28 @@
 @head = {
-    <link rel="import" href="@routes.Application.scongoBoard">
+    <link rel="import" href="@routes.Application.scongoSocket">
+    <link rel="import" href="@routes.Application.scongoMenu">
+    <link rel="import" href="@routes.Application.scongoGame">
+    <link rel="import" href="@routes.Application.scongoFinish">
 }
 
 @main("Game", head) {
-    <!--div class="container-fluid" >
-        <div class="well"-->
-            <scongo-board></scongo-board>
-        <!--/div>
-    </div-->
+
+    <style>
+    #board {
+        background-color: #b2ff72;
+        flex-grow: 1;
+
+    }
+
+    .navbar-default {
+        margin-bottom: 0;
+    }
+    </style>
+
+    <div id="board">
+        <scongo-socket id="socket" menu-id="menu" game-id="game"></scongo-socket>
+        <scongo-menu id="menu" socket-id="socket"></scongo-menu>
+        <scongo-game id="game" socket-id="socket"></scongo-game>
+            <!--scongo-finish></scongo-finish-->
+    </div>
 }

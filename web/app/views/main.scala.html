@@ -22,21 +22,27 @@
         @head
     </head>
     <body>
-
-        <nav class="navbar navbar-default">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <a class="navbar-brand">Scongo</a>
+        <div style="display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;">
+            <nav class="navbar navbar-default">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand">Scongo</a>
+                    </div>
+                    <ul class="nav navbar-nav">
+                        <li id="navGuide"><a href="@routes.Application.guide" @isActive("Guide")>Guide</a></li>
+                        <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Game</a></li>
+                        <li id="navConsole"><a href="@routes.Application.console" @isActive("Console")>Console</a></li>
+                    </ul>
                 </div>
-                <ul class="nav navbar-nav">
-                    <li id="navGuide"><a href="@routes.Application.guide" @isActive("Guide")>Guide</a></li>
-                    <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Game</a></li>
-                    <li id="navConsole"><a href="@routes.Application.console" @isActive("Console")>Console</a></li>
-                </ul>
-            </div>
-        </nav>
+            </nav>
 
-        @body
-
+            @body
+        </div>
     </body>
 </html>

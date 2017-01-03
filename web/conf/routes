@@ -4,7 +4,9 @@ GET        /guide               controllers.Application.guide
 GET        /console             controllers.Application.console
 GET        /game                controllers.Application.game
 
-GET        /scongoBoard         controllers.Application.scongoBoard
+GET        /scongoSocket        controllers.Application.scongoSocket
+GET        /scongoMenu          controllers.Application.scongoMenu
+GET        /scongoGame          controllers.Application.scongoGame
 GET        /scongoFinish        controllers.Application.scongoFinish
 
 GET        /socket              controllers.Application.socket

@@ -33,8 +33,16 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
     Ok(views.html.console())
   }
 
-  def scongoBoard = Action {
-    Ok(views.html.scongoBoard())
+  def scongoSocket = Action {
+    Ok(views.html.scongoSocket())
+  }
+
+  def scongoMenu = Action {
+    Ok(views.html.scongoMenu())
+  }
+
+  def scongoGame = Action {
+    Ok(views.html.scongoGame())
   }
 
   def scongoFinish = Action {

@@ -3,7 +3,7 @@
 <link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
 <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
 
-<dom-module id='scongo-board' attributes="name">
+<dom-module id='scongo-game'>
 
     <template>
 
@@ -20,37 +20,21 @@
                 .hideCursor {
                     cursor: none;
                 }
-
-                .content {
-                    display: none;
-                }
         </style>
 
-        <div id="menu" class="content">
-        @for(level <- persistence.LevelManager.LEVEL_NAMES) {
-            <paper-button raised on-click="levelClicked" level="@level">@level</paper-button>
-        }
-        </div>
-
-        <div id="level" class="content">
+        <div id="contentGame" style="display: none">
             <canvas id="can" width="1000" height="625"></canvas>
         </div>
-
-        <div id="closed" class="content">
-            <div class="alert alert-info">
-                <strong>Connection closed! <a href="@routes.Application.game" class="alert-link">Reconnect</a></strong>
-            </div>
-        </div>
-
-        <scongo-finish time="123"></scongo-finish>
     </template>
 
     <script>
             Polymer({
-                is: "scongo-board",
+                is: "scongo-game",
 
                 properties: {
-                    socket: WebSocket,
+                    socketId: String,
+                    socket: Object,
+
                     width: Number,
                     height: Number,
                     form: Number,
@@ -64,79 +48,34 @@
                     actionCounter: Number,
                     timer: Object,
 
-                    // Coordinates of last mouse-position
-                    lastX: Number,
-                    lastY: Number
+                    lastMousePosX: Number,
+                    lastMousePosY: Number
                 },
 
                 ready: function () {
-                    this.socket = new WebSocket('ws://localhost:9000/socket');
-
-                    this.socket.onopen = () => {
-                        console.log("socket opened");
-                        this.socket.send("menu");
-                    };
-
-                    this.socket.onerror = msg => {
-                        console.log("socket error: " + msg);
-                    };
-
-                    this.socket.onmessage = msg => {
-                        console.log("message received: " + JSON.parse(msg.data).jsonClass);
-                        this.handleMsg(msg);
-                    };
-
-                    this.socket.onclose = () => {
-                        console.log("socket closed")
-                    };
-
+                    this.socket = document.querySelector('#' + this.socketId);
                     window.addEventListener('keydown', this.keyDown, false);
+                },
 
-                    //$("#popup1").modal("show"); // TODO
-                    location.href = "#popup1";
-                    location.href = "#popup1";
+                show: function(data) {
+                    this.initGame(data.game);
+                    $('#contentGame').css("display", "block");
+                },
 
-                    function check(e) {
-                        alert(e.keyCode);
-                    }
+                hide: function() {
+                    $('#contentGame').css("display", "none");
                 },
 
                 levelClicked: function (e) {
-                    this.socket.send("game " + e.target.getAttribute("level"));
+                    this.socket.sendMsg("game " + e.target.getAttribute("level"));
                 },
 
-                handleMsg: function (msg) {
-                    const data = JSON.parse(msg.data);
-                    //let type = data.jsonClass;
-                    //delete data.jsonClass;
-
-                    switch (data.jsonClass) {
-                        case 'ServerMsg$ShowMenu$':
-                            $('.content').hide();
-                            $('#menu').show();
-                            break;
-                        case 'ServerMsg$ShowGame':
-                            $('.content').hide();
-                            $('#level').show();
-                            this.initGame(data);
-                            break;
-                        case 'ServerMsg$UpdateBlock':
-                            this.updateBlock(data);
-                            break;
-                        case 'ServerMsg$LevelFinished':
-                            $("#popupFinish").addClass("show");
-                            break;
-                        default:
-                            alert("Unhandled message: " + msg.data)
-                    }
-                },
-
-                initGame: function (data) {
-                    this.height = data.game.height;
-                    this.width = data.game.width;
-                    this.form = data.game.form;
-                    this.board = data.game.board;
-                    this.blocks = data.game.blocks;
+                initGame: function (level) {
+                    this.height = level.height;
+                    this.width = level.width;
+                    this.form = level.form;
+                    this.board = level.board;
+                    this.blocks = level.blocks;
                     console.log("board size: " + this.width + " " + this.height);
                     console.log("board form: " + this.form);
                     console.log("board: " + JSON.stringify(this.board));
@@ -148,21 +87,19 @@
 
                     let canvas = document.getElementById("can");
                     canvas.onmousedown = function (e) {
-                        document.querySelector("scongo-board").selectBlock(e);
+                        document.querySelector("scongo-game").selectBlock(e);
                     };
 
                     canvas.onmouseup = function () {
-                        console.log("up");
-                        document.querySelector("scongo-board").releaseBlock();
+                        document.querySelector("scongo-game").releaseBlock();
                     };
 
                     canvas.onmouseout = function () {
-                        console.log("out");
-                        document.querySelector("scongo-board").releaseBlock();
+                        document.querySelector("scongo-game").releaseBlock();
                     };
 
                     canvas.onmousemove = function (e) {
-                        document.querySelector("scongo-board").moveBlock(e);
+                        document.querySelector("scongo-game").moveBlock(e);
                     };
 
                     this.drawBoard();
@@ -238,9 +175,9 @@
                             console.log("Select Block " + i);
                             this.selIndex = i;
                             this.selectedBlock = this.blocks[i];
-                            this.lastX = x;
-                            this.lastY = y;
-                            $("#can").addClass("hideCursor");
+                            this.lastMousePosX = x;
+                            this.lastMousePosY = y;
+                            $("#contentGame").addClass("hideCursor");
                             this.drawBoard();
                             console.log("Selected block: " + this.selIndex);
                         }
@@ -253,13 +190,13 @@
                             clearTimeout(this.timer);
                         }
                         this.blocks[this.selIndex] = this.selectedBlock;
-                        this.socket.send(
+                        this.socket.sendMsg(
                                 "move " +
                                 this.selIndex + " " +
                                 this.selectedBlock.position.x + " " +
                                 this.selectedBlock.position.y);
                         this.selIndex = -1;
-                        $("#can").removeClass("hideCursor");
+                        $("#contentGame").removeClass("hideCursor");
                         this.drawBoard();
                     }
 
@@ -275,11 +212,11 @@
                     let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
                     let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
 
-                    this.selectedBlock.position.x += x - this.lastX ;
-                    this.selectedBlock.position.y += y - this.lastY;
+                    this.selectedBlock.position.x += x - this.lastMousePosX ;
+                    this.selectedBlock.position.y += y - this.lastMousePosY;
 
-                    this.lastX = x;
-                    this.lastY = y;
+                    this.lastMousePosX = x;
+                    this.lastMousePosY = y;
 
                     this.drawBoard();
                 },
@@ -311,7 +248,7 @@
                 },
 
                 keyDown: function (e) {
-                    document.querySelector("scongo-board").handleKeyCode(e.keyCode);
+                    document.querySelector("scongo-game").handleKeyCode(e.keyCode);
                 },
 
                 handleKeyCode: function (code) {
@@ -322,28 +259,28 @@
                         case 65:
                         case 37:
                             // left - rotate
-                            this.socket.send("left " + this.selIndex);
+                            this.socket.sendMsg("left " + this.selIndex);
                             this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
                             this.rotateLeft(1);
                             break;
                         case 68:
                         case 39:
                             // right - rotate
-                            this.socket.send("right " + this.selIndex);
+                            this.socket.sendMsg("right " + this.selIndex);
                             this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
                             this.rotateRight(1);
                             break;
                         case 87:
                         case 38:
                             // up - mirror vertical axis
-                            this.socket.send("vertical " + this.selIndex);
+                            this.socket.sendMsg("vertical " + this.selIndex);
                             this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
                             this.mirrorVertical(1);
                             break;
                         case 83:
                         case 40:
                             // down - mirror horizontal axis
-                            this.socket.send("horizontal " + this.selIndex);
+                            this.socket.sendMsg("horizontal " + this.selIndex);
                             this.actionStartGrid = JSON.parse(JSON.stringify(this.selectedBlock.grid));
                             this.mirrorHorizontal(1);
                             break;
@@ -407,7 +344,7 @@
                 },
 
                 timerEvent: function (counter, action) {
-                    let scongo = document.querySelector("scongo-board");
+                    let scongo = document.querySelector("scongo-game");
                     switch (action) {
                         case 'vertical':
                             scongo.mirrorVertical(counter);
