@@ -1,0 +1,27 @@
+@main("Console") {
+
+    <script src='@routes.Assets.at("javascripts/console.js")'></script>
+
+    <style>
+    #closed {
+        display: none;
+    }
+    </style>
+
+    <div class="container-fluid">
+        <div id="cmdWell" class="well input-group">
+            <input id="inputCmd" type="text" class="form-control" title="send">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button" onclick="sendCmd()">Send</button>
+            </span>
+        </div>
+
+        <div id="closed">
+            <div class="alert alert-info">
+                <strong>Connection closed! <a href="@routes.Application.console" class="alert-link">Reconnect</a></strong>
+            </div>
+        </div>
+        <div id="messages"></div>
+    </div>
+
+}
