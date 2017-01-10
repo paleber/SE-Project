@@ -1,6 +1,55 @@
-@main("Console") {
+@main("Console-Comet") {
 
-    <script src='@routes.Assets.at("javascripts/console.js")'></script>
+    <script>
+
+            function connect() {
+                console.log("open comet");
+                $.ajax({
+                    type : 'get',
+                    url : '@routes.Application.comet()',
+                    dataType : 'text',
+                    data : {'timestamp' : '1234'},
+                    success : function(result,status,xhr) {
+                        console.log("-> Success: " + result + " - " + status + " - " + xhr);
+                        console.log("---");
+                        console.log(JSON.stringify(xhr));
+                        //timestamp = response.timestamp;
+                        //$('#chat-area').append('<p>' + response.msg + '</p>');
+                        noerror = true;
+                    },
+                    complete : function(xhr, status) {
+                        console.log("-> Complete: " + xhr + " - " + status);
+                        console.log("---");
+                        console.log(JSON.stringify(xhr));
+                        // send a new ajax request when this request is finished
+                      /*  if (!self.noerror) {
+                            // if a connection problem occurs, try to reconnect each 5 seconds
+                            setTimeout(function(){ connect(); }, 10000);
+                        }else {
+                            // persistent connection
+                            connect();
+                        } */
+                        noerror = false;
+                    },
+                    error : function (xhr,status,error) {
+                        console.log("-> Error: " + xhr + " - " + status + " - " + error );
+                    }
+                });
+                console.log("after");
+
+            }
+            $.ready(
+
+
+                connect()
+
+            );
+
+            function foo(e) {
+                console.log("foo");
+            }
+
+    </script>
 
     <style>
     #closed {

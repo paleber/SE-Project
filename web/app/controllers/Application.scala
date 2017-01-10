@@ -15,6 +15,8 @@ import play.api.libs.json.{JsString, JsValue}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -61,23 +63,41 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
     ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
 
+  def consoleComet = Action {
+    Ok(views.html.consoleComet())
+  }
 
-
-  def cometJson = Action {
+  def comet = Action {
     implicit val m = mat // TODO needed here again?
     //def jsonSource: Source[JsValue, _] = Source(List(JsString("jsonString")))
 
+    println("Comet")
+
     val s = Source
-      .actorRef[String](bufferSize = 1000, OverflowStrategy.dropHead)
+      .actorRef[String](bufferSize = 0, OverflowStrategy.dropHead)
       .mapMaterializedValue(actor => {
-        Future { Thread.sleep(300); actor ! 1 }
-        Future { Thread.sleep(200); actor ! 2 }
-        Future { Thread.sleep(100); actor ! 3 }
+        actor ! "ABC"
+        /*println("Future")
+        Future {
+          Thread.sleep(300); actor ! "1"; println(1)
+        }
+        Future {
+          Thread.sleep(200); actor ! "2"; println(2)
+        }
+        Future {
+          Thread.sleep(100); actor ! "3"; println(3)
+        }*/
       })
 
-    Ok.chunked(s via Comet.string("parent.cometMessage")).as(ContentTypes.HTML)
-  }
+    val x: Source[String, _] = Source(List("kiki", "koo", "bar"))
 
+
+    Ok.chunked(s via Comet.string("parent.cometMessage")).as(ContentTypes.XML)
+
+    //def jsonSource: Source[JsValue, _] = Source(List(JsString("jsonString")))
+    //Ok.chunked(jsonSource via Comet.text("parent.cometMessage"))
+
+  }
 
 
 }
