@@ -15,3 +15,17 @@ GET        /comet               controllers.Application.comet
 GET        /cometStream         controllers.Application.cometStream
 
 GET        /assets/*file        controllers.Assets.at(path="/public", file)
+
+
+# Angular
+GET     /angular                           controllers.Application.angular
+
+GET     /api/heroes                 controllers.Heroes.all
+POST    /api/heroes                 controllers.Heroes.create
+PUT     /api/heroes/:id             controllers.Heroes.update(id:Int)
+DELETE  /api/heroes/:id             controllers.Heroes.delete(id:Int)
+
+GET     /api/*notFound              controllers.Application.notFound(notFound)
+
+# Map 404 to an index bis
+GET     /*others                    controllers.Application.other(others)
