@@ -11,7 +11,7 @@ GET        /scongoFinish        controllers.Application.scongoFinish
 
 GET        /socket              controllers.Application.socket
 
-GET        /consoleComet        controllers.Application.consoleComet
 GET        /comet               controllers.Application.comet
+GET        /cometStream         controllers.Application.cometStream
 
 GET        /assets/*file        controllers.Assets.at(path="/public", file)

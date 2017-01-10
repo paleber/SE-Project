@@ -9,10 +9,6 @@ import org.json4s.jackson.Serialization
 
 object Wui {
 
-  case object ReadMsgBuffer
-
-  case class MsgBuffer(messages: List[ScongoMsg])
-
   def props(control: ActorRef, socket: ActorRef) = Props(new Wui(control, socket))
 
 }
@@ -29,6 +25,7 @@ class Wui(control: ActorRef, socket: ActorRef) extends Actor with ActorLogging {
   override def receive: PartialFunction[Any, Unit] = {
 
     case msg: ClientMsg =>
+      println("Send ClientMsg")
       control ! msg
 
     case msg: ConsoleOutput =>

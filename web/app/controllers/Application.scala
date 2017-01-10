@@ -2,23 +2,23 @@ package controllers
 
 import javax.inject.Inject
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, OverflowStrategy}
-import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import control.MainControl
 import gui.Gui
+import model.msg.ClientMsg.ShowMenu
 import models.Wui
 import play.api.http.ContentTypes
 import play.api.libs.Comet
-import play.api.libs.json.{JsString, JsValue}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 
 class Application @Inject()(implicit system: ActorSystem, mat: Materializer) extends Controller {
@@ -63,41 +63,27 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
     ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
 
-  def consoleComet = Action {
+  def comet = Action {
     Ok(views.html.consoleComet())
   }
 
-  def comet = Action {
-    implicit val m = mat // TODO needed here again?
-    //def jsonSource: Source[JsValue, _] = Source(List(JsString("jsonString")))
+  def cometStream() = Action {
 
-    println("Comet")
+    val source = Source
+      .actorRef[String](bufferSize = 0, OverflowStrategy.fail)
+      .mapMaterializedValue(actor =>  {
 
-    val s = Source
-      .actorRef[String](bufferSize = 0, OverflowStrategy.dropHead)
-      .mapMaterializedValue(actor => {
-        actor ! "ABC"
-        /*println("Future")
+        val control = system.actorOf(MainControl.props)
+        system.actorOf(Gui.props(control))
+        system.actorOf(Wui.props(control, actor))
         Future {
-          Thread.sleep(300); actor ! "1"; println(1)
+          Thread.sleep(100)
+          control ! ShowMenu
         }
-        Future {
-          Thread.sleep(200); actor ! "2"; println(2)
-        }
-        Future {
-          Thread.sleep(100); actor ! "3"; println(3)
-        }*/
+
       })
 
-    val x: Source[String, _] = Source(List("kiki", "koo", "bar"))
-
-
-    Ok.chunked(s via Comet.string("parent.cometMessage")).as(ContentTypes.XML)
-
-    //def jsonSource: Source[JsValue, _] = Source(List(JsString("jsonString")))
-    //Ok.chunked(jsonSource via Comet.text("parent.cometMessage"))
-
+    Ok.chunked(source via Comet.string("parent.cometPush")).as(ContentTypes.HTML)
   }
-
 
 }
