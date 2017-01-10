@@ -64,7 +64,7 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
   }
 
   def comet = Action {
-    Ok(views.html.consoleComet())
+    Ok(views.html.comet())
   }
 
   def cometStream() = Action {
