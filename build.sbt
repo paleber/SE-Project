@@ -37,7 +37,6 @@ lazy val core = (project in file("core")).
       //tslint dependency
       "org.webjars.npm" % "tslint-eslint-rules" % "3.1.0",
       "org.webjars.npm" % "tslint-microsoft-contrib" % "2.0.12",
-      //   "org.webjars.npm" % "codelyzer" % "2.0.0-beta.1",
       "org.webjars.npm" % "types__jasmine" % "2.2.26-alpha" % "test"
     )
   )

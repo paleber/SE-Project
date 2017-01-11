@@ -1,31 +1,31 @@
-GET        /                    controllers.Application.index
+GET           /                      controllers.Application.index
 
-GET        /guide               controllers.Application.guide
-GET        /console             controllers.Application.console
-GET        /game                controllers.Application.game
+GET           /guide                 controllers.Application.guide
+GET           /console               controllers.Application.console
+GET           /game                  controllers.Application.game
 
-GET        /scongoSocket        controllers.Application.scongoSocket
-GET        /scongoMenu          controllers.Application.scongoMenu
-GET        /scongoGame          controllers.Application.scongoGame
-GET        /scongoFinish        controllers.Application.scongoFinish
+GET           /scongoSocket          controllers.Application.scongoSocket
+GET           /scongoMenu            controllers.Application.scongoMenu
+GET           /scongoGame            controllers.Application.scongoGame
+GET           /scongoFinish          controllers.Application.scongoFinish
 
-GET        /socket              controllers.Application.socket
+GET           /socket                controllers.Application.socket
 
-GET        /comet               controllers.Application.comet
-GET        /cometStream         controllers.Application.cometStream
+GET           /comet                 controllers.Application.comet
+GET           /cometStream           controllers.Application.cometStream
 
-GET        /assets/*file        controllers.Assets.at(path="/public", file)
+GET           /assets/*file          controllers.Assets.at(path="/public", file)
 
 
 # Angular
-GET     /angular                           controllers.Application.angular
+GET           /angular               controllers.Application.angular
 
-GET     /api/heroes                 controllers.Heroes.all
-POST    /api/heroes                 controllers.Heroes.create
-PUT     /api/heroes/:id             controllers.Heroes.update(id:Int)
-DELETE  /api/heroes/:id             controllers.Heroes.delete(id:Int)
+GET           /api/heroes            controllers.Heroes.all
+POST          /api/heroes            controllers.Heroes.create
+PUT           /api/heroes/:id        controllers.Heroes.update(id:Int)
+DELETE        /api/heroes/:id        controllers.Heroes.delete(id:Int)
 
-GET     /api/*notFound              controllers.Application.notFound(notFound)
+#GET     /api/*notFound              controllers.Application.notFound(notFound)
 
 # Map 404 to an index bis
-GET     /*others                    controllers.Application.other(others)
+#GET     /*others                    controllers.Application.other(others)

@@ -95,8 +95,8 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
     Ok(views.html.index1())
   }
 
-  def notFound(notFound: String) = Default.notFound
+  //def notFound(notFound: String) = Default.notFound
 
-  def other(others: String) = index
+  //def other(others: String) = index
 
 }
