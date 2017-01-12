@@ -1,7 +1,5 @@
 package models.daos
 
-import java.util.UUID
-
 import com.mohiva.play.silhouette.api.LoginInfo
 import models.User
 
@@ -23,10 +21,10 @@ trait UserDAO {
   /**
    * Finds a user by its user ID.
    *
-   * @param userID The ID of the user to find.
+   * @param name The ID of the user to find.
    * @return The found user or None if no user for the given ID could be found.
    */
-  def find(userID: UUID): Future[Option[User]]
+  def find(name: String): Future[Option[User]]
 
   /**
    * Saves a user.

@@ -24,7 +24,7 @@ class UserServiceImpl @Inject() (userDAO: UserDAO) extends UserService {
    * @param id The ID to retrieve a user.
    * @return The retrieved user or None if no user could be retrieved for the given ID.
    */
-  def retrieve(id: UUID) = userDAO.find(id)
+  def retrieve(id: String) = userDAO.find(id)
 
   /**
    * Retrieves a user that matches the specified login info.
@@ -47,29 +47,19 @@ class UserServiceImpl @Inject() (userDAO: UserDAO) extends UserService {
    *
    * If a user exists for this profile then update the user, otherwise create a new user with the given profile.
    *
-   * @param profile The social profile to save.
+   * @param loginInfo The LoginInfo to save.
    * @return The user for whom the profile was saved.
    */
-  def save(profile: CommonSocialProfile) = {
-    userDAO.find(profile.loginInfo).flatMap {
+  def save(name: String, loginInfo: LoginInfo) = {
+    userDAO.find(loginInfo).flatMap {
       case Some(user) => // Update user with profile
         userDAO.save(user.copy(
-          firstName = profile.firstName,
-          lastName = profile.lastName,
-          fullName = profile.fullName,
-          email = profile.email,
-          avatarURL = profile.avatarURL
+          name = name
         ))
       case None => // Insert a new user
         userDAO.save(User(
-          userID = UUID.randomUUID(),
-          loginInfo = profile.loginInfo,
-          firstName = profile.firstName,
-          lastName = profile.lastName,
-          fullName = profile.fullName,
-          email = profile.email,
-          avatarURL = profile.avatarURL,
-          activated = true
+          name = name,
+          loginInfo = loginInfo
         ))
     }
   }

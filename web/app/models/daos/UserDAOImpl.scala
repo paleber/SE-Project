@@ -21,16 +21,16 @@ class UserDAOImpl extends UserDAO {
    * @return The found user or None if no user for the given login info could be found.
    */
   def find(loginInfo: LoginInfo) = Future.successful(
-    users.find { case (id, user) => user.loginInfo == loginInfo }.map(_._2)
+    users.find { case (_, user) => user.loginInfo == loginInfo }.map(_._2)
   )
 
   /**
    * Finds a user by its user ID.
    *
-   * @param userID The ID of the user to find.
+   * @param name The ID of the user to find.
    * @return The found user or None if no user for the given ID could be found.
    */
-  def find(userID: UUID) = Future.successful(users.get(userID))
+  def find(name: String) = Future.successful(users.get(name))
 
   /**
    * Saves a user.
@@ -39,7 +39,7 @@ class UserDAOImpl extends UserDAO {
    * @return The saved user.
    */
   def save(user: User) = {
-    users += (user.userID -> user)
+    users += (user.name -> user)
     Future.successful(user)
   }
 }
@@ -52,5 +52,5 @@ object UserDAOImpl {
   /**
    * The list of users.
    */
-  val users: mutable.HashMap[UUID, User] = mutable.HashMap()
+  val users: mutable.HashMap[String, User] = mutable.HashMap()
 }
