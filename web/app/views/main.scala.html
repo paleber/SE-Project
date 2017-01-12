@@ -1,4 +1,5 @@
 @import com.mohiva.play.silhouette.api.Identity
+@import models.User
 @(title: String, identity: Option[Identity] = None, head: Html = Html(""))(body: Html)
 
 @isActive(s: String) = @{
@@ -53,7 +54,7 @@
                         <li>@if(identity.isEmpty) {
                             anonymous
                         } else {
-                            identified
+                            @identity.get.asInstanceOf[User].name
                         }</li>
                     </ul>
                 </div>
