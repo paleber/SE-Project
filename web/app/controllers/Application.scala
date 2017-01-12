@@ -6,6 +6,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.util.Timeout
+import com.mohiva.play.silhouette.api.Silhouette
 import control.MainControl
 import gui.Gui
 import model.msg.ClientMsg.ShowMenu
@@ -14,6 +15,7 @@ import play.api.http.ContentTypes
 import play.api.libs.Comet
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
+import utils.auth.DefaultEnv
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -21,7 +23,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-class Application @Inject()(implicit system: ActorSystem, mat: Materializer) extends Controller {
+class Application @Inject()(silhouette: Silhouette[DefaultEnv],
+                            implicit val system: ActorSystem,
+                            implicit val mat: Materializer) extends Controller {
+
 
   private implicit val timeout: Timeout = 5.seconds
 
@@ -71,7 +76,7 @@ class Application @Inject()(implicit system: ActorSystem, mat: Materializer) ext
 
     val source = Source
       .actorRef[String](bufferSize = 0, OverflowStrategy.fail)
-      .mapMaterializedValue(actor =>  {
+      .mapMaterializedValue(actor => {
 
         val control = system.actorOf(MainControl.props)
         system.actorOf(Gui.props(control))

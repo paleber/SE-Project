@@ -37,7 +37,20 @@ lazy val core = (project in file("core")).
       //tslint dependency
       "org.webjars.npm" % "tslint-eslint-rules" % "3.1.0",
       "org.webjars.npm" % "tslint-microsoft-contrib" % "2.0.12",
-      "org.webjars.npm" % "types__jasmine" % "2.2.26-alpha" % "test"
+      "org.webjars.npm" % "types__jasmine" % "2.2.26-alpha" % "test",
+
+      // silhouette
+      "com.mohiva" %% "play-silhouette" % "4.0.0",
+      "com.mohiva" %% "play-silhouette-password-bcrypt" % "4.0.0",
+      "com.mohiva" %% "play-silhouette-persistence" % "4.0.0",
+      "com.mohiva" %% "play-silhouette-crypto-jca" % "4.0.0",
+      "org.webjars" %% "webjars-play" % "2.5.0-2",
+      "net.codingwell" %% "scala-guice" % "4.0.1",
+      "com.iheart" %% "ficus" % "1.2.6",
+      "com.typesafe.play" %% "play-mailer" % "5.0.0",
+      "com.enragedginger" %% "akka-quartz-scheduler" % "1.5.0-akka-2.4.x",
+      "com.adrianhurt" %% "play-bootstrap" % "1.0-P25-B3",
+      "com.mohiva" %% "play-silhouette-testkit" % "4.0.0" % "test"
     )
   )
 
