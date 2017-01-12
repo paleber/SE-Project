@@ -1,4 +1,7 @@
-@main("Console") {
+@import com.mohiva.play.silhouette.api.Identity
+
+@(identity: Option[Identity])
+@main("Console", identity) {
 
     <script src='@routes.Assets.at("javascripts/console.js")'></script>
 
@@ -24,4 +27,4 @@
         <div id="messages"></div>
     </div>
 
-}
+}@import com.mohiva.play.silhouette.api.Identity
