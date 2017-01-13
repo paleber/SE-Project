@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.util.Timeout
-import com.mohiva.play.silhouette.api.Silhouette
+import com.mohiva.play.silhouette.api.{LogoutEvent, Silhouette}
 import control.MainControl
 import gui.Gui
 import model.msg.ClientMsg.ShowMenu
@@ -103,5 +103,16 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
   //def notFound(notFound: String) = Default.notFound
 
   //def other(others: String) = index
+
+  /**
+    * Handles the Sign Out action.
+    *
+    * @return The result to display.
+    */
+  def signOut = silhouette.SecuredAction.async { implicit request =>
+    val result = Redirect(routes.Application.index())
+    silhouette.env.eventBus.publish(LogoutEvent(request.identity, request))
+    silhouette.env.authenticatorService.discard(request.authenticator, result)
+  }
 
 }
