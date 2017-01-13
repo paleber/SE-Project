@@ -10,5 +10,6 @@ import com.mohiva.play.silhouette.api.{Identity, LoginInfo}
   */
 case class User(name: String,
                 loginInfo: LoginInfo,
+                email: String,
                 activated: Boolean) extends Identity
 

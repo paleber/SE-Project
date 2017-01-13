@@ -50,7 +50,7 @@ class UserServiceImpl @Inject() (userDAO: UserDAO) extends UserService {
    * @param loginInfo The LoginInfo to save.
    * @return The user for whom the profile was saved.
    */
-  def save(name: String, loginInfo: LoginInfo, activated: Boolean) = {
+  def save(name: String, loginInfo: LoginInfo, activated: Boolean, email: String) = {
     userDAO.find(loginInfo).flatMap {
       case Some(user) => // Update user with profile
         userDAO.save(user.copy(
@@ -60,6 +60,7 @@ class UserServiceImpl @Inject() (userDAO: UserDAO) extends UserService {
         userDAO.save(User(
           name = name,
           loginInfo = loginInfo,
+          email = email,
           activated = activated
         ))
     }
@@ -73,6 +74,7 @@ class UserServiceImpl @Inject() (userDAO: UserDAO) extends UserService {
         userDAO.save(User(
           name = profile.fullName.toString,
           loginInfo = profile.loginInfo,
+          email = profile.email.toString,
           activated = true
         ))
     }
