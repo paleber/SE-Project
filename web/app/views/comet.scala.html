@@ -1,4 +1,7 @@
-@main("Comet") {
+@import com.mohiva.play.silhouette.api.Identity
+@(identity: Option[Identity])
+
+@main("Comet", identity) {
 
     <script>
             function cometPush(msg) {

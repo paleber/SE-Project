@@ -33,12 +33,12 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Redirect(routes.Application.console())
   }
 
-  def guide = Action {
-    Ok(views.html.guide())
+  def guide = silhouette.UserAwareAction { request =>
+    Ok(views.html.guide(request.identity))
   }
 
-  def game = Action {
-    Ok(views.html.game())
+  def game = silhouette.UserAwareAction { request =>
+    Ok(views.html.game(request.identity))
   }
 
   def console = silhouette.UserAwareAction { request =>
@@ -67,8 +67,8 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
 
-  def comet = Action {
-    Ok(views.html.comet())
+  def comet = silhouette.UserAwareAction { request =>
+    Ok(views.html.comet(request.identity))
   }
 
   def cometStream() = Action {

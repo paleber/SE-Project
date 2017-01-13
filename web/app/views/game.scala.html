@@ -1,3 +1,6 @@
+@import com.mohiva.play.silhouette.api.Identity
+@(identity: Option[Identity])
+
 @head = {
     <link rel="import" href="@routes.Application.scongoSocket">
     <link rel="import" href="@routes.Application.scongoMenu">
@@ -5,7 +8,7 @@
     <link rel="import" href="@routes.Application.scongoFinish">
 }
 
-@main("Game", None, head) {
+@main("Game", identity, head) {
 
     <style>
     #board {

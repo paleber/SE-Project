@@ -1,4 +1,7 @@
-@main("Guide") {
+@import com.mohiva.play.silhouette.api.Identity
+
+@(identity: Option[Identity])
+@main("Guide", identity) {
 
     <div class="container-fluid">
 
