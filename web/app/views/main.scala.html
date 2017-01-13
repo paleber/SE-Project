@@ -1,4 +1,6 @@
-@(title: String, head: Html = Html(""))(body: Html)
+@import com.mohiva.play.silhouette.api.Identity
+@import models.User
+@(title: String, identity: Option[Identity] = None, head: Html = Html(""))(body: Html)
 
 @isActive(s: String) = @{
     if(s == title) {
@@ -49,6 +51,11 @@
                         <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Game</a></li>
                         <li id="navConsole"><a href="@routes.Application.console" @isActive("Console")>Console</a></li>
                         <li id="navComet"><a href="@routes.Application.comet" @isActive("Comet")>Comet</a></li>
+                        <li>@if(identity.isEmpty) {
+                            anonymous
+                        } else {
+                            @identity.get.asInstanceOf[User].name
+                        }</li>
                     </ul>
                 </div>
             </nav>

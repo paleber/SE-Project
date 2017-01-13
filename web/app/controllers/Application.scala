@@ -27,10 +27,9 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
                             implicit val system: ActorSystem,
                             implicit val mat: Materializer) extends Controller {
 
-
   private implicit val timeout: Timeout = 5.seconds
 
-  def index = Action {
+  def index = silhouette.UserAwareAction {
     Redirect(routes.Application.console())
   }
 
@@ -42,8 +41,8 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Ok(views.html.game())
   }
 
-  def console = Action {
-    Ok(views.html.console())
+  def console = silhouette.UserAwareAction { request =>
+    Ok(views.html.console(request.identity))
   }
 
   def scongoSocket = Action {

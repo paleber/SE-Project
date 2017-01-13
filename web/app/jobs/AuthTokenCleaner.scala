@@ -6,7 +6,6 @@ import akka.actor._
 import com.mohiva.play.silhouette.api.util.Clock
 import jobs.AuthTokenCleaner.Clean
 import models.services.AuthTokenService
-import utils.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -19,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class AuthTokenCleaner @Inject() (
   service: AuthTokenService,
   clock: Clock)
-  extends Actor with Logger {
+  extends Actor with ActorLogging {
 
   /**
    * Process the received messages.
@@ -37,12 +36,12 @@ class AuthTokenCleaner @Inject() (
         msg.append("=================================\n")
 
         msg.append("=================================\n")
-        logger.info(msg.toString)
+        log.info(msg.toString)
       }.recover {
         case e =>
           msg.append("Couldn't cleanup auth tokens because of unexpected error\n")
           msg.append("=================================\n")
-          logger.error(msg.toString, e)
+          log.error(msg.toString, e)
       }
   }
 }
