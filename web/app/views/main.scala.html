@@ -56,6 +56,12 @@
                         } else {
                             @identity.get.asInstanceOf[User].name
                         }</li>
+                        @if(identity.isEmpty) {
+                            <li id="navSignIn"><a href="@routes.SignInController.view">SignIn</a></li>
+                            <li id="navSignUp"><a href="@routes.SignUpController.view">SignUp</a></li>
+                        } else {
+                            <li id="navSignOut"><a href="@routes.Application.signOut">SignOut</a></li>
+                        }
                     </ul>
                 </div>
             </nav>
