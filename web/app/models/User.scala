@@ -9,4 +9,6 @@ import com.mohiva.play.silhouette.api.{Identity, LoginInfo}
   * @param loginInfo The linked login info.
   */
 case class User(name: String,
-                loginInfo: LoginInfo) extends Identity
+                loginInfo: LoginInfo,
+                activated: Boolean) extends Identity
+

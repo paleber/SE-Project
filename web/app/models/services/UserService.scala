@@ -2,6 +2,7 @@ package models.services
 
 import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.services.IdentityService
+import com.mohiva.play.silhouette.impl.providers.CommonSocialProfile
 import models.User
 
 import scala.concurrent.Future
@@ -35,5 +36,15 @@ trait UserService extends IdentityService[User] {
    * @param loginInfo The social profile to save.
    * @return The user for whom the profile was saved.
    */
-  def save(name: String, loginInfo: LoginInfo): Future[User]
+  def save(name: String, loginInfo: LoginInfo, activated: Boolean): Future[User]
+
+  /**
+    * Saves the social profile for a user.
+    *
+    * If a user exists for this profile then update the user, otherwise create a new user with the given profile.
+    *
+    * @param profile The social profile to save.
+    * @return The user for whom the profile was saved.
+    */
+  def save(profile: CommonSocialProfile): Future[User]
 }
