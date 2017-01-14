@@ -22,6 +22,7 @@ error = Error!
 info = Info!
 success = Success!
 home = Home
+name = Nickname
 first.name = First name
 last.name = Last name
 full.name = Full name
@@ -76,7 +77,7 @@ yahoo = Yahoo
 # Emails
 ##########
 
-email.from = Silhouette <noreply@mohiva.com>
+email.from = Scongo <noreply@mohiva.com>
 
 # Sign Up
 email.sign.up.subject = Welcome

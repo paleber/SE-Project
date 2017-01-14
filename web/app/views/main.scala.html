@@ -51,18 +51,21 @@
                         <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Game</a></li>
                         <li id="navConsole"><a href="@routes.Application.console" @isActive("Console")>Console</a></li>
                         <li id="navComet"><a href="@routes.Application.comet" @isActive("Comet")>Comet</a></li>
-                        <li>@if(identity.isEmpty) {
+                    </ul>
+                    <ui class="nav navbar-nav navbar-right">
+                        <li id="navUserName"> <span class="label label-default">@if(identity.isEmpty) {
                             anonymous
                         } else {
                             @identity.get.asInstanceOf[User].name
-                        }</li>
+                        }</span></li>
                         @if(identity.isEmpty) {
                             <li id="navSignIn"><a href="@routes.SignInController.view">SignIn</a></li>
                             <li id="navSignUp"><a href="@routes.SignUpController.view">SignUp</a></li>
                         } else {
                             <li id="navSignOut"><a href="@routes.Application.signOut">SignOut</a></li>
                         }
-                    </ul>
+                    </ui>
+
                 </div>
             </nav>
 

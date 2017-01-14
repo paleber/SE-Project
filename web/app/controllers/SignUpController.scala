@@ -79,7 +79,7 @@ class SignUpController @Inject() (
           case None =>
             val authInfo = passwordHasherRegistry.current.hash(data.password)
             val user = User(
-              name = data.firstName + " " + data.lastName,
+              name = data.name,
               loginInfo = loginInfo,
               email = data.email,
               activated = false
