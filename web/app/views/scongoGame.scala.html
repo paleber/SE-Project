@@ -10,11 +10,10 @@
         <style>
                 canvas {
                     background-color: lightgrey;
-                    width: 1000px;
-                    height: 625px;
-                    margin-left: auto;
-                    margin-right: auto;
+
+                    width: 100%;
                     display: block;
+                    flex-grow: 1;
                 }
 
                 .hideCursor {
@@ -22,8 +21,8 @@
                 }
         </style>
 
-        <div id="contentGame" style="display: none">
-            <canvas id="can" width="1000" height="625"></canvas>
+        <div id="contentGame" style="display: none; flex-grow: 1; flex-direction: column;">
+            <canvas id="can" width="800" height="500"></canvas>
         </div>
     </template>
 
@@ -55,11 +54,12 @@
                 ready: function () {
                     this.socket = document.querySelector('#' + this.socketId);
                     window.addEventListener('keydown', this.keyDown, false);
+                    window.addEventListener('resize', () => {document.querySelector("scongo-game").drawBoard()});
                 },
 
                 show: function(data) {
                     this.initGame(data.game);
-                    $('#contentGame').css("display", "block");
+                    $('#contentGame').css("display", "flex");
                 },
 
                 hide: function() {
@@ -114,22 +114,29 @@
                     let canvas = document.getElementById("can");
                     let ctx = canvas.getContext("2d");
 
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    let board = $("#board");
+                    canvas.height = board.height();
+                    canvas.width = board.width();
 
-                    let sf = canvas.width / this.width;
+                    let sf = Math.min(canvas.width / this.width, canvas.height / this.height);
+
+                    let xOffset = (canvas.width - this.width * sf) / 2;
+                    let yOffset = (canvas.height - this.height * sf) / 2;
+
+                    // Clear the board
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                     // Draw the board
                     ctx.lineWidth = 3;
                     ctx.strokeStyle = '#5d5d5d';
                     ctx.fillStyle = '#969696';
-
-                    this.drawPolygon(ctx, sf, this.board, 0, 0);
+                    this.drawPolygon(ctx, sf, this.board, 0, 0, xOffset, yOffset);
 
                     for (let i = 0; i < this.board.lines.length; i++) {
-                        let x1 = Math.round(sf * this.board.lines[i].start.x);
-                        let y1 = Math.round(sf * this.board.lines[i].start.y);
-                        let x2 = Math.round(sf * this.board.lines[i].end.x);
-                        let y2 = Math.round(sf * this.board.lines[i].end.y);
+                        let x1 = Math.round(sf * this.board.lines[i].start.x + xOffset);
+                        let y1 = Math.round(sf * this.board.lines[i].start.y + yOffset);
+                        let x2 = Math.round(sf * this.board.lines[i].end.x + xOffset);
+                        let y2 = Math.round(sf * this.board.lines[i].end.y + yOffset);
                         ctx.beginPath();
                         ctx.moveTo(x1, y1);
                         ctx.lineTo(x2, y2);
@@ -146,7 +153,9 @@
                             this.drawPolygon(ctx, sf,
                                     this.blocks[i].grid,
                                     this.blocks[i].position.x,
-                                    this.blocks[i].position.y);
+                                    this.blocks[i].position.y,
+                                    xOffset,
+                                    yOffset);
                         }
                     }
 
@@ -157,16 +166,21 @@
                         this.drawPolygon(ctx, sf,
                                 this.selectedBlock.grid,
                                 this.selectedBlock.position.x,
-                                this.selectedBlock.position.y);
+                                this.selectedBlock.position.y,
+                                xOffset,
+                                yOffset);
                     }
                 },
 
                 selectBlock: function (e) {
                     let canvas = document.getElementById("can");
-                    let sf = canvas.width / this.width;
+                    let sf = Math.min(canvas.width / this.width, canvas.height / this.height);
 
-                    let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
-                    let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
+                    let xOffset = (canvas.width - this.width * sf) / 2;
+                    let yOffset = (canvas.height - this.height * sf) / 2;
+
+                    let x = ((e.clientX - canvas.getBoundingClientRect().left - xOffset) / sf) ;
+                    let y = ((e.clientY - canvas.getBoundingClientRect().top - yOffset) / sf) ;
                     console.log("canvas clicked at (" + x + "|" + y + ")");
 
                     for (let i = 0; i < this.blocks.length; i++) {
@@ -208,9 +222,12 @@
                     }
 
                     let canvas = document.getElementById("can");
-                    let sf = canvas.width / this.width;
-                    let x = (e.clientX - canvas.getBoundingClientRect().left) / sf;
-                    let y = (e.clientY - canvas.getBoundingClientRect().top) / sf;
+                    let sf = Math.min(canvas.width / this.width, canvas.height / this.height);
+                    let xOffset = (canvas.width - this.width * sf) / 2;
+                    let yOffset = (canvas.height - this.height * sf) / 2;
+
+                    let x = (e.clientX - canvas.getBoundingClientRect().left - xOffset) / sf;
+                    let y = (e.clientY - canvas.getBoundingClientRect().top - yOffset) / sf;
 
                     this.selectedBlock.position.x += x - this.lastMousePosX ;
                     this.selectedBlock.position.y += y - this.lastMousePosY;
@@ -221,14 +238,14 @@
                     this.drawBoard();
                 },
 
-                drawPolygon: function (ctx, sf, poly, xPos, yPos) {
+                drawPolygon: function (ctx, sf, poly, xPos, yPos, xOffset, yOffset) {
                     ctx.beginPath();
-                    let xStart = Math.round(sf * (poly.corners[0].x + xPos));
-                    let yStart = Math.round(sf * (poly.corners[0].y + yPos));
+                    let xStart = Math.round(sf * (poly.corners[0].x + xPos) + xOffset);
+                    let yStart = Math.round(sf * (poly.corners[0].y + yPos) + yOffset);
                     ctx.moveTo(xStart, yStart);
                     for (let i = 1; i < poly.corners.length; i++) {
-                        let x = Math.round(sf * (poly.corners[i].x + xPos));
-                        let y = Math.round(sf * (poly.corners[i].y + yPos));
+                        let x = Math.round(sf * (poly.corners[i].x + xPos) + xOffset);
+                        let y = Math.round(sf * (poly.corners[i].y + yPos) + yOffset);
                         ctx.lineTo(x, y);
                     }
                     ctx.closePath();

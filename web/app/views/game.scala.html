@@ -14,7 +14,8 @@
     #board {
         background-color: #b2ff72;
         flex-grow: 1;
-
+        display: flex;
+        flex-direction: column;
     }
 
     .navbar-default {
@@ -25,7 +26,7 @@
     <div id="board">
         <scongo-socket id="socket" menu-id="menu" game-id="game"></scongo-socket>
         <scongo-menu id="menu" socket-id="socket"></scongo-menu>
-        <scongo-game id="game" socket-id="socket"></scongo-game>
+        <scongo-game id="game" socket-id="socket" style="display: flex; flex-direction: column; flex-grow: 1"></scongo-game>
             <!--scongo-finish></scongo-finish-->
     </div>
 }
