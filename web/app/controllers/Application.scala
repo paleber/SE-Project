@@ -94,16 +94,16 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Ok(views.html.angular(request.identity))
   }
 
-  //def notFound(notFound: String) = Default.notFound
-
-  //def other(others: String) = index
+  def angularSub(path: String) = silhouette.UserAwareAction { request =>
+    Ok(views.html.angular(request.identity))
+  }
 
   /**
     * Handles the Sign Out action.
     *
     * @return The result to display.
     */
-  def signOut = silhouette.SecuredAction.async { implicit request =>
+  def signOut: Action[AnyContent] = silhouette.SecuredAction.async { implicit request =>
     val result = Redirect(routes.Application.index())
     silhouette.env.eventBus.publish(LogoutEvent(request.identity, request))
     silhouette.env.authenticatorService.discard(request.authenticator, result)

@@ -1,0 +1,13 @@
+<div class="container-fluid">
+
+    <div class="pager-header">
+        <h1>{{title}}</h1>
+    </div>
+    <nav>
+        <a *ngFor="let page of pages" routerLink="/{{page.link}}" routerLinkActive="active">{{page.name}}</a>
+    </nav>
+    <div class="well">
+        <router-outlet></router-outlet>
+    </div>
+
+</div>

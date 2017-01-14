@@ -1,25 +1,15 @@
-import { Component }          from '@angular/core';
+import {Component} from '@angular/core';
 
 @Component({
-//  moduleId: module.id,
-  selector: 'my-app',
-  template: `
-    <h1>{{title}}</h1>
-    <nav>
-      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-      <a routerLink="/heroes" routerLinkActive="active">Heroes</a>
-      <a routerLink="/login" routerLinkActive="active">Login</a>
-    </nav>
-    <router-outlet></router-outlet>
-  `,
-  styleUrls: ['assets/app/app.component.css'],
+    selector: 'my-app',
+    templateUrl: 'assets/app/app.component.html',
+    styleUrls: ['assets/app/app.component.css'],
 })
 export class AppComponent {
-  public title = 'Tour of Heroes';
-}
+    public title = 'Game Guide (with Angular2)';
 
-/*
-Copyright 2016 Google Inc. All Rights Reserved.
-Use of this source code is governed by an MIT-style license that
-can be found in the LICENSE file at http://angular.io/license
-*/
+    public pages = [
+        {link: 'intro', name: 'What is Scongo'},
+        {link: 'manual', name: 'How To Play'},
+        {link: 'history', name: 'History'}];
+}
