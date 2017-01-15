@@ -14,6 +14,7 @@ lazy val core = (project in file("core")).
   settings(commonSettings: _*).
   settings(
     name := "scongo-core",
+    resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % "2.4.11",
       "org.json4s" %% "json4s-jackson" % "3.4.1",
