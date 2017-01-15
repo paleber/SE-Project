@@ -1,6 +1,6 @@
 @import com.mohiva.play.silhouette.api.Identity
 @import models.User
-@(title: String, identity: Option[Identity] = None, head: Html = Html(""))(body: Html)
+@(title: String, identity: Option[Identity] = None, head: Html = Html(""))(body: Html)(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
 
 @isActive(s: String) = @{
     if(s == title) {
@@ -70,6 +70,27 @@
 
                 </div>
             </nav>
+
+            <div class="starter-template row">
+                @request.flash.get("error").map { msg =>
+                    <div class="col-md-6 col-md-offset-3 alert alert-danger">
+                        <a href="#" class="close" data-dismiss="alert">&times;</a>
+                        <strong>@Messages("error")</strong> @msg
+                    </div>
+                }
+                @request.flash.get("info").map { msg =>
+                    <div class="col-md-6 col-md-offset-3 alert alert-info">
+                        <a href="#" class="close" data-dismiss="alert">&times;</a>
+                        <strong>@Messages("info")</strong> @msg
+                    </div>
+                }
+                @request.flash.get("success").map { msg =>
+                    <div class="col-md-6 col-md-offset-3 alert alert-success">
+                        <a href="#" class="close" data-dismiss="alert">&times;</a>
+                        <strong>@Messages("success")</strong> @msg
+                    </div>
+                }
+            </div>
 
             @body
         </div>

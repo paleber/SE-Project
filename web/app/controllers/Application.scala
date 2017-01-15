@@ -12,6 +12,7 @@ import gui.Gui
 import model.msg.ClientMsg.ShowMenu
 import models.Wui
 import play.api.http.ContentTypes
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Comet
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
@@ -24,8 +25,10 @@ import scala.language.postfixOps
 
 
 class Application @Inject()(silhouette: Silhouette[DefaultEnv],
+                            val messagesApi: MessagesApi,
                             implicit val system: ActorSystem,
-                            implicit val mat: Materializer) extends Controller {
+                            implicit val mat: Materializer,
+                            implicit val webJarAssets: WebJarAssets) extends Controller with I18nSupport {
 
   private implicit val timeout: Timeout = 5.seconds
 
@@ -33,15 +36,15 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Redirect(routes.Application.console())
   }
 
-  def guide = silhouette.UserAwareAction { request =>
+  def guide = silhouette.UserAwareAction { implicit request =>
     Ok(views.html.guide(request.identity))
   }
 
-  def game = silhouette.UserAwareAction { request =>
+  def game = silhouette.UserAwareAction { implicit request =>
     Ok(views.html.game(request.identity))
   }
 
-  def console = silhouette.UserAwareAction { request =>
+  def console = silhouette.UserAwareAction { implicit request =>
     Ok(views.html.console(request.identity))
   }
 
@@ -49,15 +52,15 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Ok(views.html.scongoSocket())
   }
 
-  def scongoMenu = Action {
+  def scongoMenu = Action { implicit request =>
     Ok(views.html.scongoMenu())
   }
 
-  def scongoGame = Action {
+  def scongoGame = Action { implicit request =>
     Ok(views.html.scongoGame())
   }
 
-  def scongoFinish = Action {
+  def scongoFinish = Action { implicit request =>
     Ok(views.html.scongoFinish())
   }
 
@@ -67,7 +70,7 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
 
-  def comet = silhouette.UserAwareAction { request =>
+  def comet = silhouette.UserAwareAction { implicit request =>
     Ok(views.html.comet(request.identity))
   }
 
@@ -90,11 +93,11 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Ok.chunked(source via Comet.string("parent.cometPush")).as(ContentTypes.HTML)
   }
 
-  def angular = silhouette.UserAwareAction { request =>
+  def angular = silhouette.UserAwareAction { implicit request =>
     Ok(views.html.angular(request.identity))
   }
 
-  def angularSub(path: String) = silhouette.UserAwareAction { request =>
+  def angularSub(path: String) = silhouette.UserAwareAction { implicit request =>
     Ok(views.html.angular(request.identity))
   }
 

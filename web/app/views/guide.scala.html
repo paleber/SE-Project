@@ -1,6 +1,6 @@
 @import com.mohiva.play.silhouette.api.Identity
 
-@(identity: Option[Identity])
+@(identity: Option[Identity])(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
 @main("Guide", identity) {
 
     <div class="container-fluid">
