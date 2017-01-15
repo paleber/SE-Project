@@ -5,12 +5,6 @@
 
     <script src='@routes.Assets.at("javascripts/console.js")'></script>
 
-    <style>
-    #closed {
-        display: none;
-    }
-    </style>
-
     <div class="container-fluid">
         <div id="cmdWell" class="well input-group">
             <input id="inputCmd" type="text" class="form-control" title="send">
@@ -19,7 +13,7 @@
             </span>
         </div>
 
-        <div id="closed">
+        <div id="closed" style="display: none;">
             <div class="alert alert-info">
                 <strong>Connection closed! <a href="@routes.Application.console" class="alert-link">Reconnect</a></strong>
             </div>
@@ -27,4 +21,4 @@
         <div id="messages"></div>
     </div>
 
-}@import com.mohiva.play.silhouette.api.Identity
+}
