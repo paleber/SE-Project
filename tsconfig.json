@@ -14,7 +14,7 @@
     "mapRoot": "/assets",
     "sourceRoot": "/assets",
     "rootDirs": ["app/assets","test/assets"],
-    "baseUrl": ".",
+    "baseUrl": "./web",
     "paths": {
       "*": [
         "*",

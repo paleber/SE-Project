@@ -6,11 +6,10 @@
 <dom-module id='scongo-socket'>
 
     <template>
-        <div class="container-fluid" style="margin-top: 20px">
-            <div id="closed" style="display: none">
-                <div class="alert alert-info">
-                    <strong>Connection closed! <a href="@routes.Application.game" class="alert-link">Reconnect</a></strong>
-                </div>
+        <div id="closed" class="container-fluid" style="display: none;
+            margin-top: 20px">
+            <div class="alert alert-info">
+                <strong>Connection closed! <a href="@routes.Application.game" class="alert-link">Reconnect</a></strong>
             </div>
         </div>
     </template>

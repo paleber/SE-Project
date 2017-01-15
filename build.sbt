@@ -6,7 +6,9 @@ lazy val commonSettings = Seq(
 
 lazy val scongo = (project in file(".")).
   settings(commonSettings: _*).
-  enablePlugins(PlayScala)
+  enablePlugins(PlayScala).
+  dependsOn(core).
+  enablePlugins(PlayScala, SbtWeb)
 
 lazy val core = (project in file("core")).
   settings(commonSettings: _*).
@@ -53,14 +55,6 @@ lazy val core = (project in file("core")).
       "com.mohiva" %% "play-silhouette-testkit" % "4.0.0" % "test"
     )
   )
-
-lazy val web = (project in file("web")).
-  settings(commonSettings: _*).
-  settings(
-    name := "scongo-web"
-  ).
-  dependsOn(core).
-  enablePlugins(PlayScala, SbtWeb)
 
 dependencyOverrides += "org.webjars.npm" % "minimatch" % "3.0.0"
 
