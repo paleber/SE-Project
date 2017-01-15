@@ -45,7 +45,7 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Ok(views.html.console(request.identity))
   }
 
-  def scongoSocket = Action {
+  def scongoSocket = Action { implicit request =>
     Ok(views.html.scongoSocket())
   }
 

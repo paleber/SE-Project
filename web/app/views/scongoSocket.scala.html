@@ -1,4 +1,4 @@
-@()
+@()(implicit request: RequestHeader)
 <link rel="import" href="@routes.Application.scongoFinish">
 <link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
 <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
@@ -24,7 +24,7 @@
                 },
 
                 ready: function () {
-                    this.socket = new WebSocket('ws://localhost:9000/socket');
+                    this.socket = new WebSocket("@routes.Application.socket.webSocketURL");
 
                     this.menu = document.querySelector('#' + this.menuId);
                     this.game = document.querySelector('#' + this.gameId);
