@@ -25,7 +25,6 @@ class Wui(control: ActorRef, socket: ActorRef) extends Actor with ActorLogging {
   override def receive: PartialFunction[Any, Unit] = {
 
     case msg: ClientMsg =>
-      println("Send ClientMsg")
       control ! msg
 
     case msg: ConsoleOutput =>

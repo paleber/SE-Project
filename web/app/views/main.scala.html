@@ -21,6 +21,10 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <script src="@routes.Assets.at("bower_components/webcomponentsjs/webcomponents-lite.min.js")"></script>
 
+        <link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
+        <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
+        <link rel='import' href='@routes.Assets.at("bower_components/paper-dialog/paper-dialog.html")'>
+
         <style>
         .container-fluid {
             width: 100%;
@@ -47,7 +51,7 @@
                     </div>
                     <ul class="nav navbar-nav">
                         <li id="navGuide"><a href="@routes.Application.guide" @isActive("Guide")>Guide</a></li>
-                        <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Game</a></li>
+                        <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Menu</a></li>
                         <li id="navConsole"><a href="@routes.Application.console" @isActive("Console")>Console</a></li>
                         <li id="navComet"><a href="@routes.Application.comet" @isActive("Comet")>Comet</a></li>
                         <li id="navAngular"><a href="@routes.Application.angular" @isActive("Angular")>Angular</a></li>

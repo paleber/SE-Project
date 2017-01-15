@@ -33,7 +33,18 @@ object LevelManager {
     map
   }
 
-  val LEVEL_NAMES = levelMap.keys.toList.sorted
+  val levels: Map[String, List[String]] = {
+
+    def filterLevels(form: Int, numberBlocks: Int) =
+      levelMap.filter(_._2.plan.board.form == form).filter(_._2.plan.variants.head.size == numberBlocks).keys.toList.sorted
+
+    Map(
+      "easy" -> filterLevels(4, 3),
+      "normal" -> filterLevels(4, 4),
+      "difficult" -> filterLevels(6, 3),
+      "extreme" -> filterLevels(6, 4))
+
+  }
 
   def load(levelName: String): Option[Level] = {
     val item = levelMap.get(levelName)

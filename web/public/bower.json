@@ -1,6 +1,7 @@
 {
   "name": "scongo",
   "dependencies": {
-    "paper-button": null
+    "paper-button": null,
+    "paper-dialog": null
   }
 }

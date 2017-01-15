@@ -1,6 +1,4 @@
 @()
-<link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
-<link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
 
 <dom-module id='scongo-menu'>
 
@@ -13,7 +11,7 @@
         </style>
 
         <div id="contentMenu" style="display: none">
-        @for(level <- persistence.LevelManager.LEVEL_NAMES) {
+        @for(level <- persistence.LevelManager.levels.values.flatten) {
             <paper-button raised on-click="levelClicked" level="@level">@level</paper-button>
         }
         </div>

@@ -269,9 +269,18 @@
                 },
 
                 handleKeyCode: function (code) {
+
+                    // escape - back to menu
+                    if(code == 27) {
+                        this.socket.sendMsg("menu");
+                        return;
+                    }
+
+                    // return, when no block is selected
                     if (this.selIndex == -1) {
                         return;
                     }
+
                     switch (code) {
                         case 65:
                         case 37:

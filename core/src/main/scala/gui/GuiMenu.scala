@@ -18,7 +18,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
     }
   }
 
-  for(level <- LevelManager.LEVEL_NAMES) {
+  for(level <- LevelManager.levels.values.flatten) {
     val bnLevel = new JButton(level)
     bnLevel.addActionListener(StartLevelEvent(level))
     add(bnLevel)

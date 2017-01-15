@@ -19,6 +19,8 @@
                     menu: Object,
                     gameId: String,
                     game: Object,
+                    finishId: String,
+                    finish: Object,
                 },
 
                 ready: function () {
@@ -26,6 +28,7 @@
 
                     this.menu = document.querySelector('#' + this.menuId);
                     this.game = document.querySelector('#' + this.gameId);
+                    this.finish = document.querySelector('#' + this.finishId);
 
                     this.socket.onopen = () => {
                         console.log("socket opened");
@@ -66,8 +69,7 @@
                             this.game.updateBlock(data);
                             break;
                         case 'ServerMsg$LevelFinished':
-                            // showPopup
-                            $("#popupFinish").addClass("show");
+                            this.finish.show(data);
                             break;
                         default:
                             alert("Unhandled message: " + msg.data)
