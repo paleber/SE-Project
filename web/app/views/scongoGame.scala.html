@@ -8,20 +8,22 @@
     <template>
 
         <style>
-                canvas {
-                    background-color: lightgrey;
+        canvas {
+            background-color: #5d5d5d;
 
-                    width: 100%;
-                    display: block;
-                    flex-grow: 1;
-                }
+            width: 100%;
+            display: block;
+            flex-grow: 1;
+        }
 
-                .hideCursor {
-                    cursor: none;
-                }
+        .hideCursor {
+            cursor: none;
+        }
         </style>
 
-        <div id="contentGame" style="display: none; flex-grow: 1; flex-direction: column;">
+        <div id="contentGame" style="display: none;
+            flex-grow: 1;
+            flex-direction: column;">
             <canvas id="can" width="800" height="500"></canvas>
         </div>
     </template>
@@ -44,7 +46,6 @@
                     selectedBlock: Object,
 
                     actionStartGrid: Object,
-                    actionCounter: Number,
                     timer: Object,
 
                     lastMousePosX: Number,
@@ -54,15 +55,17 @@
                 ready: function () {
                     this.socket = document.querySelector('#' + this.socketId);
                     window.addEventListener('keydown', this.keyDown, false);
-                    window.addEventListener('resize', () => {document.querySelector("scongo-game").drawBoard()});
+                    window.addEventListener('resize', () => {
+                        document.querySelector("scongo-game").drawBoard()
+                    });
                 },
 
-                show: function(data) {
+                show: function (data) {
                     this.initGame(data.game);
                     $('#contentGame').css("display", "flex");
                 },
 
-                hide: function() {
+                hide: function () {
                     $('#contentGame').css("display", "none");
                 },
 
@@ -125,6 +128,9 @@
 
                     // Clear the board
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.fillStyle = '#eaeaea';
+                    ctx.fillRect(xOffset, yOffset, this.width * sf, this.height * sf);
 
                     // Draw the board
                     ctx.lineWidth = 3;
@@ -271,13 +277,13 @@
                 handleKeyCode: function (code) {
 
                     // escape - back to menu
-                    if(code == 27) {
+                    if (code == 27) {
                         this.socket.sendMsg("menu");
                         return;
                     }
 
                     // return, when no block is selected
-                    if (this.selIndex == -1) {
+                    if (this.selIndex == -1 || this.actionStartGrid != undefined) {
                         return;
                     }
 
@@ -323,6 +329,8 @@
                     this.drawBoard();
                     if (counter < 10) {
                         this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'vertical');
+                    } else {
+                        this.actionStartGrid = undefined
                     }
                 },
 
@@ -334,6 +342,8 @@
                     this.drawBoard();
                     if (counter < 10) {
                         this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'horizontal');
+                    } else {
+                        this.actionStartGrid = undefined
                     }
                 },
 
@@ -350,6 +360,8 @@
                     this.drawBoard();
                     if (counter < 10) {
                         this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'left');
+                    } else {
+                        this.actionStartGrid = undefined
                     }
                 },
 
@@ -366,6 +378,8 @@
                     this.drawBoard();
                     if (counter < 10) {
                         this.timer = setTimeout(this.timerEvent, 15, counter + 1, 'right');
+                    } else {
+                        this.actionStartGrid = undefined
                     }
                 },
 

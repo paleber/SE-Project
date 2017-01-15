@@ -32,7 +32,7 @@
                 show: function (data) {
                     let time = parseFloat(data.timeMillis / 1000).toFixed(2);
                     $('#time').html(time);
-                    modalFinish.open();
+                    setTimeout(() => modalFinish.open(), 500);
                 }
 
             });

@@ -5,15 +5,62 @@
     <template>
 
         <style>
-            #contentMenu {
-                margin: 1em;
-            }
+        #contentMenu {
+            margin: 1em;
+        }
+
+        #wellEasy {
+            background: #74fffd
+        }
+
+        #wellNormal {
+            background: #d1ff81
+        }
+
+        #wellDifficult {
+            background: #ffbe62
+        }
+
+        #wellExtreme {
+            background: #ff8d77
+        }
+
+        paper-button {
+            margin-bottom: 5px;
+            background: white;
+            font-weight: bold;
+            width: 80px;
+        }
+
+        h3 {
+            margin-top: 0;
+            font-weight: bold;
+            text-align: center;
+        }
+
         </style>
 
-        <div id="contentMenu" style="display: none">
-        @for(level <- persistence.LevelManager.levels.values.flatten) {
-            <paper-button raised on-click="levelClicked" level="@level">@level</paper-button>
-        }
+        <div id="contentMenu" style="display: none;">
+
+            @defining(persistence.LevelManager.levels("easy")) { levels =>
+            }
+
+            @for(difficulty <- persistence.LevelManager.levels.keys) {
+                @defining("well" + difficulty.capitalize) { wellId =>
+                    <div id="@wellId" class="well">
+                        <h3>@difficulty.capitalize</h3>
+                        @defining(persistence.LevelManager.levels(difficulty)) { levels =>
+                            @for(level <- levels) {
+                                <paper-button raised on-click="levelClicked" level="@level">Level @{
+                                    levels.indexOf(level) + 1
+                                }</paper-button>
+                            }
+                        }
+                    </div>
+                }
+            }
+
+
         </div>
 
     </template>
@@ -31,11 +78,11 @@
                     this.socket = document.querySelector('#' + this.socketId);
                 },
 
-                show: function() {
+                show: function () {
                     $('#contentMenu').css("display", "block");
                 },
 
-                hide: function() {
+                hide: function () {
                     $('#contentMenu').css("display", "none");
                 },
 
