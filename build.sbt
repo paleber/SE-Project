@@ -69,4 +69,3 @@ resolveFromWebjarsNodeModulesDir := true
 ))
 
 logLevel in tslint := Level.Debug
-//routesGenerator := InjectedRoutesGenerator

@@ -7,6 +7,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.util.Timeout
 import com.mohiva.play.silhouette.api.{LogoutEvent, Silhouette}
+import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import control.MainControl
 import gui.Gui
 import model.msg.ClientMsg.ShowMenu
@@ -26,6 +27,7 @@ import scala.language.postfixOps
 
 class Application @Inject()(silhouette: Silhouette[DefaultEnv],
                             val messagesApi: MessagesApi,
+                            socialProviderRegistry: SocialProviderRegistry,
                             implicit val system: ActorSystem,
                             implicit val mat: Materializer,
                             implicit val webJarAssets: WebJarAssets) extends Controller with I18nSupport {
