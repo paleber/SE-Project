@@ -1,4 +1,7 @@
-@()(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
+@import play.api.Environment
+@import play.api.Mode
+
+@()(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets, env: Environment)
 <link rel="import" href="@routes.Application.scongoFinish">
 <link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
 <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
@@ -29,7 +32,7 @@
                 },
 
                 ready: function () {
-                    this.socket = new WebSocket("@routes.Application.socket.webSocketURL");
+                    this.socket = new WebSocket("@routes.Application.socket.webSocketURL(secure=env.mode == Mode.Prod)");
 
                     this.menu = document.querySelector('#' + this.menuId);
                     this.game = document.querySelector('#' + this.gameId);

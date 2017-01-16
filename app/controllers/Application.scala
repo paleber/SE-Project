@@ -12,6 +12,7 @@ import control.MainControl
 import gui.Gui
 import model.msg.ClientMsg.ShowMenu
 import models.Wui
+import play.api.Mode
 import play.api.http.ContentTypes
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Comet
@@ -28,6 +29,7 @@ import scala.language.postfixOps
 class Application @Inject()(silhouette: Silhouette[DefaultEnv],
                             val messagesApi: MessagesApi,
                             socialProviderRegistry: SocialProviderRegistry,
+                            implicit val env: play.api.Environment,
                             implicit val system: ActorSystem,
                             implicit val mat: Materializer,
                             implicit val webJarAssets: WebJarAssets) extends Controller with I18nSupport {
@@ -68,7 +70,9 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
 
   def socket: WebSocket = WebSocket.accept[String, String] { _ =>
     val control = system.actorOf(MainControl.props)
-    system.actorOf(Gui.props(control))
+    if (env.mode != Mode.Prod) {
+      system.actorOf(Gui.props(control))
+    }
     ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
 
@@ -83,24 +87,30 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
       .mapMaterializedValue(actor => {
 
         val control = system.actorOf(MainControl.props)
-        system.actorOf(Gui.props(control))
+        if (env.mode != Mode.Prod) {
+          system.actorOf(Gui.props(control))
+        }
         system.actorOf(Wui.props(control, actor))
         Future {
           Thread.sleep(100)
           control ! ShowMenu
         }
 
-      })
+      }
+
+      )
 
     Ok.chunked(source via Comet.string("parent.cometPush")).as(ContentTypes.HTML)
   }
 
-  def angular = silhouette.UserAwareAction { implicit request =>
-    Ok(views.html.angular(request.identity))
+  def angular = silhouette.UserAwareAction {
+    implicit request =>
+      Ok(views.html.angular(request.identity))
   }
 
-  def angularSub(path: String) = silhouette.UserAwareAction { implicit request =>
-    Ok(views.html.angular(request.identity))
+  def angularSub(path: String) = silhouette.UserAwareAction {
+    implicit request =>
+      Ok(views.html.angular(request.identity))
   }
 
   /**
@@ -108,10 +118,11 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     *
     * @return The result to display.
     */
-  def signOut: Action[AnyContent] = silhouette.SecuredAction.async { implicit request =>
-    val result = Redirect(routes.Application.index())
-    silhouette.env.eventBus.publish(LogoutEvent(request.identity, request))
-    silhouette.env.authenticatorService.discard(request.authenticator, result)
+  def signOut: Action[AnyContent] = silhouette.SecuredAction.async {
+    implicit request =>
+      val result = Redirect(routes.Application.index())
+      silhouette.env.eventBus.publish(LogoutEvent(request.identity, request))
+      silhouette.env.authenticatorService.discard(request.authenticator, result)
   }
 
 }

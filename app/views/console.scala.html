@@ -1,9 +1,9 @@
 @import com.mohiva.play.silhouette.api.Identity
 
-@(identity: Option[Identity])(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
+@(identity: Option[Identity])(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets, env: play.api.Environment)
 @main("Console", identity) {
 
-    <script src='@routes.Assets.at("javascripts/console.js")'></script>
+    @consoleScript()
 
     <div class="container-fluid">
         <div id="cmdWell" class="well input-group">
