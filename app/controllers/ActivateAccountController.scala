@@ -49,14 +49,13 @@ class ActivateAccountController @Inject() (
 
     userService.retrieve(loginInfo).flatMap {
       case Some(user) if !user.activated =>
-        authTokenService.create(user.name).map { authToken =>
+        authTokenService.create(user.userID).map { authToken =>
           val url = routes.ActivateAccountController.activate(authToken.id).absoluteURL()
 
           mailerClient.send(Email(
             subject = Messages("email.activate.account.subject"),
             from = Messages("email.from"),
             to = Seq(decodedEmail),
-
             bodyText = Some(views.txt.emails.activateAccount(user, url).body),
             bodyHtml = Some(views.html.emails.activateAccount(user, url).body)
           ))
@@ -74,7 +73,7 @@ class ActivateAccountController @Inject() (
     */
   def activate(token: UUID) = silhouette.UnsecuredAction.async { implicit request =>
     authTokenService.validate(token).flatMap {
-      case Some(authToken) => userService.retrieve(authToken.name).flatMap {
+      case Some(authToken) => userService.retrieve(authToken.userID).flatMap {
         case Some(user) if user.loginInfo.providerID == CredentialsProvider.ID =>
           userService.save(user.copy(activated = true)).map { _ =>
             Redirect(routes.SignInController.view()).flashing("success" -> Messages("account.activated"))
@@ -85,4 +84,3 @@ class ActivateAccountController @Inject() (
     }
   }
 }
-

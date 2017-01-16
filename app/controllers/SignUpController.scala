@@ -1,5 +1,6 @@
 package controllers
 
+import java.util.UUID
 import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api._
@@ -78,16 +79,20 @@ class SignUpController @Inject() (
           case None =>
             val authInfo = passwordHasherRegistry.current.hash(data.password)
             val user = User(
-              name = data.name,
+              userID = UUID.randomUUID(),
               loginInfo = loginInfo,
-              email = data.email,
+              firstName = None,
+              lastName = None,
+              fullName = Some(data.name),
+              email = Some(data.email),
+              avatarURL = None,
               activated = false
             )
             for {
               avatar <- avatarService.retrieveURL(data.email)
-              user <- userService.save(user)
+              user <- userService.save(user.copy(avatarURL = avatar))
               authInfo <- authInfoRepository.add(loginInfo, authInfo)
-              authToken <- authTokenService.create(user.name)
+              authToken <- authTokenService.create(user.userID)
             } yield {
               val url = routes.ActivateAccountController.activate(authToken.id).absoluteURL()
               mailerClient.send(Email(
