@@ -31,8 +31,3 @@ GET           /assets/*file                   controllers.Assets.at(path="/publi
 # Angular
 GET           /angular                        controllers.Application.angular
 GET           /angular/*path                  controllers.Application.angularSub(path)
-
-GET           /api/heroes                     controllers.Heroes.all
-POST          /api/heroes                     controllers.Heroes.create
-PUT           /api/heroes/:id                 controllers.Heroes.update(id:Int)
-DELETE        /api/heroes/:id                 controllers.Heroes.delete(id:Int)

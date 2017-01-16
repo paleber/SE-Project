@@ -26,7 +26,6 @@ $(() => {
 
     socket.onerror = msg => {
         console.log("socket error: " + msg);
-        alert('An error occurred: ' + msg);
     };
 
     socket.onclose = () => {

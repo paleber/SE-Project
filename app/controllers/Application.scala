@@ -33,7 +33,7 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
   private implicit val timeout: Timeout = 5.seconds
 
   def index = silhouette.UserAwareAction {
-    Redirect(routes.Application.console())
+    Redirect(routes.Application.game())
   }
 
   def guide = silhouette.UserAwareAction { implicit request =>
