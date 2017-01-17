@@ -67,7 +67,7 @@ github = GitHub
 # Emails
 ##########
 
-email.from = Scongo
+email.from = Scongo <scongo.auth@gmail.com>
 
 # Sign Up
 email.sign.up.subject = Welcome
