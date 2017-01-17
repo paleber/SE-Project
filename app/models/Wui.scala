@@ -13,7 +13,7 @@ object Wui {
 
 }
 
-class Wui(control: ActorRef, socket: ActorRef) extends Actor with ActorLogging {
+class Wui(control: ActorRef, connection: ActorRef) extends Actor with ActorLogging {
   log.info("Initializing")
 
   control ! MainControl.RegisterView(self)
@@ -27,14 +27,14 @@ class Wui(control: ActorRef, socket: ActorRef) extends Actor with ActorLogging {
     case msg: String =>
       parser ! msg
 
+    case msg: ParserMsg =>
+      connection ! Serialization.write(msg)
+
     case msg: ClientMsg =>
       control ! msg
 
     case msg: ServerMsg =>
-      socket ! Serialization.write(msg)
-
-    case msg: ParserMsg =>
-      socket ! Serialization.write(msg)
+      connection ! Serialization.write(msg)
 
     case msg =>
       log.warning("Unhandled message: " + msg)
