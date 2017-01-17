@@ -91,14 +91,13 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
           system.actorOf(Gui.props(control))
         }
         system.actorOf(Wui.props(control, actor))
+
         Future {
           Thread.sleep(100)
           control ! ShowMenu
         }
 
-      }
-
-      )
+      })
 
     Ok.chunked(source via Comet.string("parent.cometPush")).as(ContentTypes.HTML)
   }

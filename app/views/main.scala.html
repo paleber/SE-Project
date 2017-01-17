@@ -25,15 +25,11 @@
         <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
         <link rel='import' href='@routes.Assets.at("bower_components/paper-dialog/paper-dialog.html")'>
 
+        <link rel="stylesheet" href="@routes.Assets.at("stylesheets/main.css")">
         <style>
-        .container-fluid {
-            width: 100%;
-        }
 
-        .navbar-inverse {
-            background: #1c3363;
-            border-color: #1c3363;
-        }
+
+
         </style>
 
         @head
@@ -42,16 +38,10 @@
 
     <body>
 
-        <div style="display: flex;
-            flex-direction: column;
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;">
+        <div id="main-container">
             <div style="flex: 0">
-                <nav class="navbar navbar-inverse">
-                    <div class="container-fluid" >
+                <nav class="navbar navbar-default">
+                    <div class="container-fluid">
                         <div class="navbar-header">
                             <a class="navbar-brand">Scongo</a>
                         </div>

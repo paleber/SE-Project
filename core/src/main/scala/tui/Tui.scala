@@ -4,8 +4,8 @@ import java.io.{BufferedReader, InputStreamReader}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import control.MainControl
-import model.console.{ConsoleInput, ConsoleOutput, TextCmdParser}
-import model.msg.{ClientMsg, ServerMsg}
+import model.console.CmdParser
+import model.msg.{ClientMsg, ParserMsg, ServerMsg}
 
 object Tui {
   def props(control: ActorRef) = Props(new Tui(control))
@@ -16,15 +16,15 @@ private class Tui(control: ActorRef) extends Actor with ActorLogging {
 
   control ! MainControl.RegisterView(self)
 
-  private val parser = context.actorOf(Props[TextCmdParser], "parser")
+  private val parser = context.actorOf(Props[CmdParser], "parser")
 
   private val readConsoleThread = new Thread(new Runnable {
-    override def run() = {
+    override def run(): Unit = {
       val reader = new BufferedReader(new InputStreamReader(System.in))
       try {
         while (!Thread.currentThread.isInterrupted) {
           if (reader.ready) {
-            parser ! ConsoleInput(reader.readLine)
+            parser ! reader.readLine
           } else {
             Thread.sleep(10)
           }
@@ -39,7 +39,7 @@ private class Tui(control: ActorRef) extends Actor with ActorLogging {
   })
   readConsoleThread.start()
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
 
     case ClientMsg.Shutdown =>
       control ! PoisonPill
@@ -50,7 +50,7 @@ private class Tui(control: ActorRef) extends Actor with ActorLogging {
     case msg: ServerMsg =>
       log.info(msg.toString)
 
-    case msg: ConsoleOutput =>
+    case msg: ParserMsg =>
       log.info(msg.toString)
 
     case msg =>
@@ -58,7 +58,7 @@ private class Tui(control: ActorRef) extends Actor with ActorLogging {
 
   }
 
-  override def postStop = {
+  override def postStop: Unit = {
     readConsoleThread.interrupt()
   }
 
