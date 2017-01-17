@@ -56,7 +56,7 @@ class CmdParser extends Actor with ActorLogging {
     }
 
     if (args.length - 1 != cmd.get.numberArgs) {
-      context.parent ! ParserMsg(s"Command '${args(0)}' requires ${cmd.get.numberArgs} arguments")
+      context.parent ! ParserMsg(s"Command '${args(0)}' requires ${cmd.get.numberArgs} argument(s)")
       return
     }
 

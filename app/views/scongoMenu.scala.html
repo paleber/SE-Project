@@ -42,9 +42,6 @@
 
         <div id="contentMenu" style="display: none;">
 
-            @defining(persistence.LevelManager.levels("easy")) { levels =>
-            }
-
             @for(difficulty <- persistence.LevelManager.levels.keys) {
                 @defining("well" + difficulty.capitalize) { wellId =>
                     <div id="@wellId" class="well">
@@ -59,7 +56,6 @@
                     </div>
                 }
             }
-
 
         </div>
 

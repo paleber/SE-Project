@@ -9,7 +9,9 @@
 
         $(() => {
 
-            socket = new WebSocket("@routes.Application.socket.webSocketURL(secure= env.mode == Mode.Prod )");
+            @defining(env.mode == Mode.Prod) { secure =>
+            socket = new WebSocket("@routes.Application.socket.webSocketURL(secure)");
+            }
 
             socket.onopen = () => {
                 console.log("socket opened");

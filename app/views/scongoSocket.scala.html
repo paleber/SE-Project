@@ -32,7 +32,10 @@
                 },
 
                 ready: function () {
-                    this.socket = new WebSocket("@routes.Application.socket.webSocketURL(secure=env.mode == Mode.Prod)");
+
+                    @defining(env.mode == Mode.Prod) { secure =>
+                    this.socket = new WebSocket("@routes.Application.socket.webSocketURL(secure)");
+                    }
 
                     this.menu = document.querySelector('#' + this.menuId);
                     this.game = document.querySelector('#' + this.gameId);
