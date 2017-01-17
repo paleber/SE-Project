@@ -6,9 +6,15 @@
 
     <template>
 
+        <style>
+        p {
+            text-align: center
+        }
+        </style>
+
         <paper-dialog id="modalFinish" modal>
             <h2>Level Completed</h2>
-            <p style="text-align: center">Time: <span id="time"></span>s</p>
+            <p>Time: <span id="time"></span>s</p>
             <div class="buttons">
                 <paper-button dialog-confirm autofocus onclick="socket.sendMsg('menu')">OK</paper-button>
             </div>

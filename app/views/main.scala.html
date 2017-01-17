@@ -2,14 +2,6 @@
 @import models.User
 @(title: String, identity: Option[Identity] = None, head: Html = Html(""))(body: Html)(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
 
-@isActive(s: String) = @{
-    if(s == title) {
-        Html("class='active'")
-    } else {
-        Html("")
-    }
-}
-
 <!DOCTYPE html>
 <html>
     <head>
@@ -40,10 +32,9 @@
     </head>
 
     <body>
-
         <div id="main-container">
 
-            <!-- navigation bar -->
+                <!-- navigation bar -->
             <div style="flex: 0">
                 <nav class="navbar navbar-default">
                     <div class="container-fluid">
@@ -51,11 +42,11 @@
                             <a class="navbar-brand">Scongo</a>
                         </div>
                         <ul class="nav navbar-nav">
-                            <li id="navGuide"><a href="@routes.Application.guide" @isActive("Guide")>Guide</a></li>
-                            <li id="navGame"><a href="@routes.Application.game" @isActive("Game")>Menu</a></li>
-                            <li id="navConsole"><a href="@routes.Application.console" @isActive("Console")>Console</a></li>
-                            <li id="navComet"><a href="@routes.Application.comet" @isActive("Comet")>Comet</a></li>
-                            <li id="navAngular"><a href="@routes.Application.angular" @isActive("Angular")>Angular</a></li>
+                            <li id="navGuide"><a href="@routes.Application.guide">Guide</a></li>
+                            <li id="navGame"><a href="@routes.Application.game">Menu</a></li>
+                            <li id="navConsole"><a href="@routes.Application.console">Console</a></li>
+                            <li id="navComet"><a href="@routes.Application.comet">Comet</a></li>
+                            <li id="navAngular"><a href="@routes.Application.angular">Angular</a></li>
                         </ul>
                         <ul class="nav navbar-nav navbar-right">
                         @if(identity.isEmpty) {
