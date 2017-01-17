@@ -2,6 +2,7 @@
 @(identity: Option[Identity])(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
 
 @head = {
+    <!--suppress ALL -->
     <base href="/angular" />
     @* In this version of the application the typescript compilation is done by the play framework.
     The browser downloads .js files. *@
@@ -14,22 +15,23 @@
     <script type='text/javascript' src='@routes.Assets.at("lib/reflect-metadata/Reflect.js")'></script>
     <script type='text/javascript' src='@routes.Assets.at("lib/systemjs/dist/system.src.js")'></script>
 
+    <!--suppress ES6ModulesDependencies -->
     <script>    @* our app is downloaded as individual javascript files by SystemJs
                      after compilation by sbt-typescript*@
-    var map = {
+    const map = {
         'app': 'assets/app',
         '@@angular': 'assets/lib/@@angular',
         'rxjs': 'assets/lib/rxjs',
         'symbol-observable': 'assets/lib/symbol-observable'
     };
 
-    var packages = {
+    const packages = {
         'app': {main: 'main.js', defaultExtension: 'js'},
         'rxjs': {defaultExtension: 'js'},
         'assets/lib': {defaultExtension: 'js'},
         'symbol-observable': {defaultExtension: 'js', main: 'index.js'}
     };
-    var ngPackageNames = [
+    const ngPackageNames = [
         'common',
         'compiler',
         'core',
@@ -53,7 +55,7 @@
     }
 
     // Add package entries for angular packages
-    var setPackageConfig = System.packageWithIndex ? packIndex : packUmd;
+    const setPackageConfig = System.packageWithIndex ? packIndex : packUmd;
     ngPackageNames.forEach(setPackageConfig);
 
     // Add map entries for angular packages
