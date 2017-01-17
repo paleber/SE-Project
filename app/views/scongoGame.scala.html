@@ -114,6 +114,10 @@
                 },
 
                 drawBoard: function () {
+                    if(this.board == undefined) {
+                        return
+                    }
+
                     let canvas = document.getElementById("can");
                     let ctx = canvas.getContext("2d");
 
