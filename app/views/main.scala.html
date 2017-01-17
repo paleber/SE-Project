@@ -13,25 +13,28 @@
 <!DOCTYPE html>
 <html>
     <head>
+
         <title>Scongo - @title</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script src="@routes.Assets.at("bower_components/webcomponentsjs/webcomponents-lite.min.js")"></script>
 
+            <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+            <!-- JQuery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+            <!-- Polymer -->
+        <script src="@routes.Assets.at("bower_components/webcomponentsjs/webcomponents-lite.min.js")"></script>
         <link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
         <link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
         <link rel='import' href='@routes.Assets.at("bower_components/paper-dialog/paper-dialog.html")'>
 
+            <!-- custom stylesheets -->
         <link rel="stylesheet" href="@routes.Assets.at("stylesheets/main.css")">
-        <style>
 
-
-
-        </style>
-
+            <!-- template head -->
         @head
 
     </head>
@@ -39,6 +42,8 @@
     <body>
 
         <div id="main-container">
+
+            <!-- navigation bar -->
             <div style="flex: 0">
                 <nav class="navbar navbar-default">
                     <div class="container-fluid">
@@ -68,6 +73,7 @@
                 </nav>
             </div>
 
+                <!-- authentication notifications -->
             <div class="starter-template row">
                 @request.flash.get("error").map { msg =>
                     <div class="col-md-6 col-md-offset-3 alert alert-danger">
@@ -88,7 +94,10 @@
                     </div>
                 }
             </div>
+
+                <!-- template body -->
             @body
+
         </div>
     </body>
 </html>
