@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/scongo -Dhttp.port=${PORT} -Dconfig.resource=${PLAY_CONF_FILE}
+web: target/universal/stage/bin/scongo -Dconfig.resource=${SCONGO_CONF_FILE}
