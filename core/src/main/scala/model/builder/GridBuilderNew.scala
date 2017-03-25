@@ -1,18 +1,90 @@
 package model.builder
 
-import model.basic
-import model.basic.{Line, Point}
-import model.element.{Grid, AnchoredGrid, GridPlan}
+import model.basic._
+import model.element.{AnchoredGrid, Grid}
+import persistence.ResourceLoader.NewLevelPlan
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
-object GridBuilder {
 
-  def build(plan: GridPlan): AnchoredGrid = {
-    val coreLines = buildCoreLines(plan.form)
-    val dirs = buildDirections(plan.form)
+
+
+object GridBuilderNew {
+
+  case class NewGrid(anchors: List[Point], polygons: List[List[Point]], edges: List[Line])
+
+  case class ConstructedLevel(board: NewGrid,
+                              blocks: List[NewGrid],
+                              width: Double,
+                              height: Double)
+
+  private case class Element(anchor: Point, lines: List[Line])
+
+  private val (anchorToAnchors: Map[Int, Array[Vector]], anchorToCorners: Map[Int, Array[Vector]]) = {
+
+    def createLines(form: Int) = {
+      var p = Point.ORIGIN
+      var v = Vector(0, 1)
+      val lines = new Array[Line](form)
+
+      for (i <- 0 until form) {
+        val q = p + v
+        lines(i) = Line(p, q)
+        p = q
+        v = v.rotate(Math.PI * 2 / form)
+      }
+
+      val centeringVector = Vector.stretch(lines(lines.length / 2 - 1).end, Point.ORIGIN) * 0.5
+      lines.transform(l => l + centeringVector)
+    }
+
+    val lines = Map(4 -> createLines(4), 6 -> createLines(6))
+
+    def createAnchorVectors(form: Int): Array[Vector] = {
+      lines(form).map(line => Vector.stretch(Point.ORIGIN, line.mid) * 2).toArray
+    }
+
+    def createCornerVectors(form: Int): Array[Vector] = {
+      lines(form).map(line => Vector.stretch(Point.ORIGIN, line.start)).toArray
+    }
+
+    (Map(4 -> createAnchorVectors(4),
+      6 -> createAnchorVectors(6)),
+      Map(4 -> createCornerVectors(4),
+        6 -> createCornerVectors(6)))
+
+  }
+
+  def build(plan: NewLevelPlan): ConstructedLevel = {
+    val anchorVectors = anchorToAnchors(plan.form)
+    val cornerVectors = anchorToCorners(plan.form)
+
+    def shiftAnchors(shifts: List[Int]): Point = {
+      Point.ORIGIN + shifts.map(s => anchorVectors(s)).sum
+    }
+
+    def createBlockAnchors(blockShifts: List[List[Int]]): List[Point] = {
+      blockShifts.map(s => shiftAnchors(s))
+    }
+
+    val blockAnchors = plan.shifts.map(s => createBlockAnchors(s))
+    val boardAnchors = blockAnchors.flatten
+
+    def createBlock(anchors: List[Point]): NewGrid = {
+
+
+
+
+       NewGrid(anchors, null, null)
+    }
+
+
+    // anchors / List[List[PolygonPoint]] / List[BorderLines]
+    val boardElements: List[Element] = null
+    val blockElements: List[List[Element]] = null
+
     val anchors = buildAnchors(dirs, plan.shifts)
     centerElements(coreLines, anchors)
 
@@ -37,32 +109,13 @@ object GridBuilder {
       yMax = Math.max(yMax, anchors(i).y)
     }
 
-    val v = basic.Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
+    val v = Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
     coreLines.transform(l => l + v)
     anchors.transform(a => a + v)
   }
 
-  private def buildCoreLines(rotationSteps: Int): Array[Line] = {
-    var p = Point.ORIGIN
-    var v = basic.Vector(0, 1)
-    val lines = new Array[Line](rotationSteps)
 
-    for (i <- 0 until rotationSteps) {
-      val q = p + v
-      lines(i) = Line(p, q)
-      p = q
-      v = v.rotate(Math.PI * 2 / rotationSteps)
-    }
-
-    v = basic.Vector.stretch(lines(lines.length / 2 - 1).end, Point.ORIGIN) * 0.5
-    for (i <- 0 until rotationSteps) {
-      lines(i) = lines(i) + v
-    }
-
-    lines
-  }
-
-  private def buildAnchors(dirs: List[basic.Vector], shifts: List[List[Int]]): Array[Point] = {
+  private def buildAnchors(dirs: List[Vector], shifts: List[List[Int]]): Array[Point] = {
     val anchors = mutable.ListBuffer(Point.ORIGIN)
     shifts.foreach(shift => {
       var p = Point.ORIGIN
@@ -75,7 +128,7 @@ object GridBuilder {
   private def buildAllLines(coreLines: Array[Line], anchors: Array[Point]): ListBuffer[Line] = {
     val lines = ListBuffer.empty[Line]
     anchors.foreach(anchor => {
-      val v = basic.Vector.stretch(anchors(0), anchor)
+      val v = Vector.stretch(anchors(0), anchor)
       coreLines.foreach(l => lines += l + v)
     })
     lines
@@ -142,15 +195,6 @@ object GridBuilder {
         }
       }
     }
-  }
-
-  def buildDirections(rotationSteps: Int): List[basic.Vector] = {
-    val lines = buildCoreLines(rotationSteps)
-    val dirs = ListBuffer.empty[basic.Vector]
-    lines.foreach(l =>
-      dirs += basic.Vector.stretch(Point.ORIGIN, l.mid) * 2
-    )
-    dirs.toList
   }
 
 }

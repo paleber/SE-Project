@@ -3,7 +3,7 @@ package persistence
 import java.io.File
 
 import model.builder.GridBuilder
-import model.element.{GridExtended, GridPlan}
+import model.element.{AnchoredGrid, GridPlan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
@@ -17,7 +17,7 @@ private[persistence] object GridManager {
   private implicit val formats = Serialization.formats(NoTypeHints)
 
   private[persistence] case class MapItem(plan: GridPlan,
-                                          grid: Option[GridExtended] = None)
+                                          grid: Option[AnchoredGrid] = None)
 
   private[persistence] val gridMap = {
     val dirGrids = new File("core/src/main/resources/blocks")
@@ -31,7 +31,7 @@ private[persistence] object GridManager {
     map
   }
 
-  private[persistence] def load(name: String): GridExtended = {
+  private[persistence] def load(name: String): AnchoredGrid = {
     assert(gridMap.contains(name))
     val item = gridMap(name)
     if (item.grid.isDefined) {

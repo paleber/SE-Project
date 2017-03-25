@@ -1,7 +1,9 @@
 package model.element
 
-case class Level(name: String,
+case class Level(category: String,
+                 name: String,
                  width: Double,
                  height: Double,
-                 board: GridExtended,
-                 blocks: List[GridExtended])
+                 form: Int,
+                 board: AnchoredGrid,
+                 blocks: List[AnchoredGrid])

@@ -20,7 +20,11 @@ case class Vector(x: Double, y: Double) {
     Vector(x * factor, y * factor)
   }
 
-  def angle = {
+  def +(v: Vector): Vector = {
+    Vector(x + v.x, y + v.y)
+  }
+
+  def angle: Double = {
     (Math.atan2(-y, x) + 2 * Math.PI) % Math.PI
   }
 

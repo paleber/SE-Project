@@ -2,7 +2,7 @@ package persistence
 
 import java.io.File
 
-import model.element.{GridExtended, Level, LevelPlan}
+import model.element.{AnchoredGrid, Level, LevelPlan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
@@ -64,7 +64,7 @@ object LevelManager {
       }
     }
 
-    val blocks = ListBuffer.empty[GridExtended]
+    val blocks = ListBuffer.empty[AnchoredGrid]
     for (block <- variant) {
       blocks += GridManager.load(block)
     }
@@ -73,11 +73,13 @@ object LevelManager {
     val board = GridManager.load(name)
 
     val level = Some(Level(
-      levelName,
-      item.get.plan.size,
-      item.get.plan.size * 0.625,
-      board,
-      blocks.toList
+      category = "TODO - category",
+      name = levelName,
+      width = item.get.plan.size,
+      height = item.get.plan.size * 0.625,
+      form = 0, // TODO
+      board = board,
+      blocks = blocks.toList
     ))
     levelMap.update(levelName, item.get.copy(level = level))
     level
