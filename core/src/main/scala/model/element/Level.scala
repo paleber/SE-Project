@@ -1,9 +1,10 @@
 package model.element
 
-case class Level(category: String,
-                 name: String,
+case class Level(id: LevelId,
                  width: Double,
                  height: Double,
                  form: Int,
-                 board: AnchoredGrid,
-                 blocks: List[AnchoredGrid])
+                 board: Grid,
+                 blocks: List[Grid])
+
+case class LevelId(category: String, name: String)

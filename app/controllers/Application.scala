@@ -10,7 +10,7 @@ import com.mohiva.play.silhouette.api.{LogoutEvent, Silhouette}
 import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import control.MainControl
 import gui.Gui
-import model.msg.ClientMsg.ShowMenu
+import model.msg.ClientMsg.LoadMenu
 import models.Wui
 import play.api.Mode
 import play.api.http.ContentTypes
@@ -94,7 +94,7 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
 
         Future {
           Thread.sleep(100)
-          control ! ShowMenu
+          control ! LoadMenu
         }
 
       })

@@ -1,19 +1,9 @@
 package persistence
 
-import java.io.File
 
-import model.builder.GridBuilder
-import model.element.{AnchoredGrid, GridPlan}
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.read
+private[persistence] object GridManagerOld {
 
-import scala.collection.mutable
-import scala.io.Source
-
-
-private[persistence] object GridManager {
-
+  /*
   private implicit val formats = Serialization.formats(NoTypeHints)
 
   private[persistence] case class MapItem(plan: GridPlan,
@@ -40,6 +30,6 @@ private[persistence] object GridManager {
     val grid = GridBuilder.build(item.plan)
     gridMap.update(name, item.copy(grid = Some(grid)))
     grid
-  }
+  }*/
 
 }

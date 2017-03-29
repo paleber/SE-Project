@@ -2,34 +2,47 @@ package model.element
 
 import model.basic.{Line, Point}
 
-case class Grid(corners: List[Point],
-                lines: List[Line]) {
+case class Grid(anchors: List[Point],
+                polygons: List[List[Point]],
+                edges: List[Line],
+                position: Point) {
 
   def +(p: Point): Grid = {
     copy(
-      corners = corners.toArray.transform(c => c + p).toList,
-      lines = lines.toArray.transform(l => l + p).toList
+      position = position + p
     )
   }
 
-  def rotate(angle: Double, pivot: Point = Point.ORIGIN): Grid = {
+  def rotate(angle: Double, pivot: Point = Point.ZERO): Grid = {
     copy(
-      corners = corners.toArray.transform(p => p.rotate(angle, pivot)).toList,
-      lines = lines.toArray.transform(l => l.rotate(angle, pivot)).toList
+      anchors = anchors.map(_.rotate(angle, pivot)),
+      polygons = polygons.map(_.map(_.rotate(angle, pivot))),
+      edges = edges.map(_.rotate(angle, pivot))
     )
   }
 
   def mirrorVertical(percentage: Double = 1): Grid = {
     copy(
-      corners = corners.toArray.transform(p => p.mirrorVertical(percentage)).toList,
-      lines = lines.toArray.transform(l => l.mirrorVertical(percentage)).toList
+      anchors = anchors.map(_.mirrorVertical(percentage)),
+      polygons = polygons.map(_.map(_.mirrorVertical(percentage))),
+      edges = edges.map(_.mirrorVertical(percentage))
     )
   }
 
   def mirrorHorizontal(percentage: Double = 1): Grid = {
     copy(
-      corners = corners.toArray.transform(p => p.mirrorHorizontal(percentage)).toList,
-      lines = lines.toArray.transform(l => l.mirrorHorizontal(percentage)).toList
+      anchors = anchors.map(_.mirrorHorizontal(percentage)),
+      polygons = polygons.map(_.map(_.mirrorHorizontal(percentage))),
+      edges = edges.map(_.mirrorHorizontal(percentage))
+    )
+  }
+
+  lazy val absolute: Grid = {
+    copy(
+      anchors = anchors.map(_ + position),
+      polygons = polygons.map(_.map(_ + position)),
+      edges = edges.map(_ + position),
+      position = Point.ZERO
     )
   }
 

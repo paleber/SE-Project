@@ -10,7 +10,9 @@ lazy val core = (project in file("core")).
     name := "scongo-core",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % "2.4.11",
-      "org.json4s" %% "json4s-jackson" % "3.4.1"
+      "org.json4s" %% "json4s-jackson" % "3.4.1",
+      "org.scaldi" %% "scaldi" % "0.5.8",
+      "org.scaldi" %% "scaldi-akka" % "0.5.8"
     )
   )
 

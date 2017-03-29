@@ -4,30 +4,35 @@ import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JPanel}
 
 import akka.actor.{Actor, ActorLogging}
+import model.element.LevelId
 import model.msg.ClientMsg
-import persistence.LevelManager
+import model.msg.ServerMsg.MenuLoaded
 
 class GuiMenu extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
-  context.parent ! Gui.SetContentPane(this, "menu")
 
-  private case class StartLevelEvent(level: String) extends ActionListener {
-    override def actionPerformed(e: ActionEvent): Unit = {
-      log.info(s"Button clicked: Level $level")
-      context.parent ! ClientMsg.ShowGame(level)
-    }
-  }
+  override def receive: Receive = {
 
-  for(level <- LevelManager.levels.values.flatten) {
-    val bnLevel = new JButton(level)
-    bnLevel.addActionListener(StartLevelEvent(level))
-    add(bnLevel)
-  }
+    case MenuLoaded(info) =>
+      log.debug("Showing menu")
+      context.parent ! Gui.SetContentPane(this, "menu")
 
-  revalidate()
+      info.foreach { case (category, names) =>
+        names.foreach { name =>
 
-  override def receive = {
-    case msg => log.warning("Unhandled message: " + msg)
+          val bn = new JButton(category + " - " + name)
+          bn.addActionListener(new ActionListener {
+            override def actionPerformed(e: ActionEvent): Unit = {
+              log.info(s"Button clicked: Level $category - $name")
+              context.parent ! ClientMsg.LoadLevel(LevelId(category, name))
+            }
+          })
+          add(bn)
+        }
+      }
+      revalidate()
+
+
   }
 
 }

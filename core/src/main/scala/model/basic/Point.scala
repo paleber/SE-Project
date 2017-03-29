@@ -1,7 +1,7 @@
 package model.basic
 
 object Point {
-  val ORIGIN = Point(0, 0)
+  val ZERO = Point(0, 0)
 }
 
 case class Point(x: Double, y: Double) {
@@ -22,7 +22,7 @@ case class Point(x: Double, y: Double) {
     (x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)
   }
 
-  def rotate(angle: Double, pivot: Point = Point.ORIGIN): Point = {
+  def rotate(angle: Double, pivot: Point = Point.ZERO): Point = {
     val sin = Math.sin(angle)
     val cos = Math.cos(angle)
 

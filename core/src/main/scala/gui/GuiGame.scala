@@ -5,20 +5,29 @@ import java.awt.image.BufferedImage
 import java.awt.{BasicStroke, Color, Cursor, Font, Graphics, Graphics2D, Polygon, Toolkit, Point => AwtPoint}
 import javax.swing.JPanel
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, Props}
 import model.basic.Point
-import model.element.{Block, Grid, Game}
+import model.element.{Grid, Level}
+import model.msg.ServerMsg.LevelLoaded
 import model.msg.{ClientMsg, ServerMsg}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
+object GuiGame {
 
-case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
+  def props: Props = Props[GuiGame]
+
+}
+
+private class GuiGame extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-  private val blocks = game.blocks.toArray
+  /*
+  private var level: Level = null
+
+  private val blocks = level.blocks.toArray
   private val blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
 
   private val boardPoly = new Polygon()
@@ -37,7 +46,7 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
     null
   )
 
-  private class Selected(var index: Int, var block: Block) {
+  private class Selected(var index: Int, var block: Grid) {
     val poly = new Polygon()
   }
 
@@ -71,17 +80,17 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
 
 
   addMouseMotionListener(new MouseAdapter {
-    override def mouseDragged(e: MouseEvent) = self ! MoveBlock(e.getPoint)
+    override def mouseDragged(e: MouseEvent): Unit = self ! MoveBlock(e.getPoint)
   })
 
   addMouseListener(new MouseAdapter {
-    override def mousePressed(e: MouseEvent) = self ! SelectBlock(e.getPoint)
+    override def mousePressed(e: MouseEvent): Unit = self ! SelectBlock(e.getPoint)
 
-    override def mouseReleased(e: MouseEvent) = self ! ReleaseBlock
+    override def mouseReleased(e: MouseEvent): Unit = self ! ReleaseBlock
   })
 
   addKeyListener(new KeyAdapter {
-    override def keyPressed(e: KeyEvent) = e.getKeyCode match {
+    override def keyPressed(e: KeyEvent): Unit = e.getKeyCode match {
       case KeyEvent.VK_A => self ! RotateLeft
       case KeyEvent.VK_LEFT => self ! RotateLeft
 
@@ -103,7 +112,7 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
     }
   })
 
-  context.parent ! Gui.SetContentPane(this, game.levelName)
+  context.parent ! Gui.SetContentPane(this, level.id.name)
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
     poly.reset()
@@ -117,13 +126,14 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
 
   override def paint(g: Graphics): Unit = {
 
+    /*
     // Calculate scaleFactor and offsets
-    scaleFactor = Math.min(getWidth / game.width, getHeight / game.height)
-    xOffset = (getWidth - game.width * scaleFactor) / 2
-    yOffset = (getHeight - game.height * scaleFactor) / 2
+    scaleFactor = Math.min(getWidth / level.width, getHeight / level.height)
+    xOffset = (getWidth - level.width * scaleFactor) / 2
+    yOffset = (getHeight - level.height * scaleFactor) / 2
 
     // Convert corners to polygon
-    convertCornersToPoly(game.board.corners, Point.ORIGIN, boardPoly)
+    convertCornersToPoly(level.board.corners, Point.ZERO, boardPoly)
     for (i <- blocks.indices) {
       convertCornersToPoly(blocks(i).grid.corners, blocks(i).position, blockPolys(i))
     }
@@ -213,7 +223,7 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
         (getWidth - g.getFontMetrics.stringWidth(sEnter)) / 2,
         getHeight / 2
       )
-    }
+    } */
   }
 
   private def scale(z: Double): Int = {
@@ -226,11 +236,15 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
 
   private def scaleY(z: Double): Int = {
     (z * scaleFactor + yOffset + 0.5).toInt
-  }
+  }*/
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
 
-    case ServerMsg.UpdateBlock(index, block) =>
+    case LevelLoaded(level) =>
+      log.info("TODO")
+
+      /*
+    case ServerMsg.BlockUpdated(index, block) =>
       blocks(index) = block
 
     case ServerMsg.LevelFinished(timeMillis) =>
@@ -276,51 +290,52 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
     case RotateLeft =>
       if (selected.isDefined && activeAction.isEmpty) {
         context.parent ! ClientMsg.RotateBlockLeft(selected.get.index)
-        activeAction = Some(BlockAction(RotateLeft, selected.get.block.grid))
+        activeAction = Some(BlockAction(RotateLeft, selected.get.block))
         self ! HandleBlockAction
       }
 
     case RotateRight =>
       if (selected.isDefined && activeAction.isEmpty) {
         context.parent ! ClientMsg.RotateBlockRight(selected.get.index)
-        activeAction = Some(BlockAction(RotateRight, selected.get.block.grid))
+        activeAction = Some(BlockAction(RotateRight, selected.get.block))
         self ! HandleBlockAction
       }
 
     case MirrorVertical =>
       if (selected.isDefined && activeAction.isEmpty) {
         context.parent ! ClientMsg.MirrorBlockVertical(selected.get.index)
-        activeAction = Some(BlockAction(MirrorVertical, selected.get.block.grid))
+        activeAction = Some(BlockAction(MirrorVertical, selected.get.block))
         self ! HandleBlockAction
       }
 
     case MirrorHorizontal =>
       if (selected.isDefined && activeAction.isEmpty) {
         context.parent ! ClientMsg.MirrorBlockHorizontal(selected.get.index)
-        activeAction = Some(BlockAction(MirrorHorizontal, selected.get.block.grid))
+        activeAction = Some(BlockAction(MirrorHorizontal, selected.get.block))
         self ! HandleBlockAction
       }
 
     case BackToMenu =>
-      context.parent ! ClientMsg.ShowMenu
+      context.parent ! ClientMsg.LoadMenu
 
     case BackToMenuWhenFinished =>
       if (finished.isDefined) {
-        context.parent ! ClientMsg.ShowMenu
+        context.parent ! ClientMsg.LoadMenu
       }
 
     case HandleBlockAction =>
       handleBlockAction()
-
+*/
     case msg =>
       log.warning("Unhandled message: " + msg)
 
   }
-
+/*
   private def handleBlockAction(): Unit = {
     if (activeAction.isDefined) {
       activeAction.get.action match {
 
+          /*
         case RotateLeft =>
           selected.get.block = selected.get.block.copy(
             grid = activeAction.get.startGrid.rotate(
@@ -347,9 +362,9 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
             grid = activeAction.get.startGrid.mirrorHorizontal(
               activeAction.get.curStep.toFloat / activeAction.get.maxSteps
             )
-          )
+          )*/
 
-        case _ => log.error("Unknown Block Action")
+        case msg => unhandled(msg)
       }
 
       if (activeAction.get.curStep < activeAction.get.maxSteps) {
@@ -363,5 +378,5 @@ case class GuiGame(game: Game) extends JPanel with Actor with ActorLogging {
         activeAction = None
       }
     }
-  }
+  }*/
 }

@@ -1,16 +1,16 @@
 package model.msg
 
-import model.element.{Block, Game}
+import model.element.{Grid, Level}
 
 sealed trait ServerMsg extends ScongoMsg
 
 object ServerMsg {
 
-  case object ShowMenu extends ServerMsg
+  case class MenuLoaded(info: Map[String, List[String]]) extends ServerMsg
 
-  case class ShowGame(game: Game) extends ServerMsg
+  case class LevelLoaded(level: Level) extends ServerMsg
 
-  case class UpdateBlock(index: Int, block: Block) extends ServerMsg
+  case class BlockUpdated(index: Int, block: Grid) extends ServerMsg
 
   case class LevelFinished(timeMillis: Int) extends ServerMsg
 

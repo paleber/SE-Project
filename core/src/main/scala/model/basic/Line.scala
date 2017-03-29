@@ -45,7 +45,7 @@ case class Line(start: Point, end: Point) {
     Point((start.x + end.x) / 2, (start.y + end.y) / 2)
   }
 
-  def rotate(angle: Double, pivot: Point = Point.ORIGIN): Line = {
+  def rotate(angle: Double, pivot: Point = Point.ZERO): Line = {
     Line(start.rotate(angle, pivot), end.rotate(angle, pivot))
   }
 

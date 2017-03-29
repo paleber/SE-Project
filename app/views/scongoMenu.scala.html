@@ -42,11 +42,11 @@
 
         <div id="contentMenu" style="display: none;">
 
-            @for(difficulty <- persistence.LevelManager.levels.keys) {
+            @for(difficulty <- persistence.LevelManagerOld.levels.keys) {
                 @defining("well" + difficulty.capitalize) { wellId =>
                     <div id="@wellId" class="well">
                         <h3>@difficulty.capitalize</h3>
-                        @defining(persistence.LevelManager.levels(difficulty)) { levels =>
+                        @defining(persistence.LevelManagerOld.levels(difficulty)) { levels =>
                             @for(level <- levels) {
                                 <paper-button raised on-click="levelClicked" level="@level">Level @{
                                     levels.indexOf(level) + 1

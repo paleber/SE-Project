@@ -1,6 +1,7 @@
 package model.console
 
 import model.basic.Point
+import model.element.LevelId
 import model.msg.ClientMsg
 
 
@@ -23,17 +24,17 @@ private[console] object CmdShutdown extends TextCommand {
 }
 
 private[console] object CmdShowGame extends TextCommand {
-  override val description = "level:STRING - Show the game"
-  override val numberArgs = 1
+  override val description = "category:STRING name:String - Show the game"
+  override val numberArgs = 2
 
-  override def parse(args: Array[String]) = ClientMsg.ShowGame(args(1))
+  override def parse(args: Array[String]) = ClientMsg.LoadLevel(LevelId(args(1), args(2)))
 }
 
 private[console] object CmdShowMenu extends TextCommand {
   override val description = "- Show the menu"
   override val numberArgs = 0
 
-  override def parse(args: Array[String]) = ClientMsg.ShowMenu
+  override def parse(args: Array[String]) = ClientMsg.LoadMenu
 }
 
 private[console] object CmdRotateBlockLeft extends TextCommand {

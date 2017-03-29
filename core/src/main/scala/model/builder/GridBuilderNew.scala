@@ -1,31 +1,20 @@
 package model.builder
 
 import model.basic._
-import model.element.{AnchoredGrid, Grid}
-import persistence.ResourceLoader.NewLevelPlan
-
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-
-
-
-
+import model.element.{Grid, Plan}
 
 object GridBuilderNew {
 
-  case class NewGrid(anchors: List[Point], polygons: List[List[Point]], edges: List[Line])
 
-  case class ConstructedLevel(board: NewGrid,
-                              blocks: List[NewGrid],
+  case class ConstructedLevel(board: Grid,
+                              blocks: List[Grid],
                               width: Double,
                               height: Double)
-
-  private case class Element(anchor: Point, lines: List[Line])
 
   private val (anchorToAnchors: Map[Int, Array[Vector]], anchorToCorners: Map[Int, Array[Vector]]) = {
 
     def createLines(form: Int) = {
-      var p = Point.ORIGIN
+      var p = Point.ZERO
       var v = Vector(0, 1)
       val lines = new Array[Line](form)
 
@@ -36,18 +25,18 @@ object GridBuilderNew {
         v = v.rotate(Math.PI * 2 / form)
       }
 
-      val centeringVector = Vector.stretch(lines(lines.length / 2 - 1).end, Point.ORIGIN) * 0.5
+      val centeringVector = Vector.stretch(lines(lines.length / 2 - 1).end, Point.ZERO) * 0.5
       lines.transform(l => l + centeringVector)
     }
 
     val lines = Map(4 -> createLines(4), 6 -> createLines(6))
 
     def createAnchorVectors(form: Int): Array[Vector] = {
-      lines(form).map(line => Vector.stretch(Point.ORIGIN, line.mid) * 2).toArray
+      lines(form).map(line => Vector.stretch(Point.ZERO, line.mid) * 2).toArray
     }
 
     def createCornerVectors(form: Int): Array[Vector] = {
-      lines(form).map(line => Vector.stretch(Point.ORIGIN, line.start)).toArray
+      lines(form).map(line => Vector.stretch(Point.ZERO, line.start)).toArray
     }
 
     (Map(4 -> createAnchorVectors(4),
@@ -57,35 +46,64 @@ object GridBuilderNew {
 
   }
 
-  def build(plan: NewLevelPlan): ConstructedLevel = {
+  def build(plan: Plan): ConstructedLevel = {
     val anchorVectors = anchorToAnchors(plan.form)
     val cornerVectors = anchorToCorners(plan.form)
 
     def shiftAnchors(shifts: List[Int]): Point = {
-      Point.ORIGIN + shifts.map(s => anchorVectors(s)).sum
+      Point.ZERO + shifts.map(s => anchorVectors(s)).reduce(_ + _)
     }
 
-    def createBlockAnchors(blockShifts: List[List[Int]]): List[Point] = {
+    def createAnchors(blockShifts: List[List[Int]]): List[Point] = {
       blockShifts.map(s => shiftAnchors(s))
     }
 
-    val blockAnchors = plan.shifts.map(s => createBlockAnchors(s))
-    val boardAnchors = blockAnchors.flatten
-
-    def createBlock(anchors: List[Point]): NewGrid = {
-
-
-
-
-       NewGrid(anchors, null, null)
+    def centerAnchors(anchors: List[Point]): List[Point] = {
+      val x = anchors.map(_.x)
+      val y = anchors.map(_.y)
+      val v = Vector(-0.5 * (x.min + x.max), -0.5 * (y.min + y.max))
+      anchors.map(_ + v)
     }
 
+    val blockAnchors = plan.shifts.map(s => centerAnchors(createAnchors(s)))
+    val boardAnchors = centerAnchors(blockAnchors.flatten)
 
-    // anchors / List[List[PolygonPoint]] / List[BorderLines]
-    val boardElements: List[Element] = null
-    val blockElements: List[List[Element]] = null
+    def createGrid(anchors: List[Point]): Grid = {
 
-    val anchors = buildAnchors(dirs, plan.shifts)
+      val corners = anchors.map(a =>
+        cornerVectors.map(v => a + v).toList)
+
+      val edges = corners.flatMap(corners =>
+        corners.indices.map(index =>
+          Line(corners(index), corners((index + 1) % corners.length))))
+
+      // TODO remove double border edges
+      // TODO optimize border edges
+      // TODO optimize polygons
+
+      // TODO calc mid of the board
+      Grid(anchors, corners, edges, Point(10, 5))
+    }
+
+    val board = createGrid(boardAnchors)
+    val blocks = blockAnchors.map(createGrid)
+
+    /*val width = {
+      val x = boardAnchors.map(_.x)
+      2 * (x.max - x.min)
+    }
+
+    val height = {
+      val y = boardAnchors.map(_.y)
+      2 * (y.max - y.min)
+    }*/
+
+    // TODO height = 0.625 * width
+    // TODO calc board size correctly
+
+    ConstructedLevel(board, blocks, 20, 15)
+
+    /*val anchors = buildAnchors(dirs, plan.shifts)
     centerElements(coreLines, anchors)
 
     val allLines = buildAllLines(coreLines, anchors)
@@ -94,46 +112,10 @@ object GridBuilderNew {
     optimizeLines(allLines)
 
     val corners = buildCorners(allLines)
-    AnchoredGrid(Grid(corners, lines.toList), plan.form, anchors.toList)
+    AnchoredGrid(Grid(corners, lines.toList), plan.form, anchors.toList) */
   }
 
-  private def centerElements(coreLines: Array[Line], anchors: Array[Point]) = {
-    var xMin = anchors(0).x
-    var xMax = anchors(0).x
-    var yMin = anchors(0).y
-    var yMax = anchors(0).y
-    for (i <- 1 until anchors.length) {
-      xMin = Math.min(xMin, anchors(i).x)
-      xMax = Math.max(xMax, anchors(i).x)
-      yMin = Math.min(yMin, anchors(i).y)
-      yMax = Math.max(yMax, anchors(i).y)
-    }
-
-    val v = Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
-    coreLines.transform(l => l + v)
-    anchors.transform(a => a + v)
-  }
-
-
-  private def buildAnchors(dirs: List[Vector], shifts: List[List[Int]]): Array[Point] = {
-    val anchors = mutable.ListBuffer(Point.ORIGIN)
-    shifts.foreach(shift => {
-      var p = Point.ORIGIN
-      shift.foreach(shiftIndex => p += dirs(shiftIndex))
-      anchors += p
-    })
-    anchors.toArray
-  }
-
-  private def buildAllLines(coreLines: Array[Line], anchors: Array[Point]): ListBuffer[Line] = {
-    val lines = ListBuffer.empty[Line]
-    anchors.foreach(anchor => {
-      val v = Vector.stretch(anchors(0), anchor)
-      coreLines.foreach(l => lines += l + v)
-    })
-    lines
-  }
-
+  /*
   private def extractInnerLines(allLines: ListBuffer[Line]): ListBuffer[Line] = {
     val innerLines = ListBuffer.empty[Line]
     var index = 0
@@ -195,6 +177,6 @@ object GridBuilderNew {
         }
       }
     }
-  }
+  }*/
 
 }

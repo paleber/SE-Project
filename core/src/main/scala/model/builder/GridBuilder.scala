@@ -1,15 +1,9 @@
 package model.builder
 
-import model.basic
-import model.basic.{Line, Point}
-import model.element.{Grid, AnchoredGrid, GridPlan}
-
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-
 
 object GridBuilder {
 
+  /*
   def build(plan: GridPlan): AnchoredGrid = {
     val coreLines = buildCoreLines(plan.form)
     val dirs = buildDirections(plan.form)
@@ -37,13 +31,13 @@ object GridBuilder {
       yMax = Math.max(yMax, anchors(i).y)
     }
 
-    val v = basic.Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ORIGIN)
+    val v = basic.Vector.stretch(Point((xMin + xMax) / 2, (yMin + yMax) / 2), Point.ZERO)
     coreLines.transform(l => l + v)
     anchors.transform(a => a + v)
   }
 
   private def buildCoreLines(rotationSteps: Int): Array[Line] = {
-    var p = Point.ORIGIN
+    var p = Point.ZERO
     var v = basic.Vector(0, 1)
     val lines = new Array[Line](rotationSteps)
 
@@ -54,7 +48,7 @@ object GridBuilder {
       v = v.rotate(Math.PI * 2 / rotationSteps)
     }
 
-    v = basic.Vector.stretch(lines(lines.length / 2 - 1).end, Point.ORIGIN) * 0.5
+    v = basic.Vector.stretch(lines(lines.length / 2 - 1).end, Point.ZERO) * 0.5
     for (i <- 0 until rotationSteps) {
       lines(i) = lines(i) + v
     }
@@ -63,9 +57,9 @@ object GridBuilder {
   }
 
   private def buildAnchors(dirs: List[basic.Vector], shifts: List[List[Int]]): Array[Point] = {
-    val anchors = mutable.ListBuffer(Point.ORIGIN)
+    val anchors = mutable.ListBuffer(Point.ZERO)
     shifts.foreach(shift => {
-      var p = Point.ORIGIN
+      var p = Point.ZERO
       shift.foreach(shiftIndex => p += dirs(shiftIndex))
       anchors += p
     })
@@ -148,9 +142,9 @@ object GridBuilder {
     val lines = buildCoreLines(rotationSteps)
     val dirs = ListBuffer.empty[basic.Vector]
     lines.foreach(l =>
-      dirs += basic.Vector.stretch(Point.ORIGIN, l.mid) * 2
+      dirs += basic.Vector.stretch(Point.ZERO, l.mid) * 2
     )
     dirs.toList
-  }
+  } */
 
 }

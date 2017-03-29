@@ -8,8 +8,8 @@ import akka.actor.{Actor, ActorLogging}
 final class DefaultActor extends Actor with ActorLogging {
   log.debug("Initializing")
 
-  override def receive = {
-    case msg => log.warning(s"Unhandled message: $msg")
+  override def receive: Receive = {
+    case msg => unhandled(msg)
   }
 
   override def postStop(): Unit = {

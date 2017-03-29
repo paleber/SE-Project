@@ -3,13 +3,13 @@ package gui
 
 import java.awt.Dimension
 import java.awt.event.{WindowAdapter, WindowEvent}
-import javax.swing.{JFrame, JPanel, WindowConstants}
+import javax.swing.{JFrame, JPanel}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import control.MainControl
 import gui.Gui.SetContentPane
-import model.element.Game
-import model.general.{DefaultActor, IdGenerator}
+import model.general.DefaultActor
+import model.msg.ServerMsg.{LevelLoaded, MenuLoaded}
 import model.msg.{ClientMsg, ServerMsg}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,17 +19,16 @@ import scala.language.postfixOps
 
 object Gui {
 
+  def props(control: ActorRef) = Props(new Gui(control))
+
   private val DEFAULT_SIZE = new Dimension(800, 600)
 
   private[gui] case class SetContentPane(c: JPanel, name: String)
-
-  def props(control: ActorRef) = Props(new Gui(control))
 
 }
 
 private class Gui(control: ActorRef) extends Actor with ActorLogging {
   log.debug("Initializing")
-
   control ! MainControl.RegisterView(self)
 
   private val frame = new JFrame()
@@ -39,7 +38,7 @@ private class Gui(control: ActorRef) extends Actor with ActorLogging {
   frame.setLocationRelativeTo(null)
   frame.setVisible(true)
   frame.addWindowListener(new WindowAdapter {
-    override def windowClosing(e: WindowEvent) = {
+    override def windowClosing(e: WindowEvent): Unit = {
       control ! PoisonPill
     }
   })
@@ -48,9 +47,12 @@ private class Gui(control: ActorRef) extends Actor with ActorLogging {
     frame.repaint()
   }
 
+  private val menu = context.actorOf(Props[GuiMenu], "menu")
+  private val game = context.actorOf(GuiGame.props, "game")
+
   private var content = context.actorOf(Props[DefaultActor], "init")
 
-  override def receive = {
+  override def receive: Receive = {
 
     case SetContentPane(panel, name) =>
       frame.setTitle(s"scongo - $name")
@@ -59,22 +61,21 @@ private class Gui(control: ActorRef) extends Actor with ActorLogging {
       panel.setFocusable(true)
       panel.requestFocusInWindow()
 
-    case ServerMsg.ShowMenu =>
-      context.stop(content)
-      content = context.actorOf(Props[GuiMenu], s"menu-${IdGenerator.generate()}")
+    case msg: MenuLoaded =>
+      content = menu
+      content ! msg
 
-    case ServerMsg.ShowGame(game: Game) =>
-      content = context.actorOf(Props(GuiGame(game)), s"game-${IdGenerator.generate()}")
+    case msg: LevelLoaded =>
+      content = game
+      content ! msg
 
     case msg: ServerMsg => content ! msg
 
     case msg: ClientMsg => control ! msg
 
-    case msg => log.warning("Unhandled message: " + msg)
-
   }
 
-  override def postStop = {
+  override def postStop: Unit = {
     frame.dispose()
   }
 

@@ -1,7 +1,7 @@
 package model.msg
 
-import akka.actor.ActorRef
 import model.basic.Point
+import model.element.LevelId
 
 sealed trait ClientMsg extends ScongoMsg
 
@@ -9,9 +9,9 @@ object ClientMsg {
 
   case object Shutdown extends ClientMsg
 
-  case object ShowMenu extends ClientMsg
+  case object LoadMenu extends ClientMsg
 
-  case class ShowGame(level: String) extends ClientMsg
+  case class LoadLevel(id: LevelId) extends ClientMsg
 
   case class RotateBlockLeft(index: Int) extends ClientMsg
 
