@@ -1,18 +1,11 @@
 package gui
 
-import java.awt.event.{KeyAdapter, KeyEvent, MouseAdapter, MouseEvent}
-import java.awt.image.BufferedImage
-import java.awt.{BasicStroke, Color, Cursor, Font, Graphics, Graphics2D, Polygon, Toolkit, Point => AwtPoint}
+import java.awt.{Point => AwtPoint}
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging, Props}
-import model.basic.Point
-import model.element.{Grid, Level}
-import model.msg.ServerMsg.LevelLoaded
-import model.msg.{ClientMsg, ServerMsg}
+import persistence.Persistence.LevelLoaded
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object GuiGame {

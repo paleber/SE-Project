@@ -5,8 +5,7 @@ import javax.swing.{JButton, JPanel}
 
 import akka.actor.{Actor, ActorLogging}
 import model.element.LevelId
-import model.msg.ClientMsg
-import model.msg.ServerMsg.MenuLoaded
+import persistence.Persistence.{LoadGame, MenuLoaded}
 
 class GuiMenu extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
@@ -24,7 +23,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
           bn.addActionListener(new ActionListener {
             override def actionPerformed(e: ActionEvent): Unit = {
               log.info(s"Button clicked: Level $category - $name")
-              context.parent ! ClientMsg.LoadLevel(LevelId(category, name))
+              context.parent ! LoadGame(LevelId(category, name))
             }
           })
           add(bn)

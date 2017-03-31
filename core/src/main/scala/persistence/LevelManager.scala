@@ -1,31 +1,27 @@
 package persistence
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
 import model.element.{Level, LevelId}
-import model.msg.ClientMsg.{LoadLevel, LoadMenu}
 import model.msg.PersistenceMessages._
-import model.msg.ServerMsg.{LevelLoaded, MenuLoaded}
+import persistence.Persistence.{LevelLoaded, LoadGame, LoadMenu, MenuLoaded}
 
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object LevelManager {
-  def props: Props = Props(new LevelManager())
-}
-
-private class LevelManager extends Actor with ActorLogging {
+class LevelManager extends Actor with ActorLogging {
+  log.debug("Initializing")
 
   private implicit val timeout: Timeout = 5 seconds
 
-  private val loader = context.actorOf(PersistenceAccessor.props)
+  private val loader = context.actorOf(FilePersistence.props)
 
   private val levels = mutable.Map.empty[LevelId, Level]
 
-  private val menuLoadedMsg = Await.result((loader ? LoadMenu).mapTo[MenuLoaded], 5 seconds).info
+  private val menuLoadedMsg = Await.result((loader ? LoadMenu).mapTo[MenuLoaded], 5 seconds)
 
   private case class Request(id: LevelId, sender: ActorRef)
 
@@ -34,14 +30,15 @@ private class LevelManager extends Actor with ActorLogging {
   override def receive: Receive = {
 
     case LoadMenu =>
+      log.debug("LoadMenu")
       sender ! menuLoadedMsg
 
-    case LoadLevel(id) =>
+    case LoadGame(id) =>
       val level = levels.get(id)
       if (level.isDefined) {
         sender ! LevelLoaded(level.get)
       } else {
-        loader ! LoadLevel(id)
+        loader ! LoadGame(id)
         requestBuffer += Request(id, sender)
       }
 

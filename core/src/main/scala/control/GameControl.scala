@@ -1,16 +1,26 @@
 package control
 
 import akka.actor.{Actor, ActorLogging}
-import model.basic.{Point, Vector}
-import model.builder.GridBuilder
-import model.element.{Grid, Level}
-import model.msg.{ClientMsg, InternalMsg, ServerMsg}
+import model.basic.Point
+import model.msg.ClientMsg
+import persistence.Persistence.LevelLoaded
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+object GameControl {
+
+  case class RotateBlockLeft(index: Int) extends ClientMsg
+
+  case class RotateBlockRight(index: Int) extends ClientMsg
+
+  case class MirrorBlockVertical(index: Int) extends ClientMsg
+
+  case class MirrorBlockHorizontal(index: Int) extends ClientMsg
+
+  case class UpdateBlockPosition(index: Int, position: Point) extends ClientMsg
+
+}
 
 
-class GameControl(level: Level) extends Actor with ActorLogging {
+class GameControl extends Actor with ActorLogging {
   log.debug("Initializing")
 
   /*
@@ -209,6 +219,9 @@ class GameControl(level: Level) extends Actor with ActorLogging {
   } */
 
   override def receive: Receive = {
+
+    case LevelLoaded(level) =>
+      log.debug("Loaded level: " + level)
 
     /*
     case InternalMsg.GetGame =>

@@ -1,78 +1,85 @@
 package control
 
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
-import control.MainControl.RegisterView
-import model.general.{DefaultActor, IdGenerator}
-import model.msg.ClientMsg.LoadLevel
-import model.msg.{ClientMsg, ServerMsg}
+import control.MainControl.{CreateAndRegisterView, RegisterView}
+import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 import persistence.LevelManager
-import scaldi.Module
+import persistence.Persistence.{LevelLoaded, LoadGame, LoadMenu, MenuLoaded}
+import scaldi.Injector
+import scaldi.akka.AkkaInjectable
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 
 object MainControl {
 
-  case class RegisterView(view: ActorRef)
+  // Create and add a view as child
+  case class CreateAndRegisterView(props: Props, name: String) extends InternalMsg
 
-  def props: Props = Props[MainControl]
+  // Add an external view actor
+  case class RegisterView(view: ActorRef) extends InternalMsg
 
 }
 
-private class MainControl extends Actor with ActorLogging {
+class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with ActorLogging {
+  log.debug("Initializing")
 
   private implicit val timeout: Timeout = 5.seconds
 
-  private val levelManager = context.actorOf(LevelManager.props, "levelManager")
+  private val levelManager = context.actorOf(Props[LevelManager], "levelManager")
+  private val game = context.actorOf(Props[GameControl], "game")
 
-  private val views = ListBuffer.empty[ActorRef]
-  private var subControl = context.actorOf(Props[DefaultActor], "init")
+  private def receiveLoadMenu(views: List[ActorRef]): Receive = {
+    case LoadMenu =>
+      levelManager ! LoadMenu
 
-  override def receive: Receive = {
-    case RegisterView(view) =>
-      views += view
+    case msg: MenuLoaded =>
+      log.debug("Switching state to menu")
+      context.become(menuState(views))
+      views.foreach(_ ! msg)
+  }
 
-    case ClientMsg.LoadMenu =>
-      log.debug("Showing Menu")
+  private def initState(views: List[ActorRef]): Receive =
+    receiveLoadMenu(views).orElse {
 
-      context.stop(subControl)
+      case RegisterView(view) =>
+        log.debug("Registering view: " + view.path.name)
+        context.become(initState(view :: views))
 
-      subControl = context.actorOf(Props[DefaultActor], s"menu-${IdGenerator.generate()}")
-      self ! ServerMsg.MenuLoaded
+      case CreateAndRegisterView(props, name) =>
+        log.debug("Creating view: " + name)
+        val view = context.actorOf(props, name)
+        context.become(initState(view :: views))
 
-    case ClientMsg.LoadLevel(id) =>
-      log.debug("Showing Game")
+    }
 
-      levelManager ! LoadLevel(id)
+  private def menuState(views: List[ActorRef]): Receive = {
 
+    case msg: LoadGame =>
+      levelManager ! msg
 
-
-     /*
-      val level = LevelManager.load(levelName)
-      if (level.isDefined) {
-        log.info(s"Start Game: $levelName")
-        context.stop(subControl)
-        subControl = context.actorOf(Props(new GameControl(level.get)), s"game-${IdGenerator.generate()}")
-
-        (subControl ? InternalMsg.GetGame).mapTo[Level].map { game => // TODO previous it was mapped to game
-          views.foreach(_ ! ServerMsg.ShowLevel(game))
-        }
-
-      } else {
-        log.error(s"Level $levelName is unknown")
-      } */
-
-    case msg: ClientMsg =>
-      subControl.forward(msg)
-
-    case msg: ServerMsg =>
+    case msg: LevelLoaded =>
+      log.debug("Switching state to game")
+      context.become(gameState(views))
       views.foreach(_ ! msg)
 
   }
 
+  private def gameState(views: List[ActorRef]): Receive =
+    receiveLoadMenu(views) orElse {
+
+      case msg: ServerMsg =>
+        views.foreach(_ ! msg)
+
+      case msg: ClientMsg =>
+        game ! msg
+
+    }
+
+  override def receive: Receive = initState(List.empty)
+
   override def postStop: Unit = {
-    views.foreach(_ ! PoisonPill)
+    log.debug("Stopping")
   }
 
 }

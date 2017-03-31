@@ -1,21 +1,33 @@
 package persistence
 
 import akka.actor.{Actor, ActorLogging}
-
 import model.builder.GridBuilderNew
 import model.builder.GridBuilderNew.ConstructedLevel
 import model.element.{Level, LevelId, Plan}
-import model.msg.ClientMsg.{LoadLevel, LoadMenu}
 import model.msg.PersistenceMessages._
-import model.msg.ServerMsg.{LevelLoaded, MenuLoaded}
+import model.msg.{ClientMsg, ServerMsg}
+import persistence.Persistence.{LevelLoaded, LoadGame, LoadMenu, MenuLoaded}
 
 import scala.util.{Failure, Success, Try}
+
+object Persistence {
+
+  case object LoadMenu extends ClientMsg
+
+  case class LoadGame(id: LevelId) extends ClientMsg
+
+  case class MenuLoaded(info: Map[String, List[String]]) extends ServerMsg
+
+  case class LevelLoaded(level: Level) extends ServerMsg
+
+}
 
 trait Persistence extends Actor with ActorLogging {
 
   override final def receive: Receive = {
 
     case LoadMenu =>
+      log.debug("Loading menu")
       Try(loadMetaInfo) match {
         case Success(info) =>
           sender ! MenuLoaded(info)
@@ -23,7 +35,8 @@ trait Persistence extends Actor with ActorLogging {
           log.error(s"failed to load info ($f)")
       }
 
-    case LoadLevel(id: LevelId) =>
+    case LoadGame(id: LevelId) =>
+      log.debug("Loading level - " + id)
       Try(loadPlan(id)) match {
         case Success(plan) =>
           val ConstructedLevel(board, blocks, width, height) = GridBuilderNew.build(plan)
@@ -41,13 +54,16 @@ trait Persistence extends Actor with ActorLogging {
           sender ! LoadingLevelFailed(id)
       }
 
+    case msg =>
+      log.warning("Unhandled message: " + msg)
+
   }
 
   @throws[Exception]
-  abstract def loadMetaInfo: Map[String, List[String]]
+  def loadMetaInfo: Map[String, List[String]]
 
   @throws[Exception]
-  abstract def loadPlan(levelId: LevelId): Plan
+  def loadPlan(levelId: LevelId): Plan
 
 }
 

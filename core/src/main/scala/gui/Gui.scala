@@ -5,12 +5,11 @@ import java.awt.Dimension
 import java.awt.event.{WindowAdapter, WindowEvent}
 import javax.swing.{JFrame, JPanel}
 
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
-import control.MainControl
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import gui.Gui.SetContentPane
-import model.general.DefaultActor
-import model.msg.ServerMsg.{LevelLoaded, MenuLoaded}
 import model.msg.{ClientMsg, ServerMsg}
+import persistence.Persistence.{LevelLoaded, MenuLoaded}
+import scaldi.Injector
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -19,17 +18,14 @@ import scala.language.postfixOps
 
 object Gui {
 
-  def props(control: ActorRef) = Props(new Gui(control))
-
   private val DEFAULT_SIZE = new Dimension(800, 600)
 
   private[gui] case class SetContentPane(c: JPanel, name: String)
 
 }
 
-private class Gui(control: ActorRef) extends Actor with ActorLogging {
+final class Gui(implicit inj: Injector) extends Actor with ActorLogging {
   log.debug("Initializing")
-  control ! MainControl.RegisterView(self)
 
   private val frame = new JFrame()
   frame.setLayout(null)
@@ -39,7 +35,7 @@ private class Gui(control: ActorRef) extends Actor with ActorLogging {
   frame.setVisible(true)
   frame.addWindowListener(new WindowAdapter {
     override def windowClosing(e: WindowEvent): Unit = {
-      control ! PoisonPill
+      context.parent ! PoisonPill
     }
   })
 
@@ -50,7 +46,7 @@ private class Gui(control: ActorRef) extends Actor with ActorLogging {
   private val menu = context.actorOf(Props[GuiMenu], "menu")
   private val game = context.actorOf(GuiGame.props, "game")
 
-  private var content = context.actorOf(Props[DefaultActor], "init")
+  private var content = context.actorOf(Props.empty, "init")
 
   override def receive: Receive = {
 
@@ -71,7 +67,7 @@ private class Gui(control: ActorRef) extends Actor with ActorLogging {
 
     case msg: ServerMsg => content ! msg
 
-    case msg: ClientMsg => control ! msg
+    case msg: ClientMsg => context.parent ! msg
 
   }
 

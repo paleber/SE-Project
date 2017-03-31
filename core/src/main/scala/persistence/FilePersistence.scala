@@ -19,7 +19,7 @@ object FilePersistence {
 
 }
 
-private final class FilePersistence extends Persistence {
+final class FilePersistence extends Persistence {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 

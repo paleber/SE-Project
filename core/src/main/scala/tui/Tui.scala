@@ -2,19 +2,24 @@ package tui
 
 import java.io.{BufferedReader, InputStreamReader}
 
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
-import control.MainControl
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import model.console.CmdParser
 import model.msg.{ClientMsg, ParserMsg, ServerMsg}
+import scaldi.Injector
+import scaldi.akka.AkkaInjectable
+import tui.Tui.Shutdown
+
 
 object Tui {
-  def props(control: ActorRef) = Props(new Tui(control))
+
+  case object Shutdown extends ClientMsg
+
 }
 
-private class Tui(control: ActorRef) extends Actor with ActorLogging {
+final class Tui(implicit inj: Injector) extends Actor with AkkaInjectable with ActorLogging {
   log.debug("Initializing")
 
-  control ! MainControl.RegisterView(self)
+  //context.parent ! MainControl.RegisterView(self)
 
   private val parser = context.actorOf(Props[CmdParser], "parser")
 
@@ -30,8 +35,8 @@ private class Tui(control: ActorRef) extends Actor with ActorLogging {
           }
         }
       } catch {
-        case e: InterruptedException =>
-        case e: NoSuchElementException =>
+        case _: InterruptedException =>
+        case _: NoSuchElementException =>
       } finally {
         reader.close()
       }
@@ -39,13 +44,13 @@ private class Tui(control: ActorRef) extends Actor with ActorLogging {
   })
   readConsoleThread.start()
 
-  override def receive: PartialFunction[Any, Unit] = {
+  override def receive: Receive = {
 
-    case ClientMsg.Shutdown =>
-      control ! PoisonPill
+    case Shutdown =>
+      context.parent ! PoisonPill
 
     case msg: ClientMsg =>
-      control ! msg
+      context.parent ! msg
 
     case msg: ServerMsg =>
       log.info(msg.toString)

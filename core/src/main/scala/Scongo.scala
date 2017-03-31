@@ -1,34 +1,34 @@
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.ActorSystem
 import control.MainControl
+import control.MainControl.CreateAndRegisterView
 import gui.Gui
-import model.general.DefaultActor
-import model.msg.ClientMsg.LoadMenu
+import persistence.Persistence.LoadMenu
+import persistence.{FilePersistence, Persistence}
+import scaldi.Module
 import scaldi.akka.AkkaInjectable
-import scaldi.{Injector, Module}
 import tui.Tui
 
-object Scongo extends App {
+object Scongo extends App with AkkaInjectable{
 
-  private implicit val inj: Injector = new ScongoModule
+  private implicit val system = ActorSystem("scongo")
+  private implicit val injector  = ScongoModule
 
-  private val system = ActorSystem("scongo")
+  private val main = injectActorRef[MainControl]("main")
 
-  private val main = system.actorOf(MainControl.props, "main")
-
-  system.actorOf(Tui.props(main), "tui")
-  system.actorOf(Gui.props(main), "gui")
+  main ! CreateAndRegisterView(injectActorProps[Tui], "tui")
+  main ! CreateAndRegisterView(injectActorProps[Gui], "gui")
 
   main ! LoadMenu
 
 }
 
-class ScongoModule extends Module{
-  bind[Actor] identifiedBy 'abc to new DefaultActor
-}
+object ScongoModule extends Module{
 
-class T extends AkkaInjectable {
+  bind[MainControl] toProvider new MainControl
 
-  val x = injectActorProps[DefaultActor] (identified by 'abc)
-  val y = injectActorRef[DefaultActor]
+  bind[Tui] toProvider new Tui
+  bind[Gui] toProvider new Gui
+
+  bind[Persistence] toProvider new FilePersistence
 
 }
