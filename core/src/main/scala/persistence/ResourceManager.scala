@@ -12,7 +12,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class LevelManager extends Actor with ActorLogging {
+class ResourceManager extends Actor with ActorLogging {
   log.debug("Initializing")
 
   private implicit val timeout: Timeout = 5 seconds
