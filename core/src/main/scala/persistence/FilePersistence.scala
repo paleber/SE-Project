@@ -2,7 +2,6 @@ package persistence
 
 import java.io.File
 
-import akka.actor.Props
 import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
@@ -12,8 +11,6 @@ import persistence.FilePersistence.path
 import scala.io.Source
 
 object FilePersistence {
-
-  def props: Props = Props(new FilePersistence())
 
   private val path = "core/src/main/resources/lvNew"
 

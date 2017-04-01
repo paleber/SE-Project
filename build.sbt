@@ -12,7 +12,9 @@ lazy val core = (project in file("core")).
       "com.typesafe.akka" %% "akka-actor" % "2.4.11",
       "org.json4s" %% "json4s-jackson" % "3.4.1",
       "org.scaldi" %% "scaldi" % "0.5.8",
-      "org.scaldi" %% "scaldi-akka" % "0.5.8"
+      "org.scaldi" %% "scaldi-akka" % "0.5.8",
+      "org.scalactic" %% "scalactic" % "3.0.1",
+      "org.scalatest" %% "scalatest" % "3.0.1" % "test"
     )
   )
 

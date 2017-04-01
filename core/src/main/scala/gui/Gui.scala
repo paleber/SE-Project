@@ -8,7 +8,7 @@ import javax.swing.{JFrame, JPanel}
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import gui.Gui.SetContentPane
 import model.msg.{ClientMsg, ServerMsg}
-import persistence.Persistence.{LevelLoaded, MenuLoaded}
+import persistence.ResourceManager.{LevelLoaded, MenuLoaded}
 import scaldi.Injector
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -4,8 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import control.MainControl.{CreateAndRegisterView, RegisterView}
 import model.msg.{ClientMsg, InternalMsg, ServerMsg}
-import persistence.ResourceManager
-import persistence.Persistence.{LevelLoaded, LoadGame, LoadMenu, MenuLoaded}
+import persistence.ResourceManager.{LevelLoaded, LoadLevel, LoadMenu, MenuLoaded}
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable
 
@@ -26,7 +25,7 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
 
   private implicit val timeout: Timeout = 5.seconds
 
-  private val levelManager = context.actorOf(Props[ResourceManager], "levelManager")
+  private val levelManager = inject[ActorRef]('resourceRouter)
   private val game = context.actorOf(Props[GameControl], "game")
 
   private def receiveLoadMenu(views: List[ActorRef]): Receive = {
@@ -55,7 +54,7 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
 
   private def menuState(views: List[ActorRef]): Receive = {
 
-    case msg: LoadGame =>
+    case msg: LoadLevel =>
       levelManager ! msg
 
     case msg: LevelLoaded =>

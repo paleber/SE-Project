@@ -1,15 +1,9 @@
 package model.builder
 
 import model.basic._
-import model.element.{Grid, Plan}
+import model.element.{Grid, Level, LevelId, Plan}
 
-object GridBuilderNew {
-
-
-  case class ConstructedLevel(board: Grid,
-                              blocks: List[Grid],
-                              width: Double,
-                              height: Double)
+object LevelBuilder {
 
   private val (anchorToAnchors: Map[Int, Array[Vector]], anchorToCorners: Map[Int, Array[Vector]]) = {
 
@@ -46,12 +40,12 @@ object GridBuilderNew {
 
   }
 
-  def build(plan: Plan): ConstructedLevel = {
+  def build(id: LevelId, plan: Plan): Level = {
     val anchorVectors = anchorToAnchors(plan.form)
     val cornerVectors = anchorToCorners(plan.form)
 
     def shiftAnchors(shifts: List[Int]): Point = {
-      Point.ZERO + shifts.map(s => anchorVectors(s)).reduce(_ + _)
+      shifts.map(s => anchorVectors(s)).foldLeft(Point.ZERO)(_ + _)
     }
 
     def createAnchors(blockShifts: List[List[Int]]): List[Point] = {
@@ -101,7 +95,15 @@ object GridBuilderNew {
     // TODO height = 0.625 * width
     // TODO calc board size correctly
 
-    ConstructedLevel(board, blocks, 20, 15)
+
+    Level(
+      id = id,
+      width = 20,
+      height = 15,
+      form = plan.form,
+      board = board,
+      blocks = blocks)
+
 
     /*val anchors = buildAnchors(dirs, plan.shifts)
     centerElements(coreLines, anchors)

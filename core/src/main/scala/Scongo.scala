@@ -1,20 +1,18 @@
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.routing.{SmallestMailboxPool, TailChoppingPool}
+import akka.routing.{DefaultOptimalSizeExploringResizer, SmallestMailboxPool}
 import control.MainControl
 import control.MainControl.CreateAndRegisterView
 import gui.Gui
-import persistence.Persistence.LoadMenu
+import persistence.ResourceManager.LoadMenu
 import persistence.{FilePersistence, Persistence, ResourceManager}
 import scaldi.Module
 import scaldi.akka.AkkaInjectable
 import tui.Tui
 
-import scala.concurrent.duration._
-
-object Scongo extends App with AkkaInjectable{
+object Scongo extends App with AkkaInjectable {
 
   private implicit val system = ActorSystem("scongo")
-  private implicit val injector  = ScongoModule
+  private implicit val injector = ScongoModule
 
 
   private val main = injectActorRef[MainControl]("main")
@@ -26,7 +24,7 @@ object Scongo extends App with AkkaInjectable{
 
 }
 
-object ScongoModule extends Module with AkkaInjectable{
+object ScongoModule extends Module with AkkaInjectable {
 
   binding to ActorSystem("scongo")
   binding toProvider new MainControl
@@ -37,9 +35,12 @@ object ScongoModule extends Module with AkkaInjectable{
   bind[Persistence] toProvider new FilePersistence
 
   bind[ActorRef] identifiedBy 'resourceRouter to {
+
     inject[ActorSystem].actorOf(
-      SmallestMailboxPool(10).props(Props(new ResourceManager())),
-      "resourceManagerRouter"
+      SmallestMailboxPool(1)
+        .withResizer(DefaultOptimalSizeExploringResizer())
+        .props(Props(new ResourceManager())),
+      "resourceRouter"
     )
   }
 

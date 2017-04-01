@@ -1,12 +1,21 @@
 package gui
 
-import java.awt.{Point => AwtPoint}
+import java.awt.event.{KeyAdapter, KeyEvent, MouseAdapter, MouseEvent}
+import java.awt.image.BufferedImage
+import java.awt.{BasicStroke, Color, Cursor, Font, Graphics, Graphics2D, Polygon, Toolkit, Point => AwtPoint}
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging, Props}
-import persistence.Persistence.LevelLoaded
+import control.GameControl._
+import model.basic.Point
+import model.element.{Grid, Level}
+import model.msg.ServerMsg.{BlockUpdated, LevelFinished}
+import persistence.ResourceManager.{LevelLoaded, LoadMenu}
+
+import scala.concurrent.duration._
 
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object GuiGame {
 
@@ -17,11 +26,11 @@ object GuiGame {
 private class GuiGame extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-  /*
-  private var level: Level = null
 
-  private val blocks = level.blocks.toArray
-  private val blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
+  private var level: Level = _
+
+  private var blocks: Array[Grid] = Array.empty
+  private var blockPolys: Array[Polygon] = Array.empty
 
   private val boardPoly = new Polygon()
 
@@ -105,7 +114,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     }
   })
 
-  context.parent ! Gui.SetContentPane(this, level.id.name)
+
 
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
     poly.reset()
@@ -119,16 +128,16 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
   override def paint(g: Graphics): Unit = {
 
-    /*
+
     // Calculate scaleFactor and offsets
     scaleFactor = Math.min(getWidth / level.width, getHeight / level.height)
     xOffset = (getWidth - level.width * scaleFactor) / 2
     yOffset = (getHeight - level.height * scaleFactor) / 2
 
     // Convert corners to polygon
-    convertCornersToPoly(level.board.corners, Point.ZERO, boardPoly)
+    convertCornersToPoly(level.board.polygons(0), Point.ZERO, boardPoly)  // TODO a block can have multiple polygons
     for (i <- blocks.indices) {
-      convertCornersToPoly(blocks(i).grid.corners, blocks(i).position, blockPolys(i))
+      convertCornersToPoly(blocks(i).polygons(0), blocks(i).position, blockPolys(i))
     }
 
     // Draw the Background
@@ -136,13 +145,13 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     g.fillRect(0, 0, getWidth, getHeight)
 
     g.setColor(Color.WHITE)
-    g.fillRect(scaleX(0), scaleY(0), scale(game.width), scale(game.height))
+    g.fillRect(scaleX(0), scaleY(0), scale(level.width), scale(level.height))
 
     g.setColor(Color.GRAY)
-    for (y <- 1 to game.height.toInt) {
+    for (y <- 1 to level.height.toInt) {
       g.drawLine(0, scaleY(y), getWidth, scaleY(y))
     }
-    for (x <- 1 to game.width.toInt) {
+    for (x <- 1 to level.width.toInt) {
       g.drawLine(scaleX(x), 0, scaleX(x), getHeight)
     }
 
@@ -157,7 +166,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     g.setColor(Color.GRAY)
     g.drawPolygon(boardPoly)
 
-    for (line <- game.board.lines) {
+    for (line <- level.board.edges) {
       g.drawLine(
         scaleX(line.start.x),
         scaleY(line.start.y),
@@ -178,7 +187,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
     if (selected.isDefined) {
       convertCornersToPoly(
-        selected.get.block.grid.corners,
+        selected.get.block.polygons(0),
         selected.get.block.position,
         selected.get.poly
       )
@@ -216,7 +225,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
         (getWidth - g.getFontMetrics.stringWidth(sEnter)) / 2,
         getHeight / 2
       )
-    } */
+    }
   }
 
   private def scale(z: Double): Int = {
@@ -229,18 +238,24 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
   private def scaleY(z: Double): Int = {
     (z * scaleFactor + yOffset + 0.5).toInt
-  }*/
+  }
 
   override def receive: PartialFunction[Any, Unit] = {
 
     case LevelLoaded(level) =>
       log.info("TODO")
 
-      /*
-    case ServerMsg.BlockUpdated(index, block) =>
+      this.level = level
+      blocks = level.blocks.toArray
+      blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
+     finished = None
+
+      context.parent ! Gui.SetContentPane(this, level.id.name)
+
+    case BlockUpdated(index, block) =>
       blocks(index) = block
 
-    case ServerMsg.LevelFinished(timeMillis) =>
+    case LevelFinished(timeMillis) =>
       finished = Some((timeMillis / 100).toDouble / 10)
 
     case MoveBlock(position) =>
@@ -269,7 +284,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
     case ReleaseBlock =>
       if (selected.isDefined) {
-        val msg = ClientMsg.UpdateBlockPosition(
+        val msg = UpdateBlockPosition(
           selected.get.index,
           selected.get.block.position
         )
@@ -282,80 +297,73 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
     case RotateLeft =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMsg.RotateBlockLeft(selected.get.index)
+        context.parent ! RotateBlockLeft(selected.get.index)
         activeAction = Some(BlockAction(RotateLeft, selected.get.block))
         self ! HandleBlockAction
       }
 
     case RotateRight =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMsg.RotateBlockRight(selected.get.index)
+        context.parent ! RotateBlockRight(selected.get.index)
         activeAction = Some(BlockAction(RotateRight, selected.get.block))
         self ! HandleBlockAction
       }
 
     case MirrorVertical =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMsg.MirrorBlockVertical(selected.get.index)
+        context.parent ! MirrorBlockVertical(selected.get.index)
         activeAction = Some(BlockAction(MirrorVertical, selected.get.block))
         self ! HandleBlockAction
       }
 
     case MirrorHorizontal =>
       if (selected.isDefined && activeAction.isEmpty) {
-        context.parent ! ClientMsg.MirrorBlockHorizontal(selected.get.index)
+        context.parent ! MirrorBlockHorizontal(selected.get.index)
         activeAction = Some(BlockAction(MirrorHorizontal, selected.get.block))
         self ! HandleBlockAction
       }
 
     case BackToMenu =>
-      context.parent ! ClientMsg.LoadMenu
+      context.parent ! LoadMenu
 
     case BackToMenuWhenFinished =>
       if (finished.isDefined) {
-        context.parent ! ClientMsg.LoadMenu
+        context.parent ! LoadMenu
       }
 
     case HandleBlockAction =>
       handleBlockAction()
-*/
+
     case msg =>
       log.warning("Unhandled message: " + msg)
 
   }
-/*
+
   private def handleBlockAction(): Unit = {
     if (activeAction.isDefined) {
       activeAction.get.action match {
 
-          /*
+
         case RotateLeft =>
-          selected.get.block = selected.get.block.copy(
-            grid = activeAction.get.startGrid.rotate(
-              -Math.PI * 2 / game.form / activeAction.get.maxSteps * activeAction.get.curStep
-            )
+
+          selected.get.block = activeAction.get.startGrid.rotate(
+            -Math.PI * 2 / level.form / activeAction.get.maxSteps * activeAction.get.curStep
           )
 
         case RotateRight =>
-          selected.get.block = selected.get.block.copy(
-            grid = activeAction.get.startGrid.rotate(
-              Math.PI * 2 / game.form / activeAction.get.maxSteps * activeAction.get.curStep
-            )
+          selected.get.block = activeAction.get.startGrid.rotate(
+            Math.PI * 2 / level.form / activeAction.get.maxSteps * activeAction.get.curStep
           )
 
         case MirrorVertical =>
-          selected.get.block = selected.get.block.copy(
-            grid = activeAction.get.startGrid.mirrorVertical(
-              activeAction.get.curStep.toFloat / activeAction.get.maxSteps
-            )
+          selected.get.block = activeAction.get.startGrid.mirrorVertical(
+            activeAction.get.curStep.toFloat / activeAction.get.maxSteps
           )
 
         case MirrorHorizontal =>
-          selected.get.block = selected.get.block.copy(
-            grid = activeAction.get.startGrid.mirrorHorizontal(
-              activeAction.get.curStep.toFloat / activeAction.get.maxSteps
-            )
-          )*/
+          selected.get.block = activeAction.get.startGrid.mirrorHorizontal(
+            activeAction.get.curStep.toFloat / activeAction.get.maxSteps
+          )
 
         case msg => unhandled(msg)
       }
@@ -371,5 +379,5 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
         activeAction = None
       }
     }
-  }*/
+  }
 }

@@ -3,7 +3,7 @@ package control
 import akka.actor.{Actor, ActorLogging}
 import model.basic.Point
 import model.msg.ClientMsg
-import persistence.Persistence.LevelLoaded
+import persistence.ResourceManager.LevelLoaded
 
 object GameControl {
 
