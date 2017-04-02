@@ -2,6 +2,7 @@ package control
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
+import builder.{AnchorField, Game}
 import control.MainControl.{CreateAndRegisterView, RegisterView}
 import model.msg.{ClientMsg, InternalMsg, ServerMsg}
 import persistence.ResourceManager.{LevelLoaded, LoadLevel, LoadMenu, MenuLoaded}
@@ -57,10 +58,15 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
     case msg: LoadLevel =>
       levelManager ! msg
 
-    case msg: LevelLoaded =>
+    case LevelLoaded(level) =>
       log.debug("Switching state to game")
       context.become(gameState(views))
-      views.foreach(_ ! msg)
+
+      val game = new Game(level, AnchorField(level.form, 3))
+
+      game.currentState.blocks.foreach(x => println(x.position)) // TODO remove
+
+      views.foreach(_ ! LevelLoaded(game.currentState))
 
   }
 

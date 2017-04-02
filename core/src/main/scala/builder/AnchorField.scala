@@ -5,23 +5,25 @@ import model.basic.Point
 import scala.collection.mutable.ListBuffer
 
 
-object AnchorBuilder {
+object AnchorField {
 
-  private val anchorDistanceMap: Map[Int, Double] = Map(
+  def apply(form: Int, size: Int): AnchorField = anchorField(form)(size)
+
+  private val maxNeighborDistance: Map[Int, Double] = Map(
     4 -> 1.43,
     6 -> 1.75
   )
 
   private val anchorVectors = LevelBuilder.anchorVectors.map { case (n, v) => (n, v.map(_ * 0.5)) }
 
-  val anchorField: Map[Int, Stream[AnchorField]] = Map(
-    4 -> Stream.from(2).map(n => build(4, n)),
-    6 -> Stream.from(2).map(n => build(6, n))
+  private val anchorField: Map[Int, Stream[AnchorField]] = Map(
+    4 -> Stream.from(3).map(n => build(4, n)),
+    6 -> Stream.from(3).map(n => build(6, n))
   )
 
   private def build(form: Int, n: Int): AnchorField = {
 
-    val border = anchorDistanceMap(form)
+    val border = maxNeighborDistance(form)
     val aVectors = anchorVectors(form)
 
     val width = (aVectors.head.x * n + border) * 2
@@ -34,17 +36,15 @@ object AnchorBuilder {
     val anchors = ListBuffer.empty[Point]
 
     def addAnchor(p: Point): Unit = {
-      if (p.x < xyMin || p.x > xMax) {
-        return
+      if (p.x > xyMin &&
+        p.x < xMax &&
+        p.y > xyMin &&
+        p.y < yMax &&
+        !anchors.exists(_.distanceSquareTo(p) < 0.1)
+      ) {
+        anchors += p
+        aVectors.foreach(v => addAnchor(p + v))
       }
-      if (p.y < xyMin || p.y > yMax) {
-        return
-      }
-      for (a <- anchors if a.distanceSquareTo(p) < 0.1) {
-        return
-      }
-      anchors += p
-      aVectors.foreach(v => addAnchor(p + v))
     }
 
     addAnchor(Point(width / 2, height / 2))

@@ -3,6 +3,8 @@ package builder
 import model.basic._
 import model.element.{Grid, Level, LevelId, Plan}
 
+import scala.util.{Failure, Success, Try}
+
 object LevelBuilder {
 
   private[builder] val (anchorVectors: Map[Int, List[Vector]], cornerVectors: Map[Int, List[Vector]]) = {
@@ -68,7 +70,7 @@ object LevelBuilder {
     def createGrid(anchors: List[Point]): Grid = {
 
       val corners = anchors.map(a =>
-        cVectors.map(v => a + v).toList)
+        cVectors.map(v => a + v))
 
       val edges = corners.flatMap(corners =>
         corners.indices.map(index =>
@@ -78,34 +80,12 @@ object LevelBuilder {
       // TODO optimize border edges
       // TODO optimize polygons
 
-      // TODO calc mid of the board
-      Grid(anchors, corners, edges, Point(10, 5))
+
+      Grid(anchors, corners, edges, Point.ZERO)
     }
 
     val board = createGrid(boardAnchors)
     val blocks = blockAnchors.map(createGrid)
-
-    /*val width = {
-      val x = boardAnchors.map(_.x)
-      2 * (x.max - x.min)
-    }
-
-    val height = {
-      val y = boardAnchors.map(_.y)
-      2 * (y.max - y.min)
-    }*/
-
-    // TODO height = 0.625 * width
-    // TODO calc board size correctly
-
-
-    Level(
-      id = id,
-      width = 20,
-      height = 15,
-      form = plan.form,
-      board = board,
-      blocks = blocks)
 
 
     /*val anchors = buildAnchors(dirs, plan.shifts)
@@ -118,6 +98,35 @@ object LevelBuilder {
 
     val corners = buildCorners(allLines)
     AnchoredGrid(Grid(corners, lines.toList), plan.form, anchors.toList) */
+
+
+    def findOptimalSize(level: Level): Level = {
+      val field = AnchorField(level.form, level.size)
+
+      Try(
+        Range(0, 5).foreach(_ =>
+          new Game(level, field)
+        )
+      ) match {
+        case Success(_) =>
+          val toleranceSize = level.size + 0
+          val field = AnchorField(level.form, toleranceSize)
+          level.copy(size = toleranceSize, width = field.width, height = field.height)
+
+        case Failure(_) => findOptimalSize(level.copy(size = level.size + 1))
+      }
+    }
+
+    findOptimalSize(Level(
+      id = id,
+      form = plan.form,
+      size = 0,
+      width = 0,
+      height = 0,
+      board = board,
+      blocks = blocks)
+    )
+
   }
 
   /*

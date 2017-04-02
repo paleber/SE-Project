@@ -239,12 +239,12 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     (z * scaleFactor + yOffset + 0.5).toInt
   }
 
-  override def receive: PartialFunction[Any, Unit] = {
+  override def receive: Receive = {
 
-    case LevelLoaded(level) =>
+    case LevelLoaded(lv) =>
       log.info("TODO")
 
-      this.level = level
+      level = lv
       blocks = level.blocks.toArray
       blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
       finished = None

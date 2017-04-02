@@ -1,6 +1,6 @@
 package model.element
 
-import model.basic.{Line, Point}
+import model.basic.{Line, Point, Vector}
 
 case class Grid(anchors: List[Point],
                 polygons: List[List[Point]],
@@ -10,6 +10,12 @@ case class Grid(anchors: List[Point],
   def +(p: Point): Grid = {
     copy(
       position = position + p
+    )
+  }
+
+  def +(v: Vector): Grid = {
+    copy(
+      position = position + v
     )
   }
 
@@ -38,12 +44,16 @@ case class Grid(anchors: List[Point],
   }
 
   lazy val absolute: Grid = {
-    copy(
-      anchors = anchors.map(_ + position),
-      polygons = polygons.map(_.map(_ + position)),
-      edges = edges.map(_ + position),
-      position = Point.ZERO
-    )
+    if(position == Point.ZERO) {
+      this
+    } else {
+      copy(
+        anchors = anchors.map(_ + position),
+        polygons = polygons.map(_.map(_ + position)),
+        edges = edges.map(_ + position),
+        position = Point.ZERO
+      )
+    }
   }
 
 }

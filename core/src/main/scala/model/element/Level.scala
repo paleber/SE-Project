@@ -1,9 +1,10 @@
 package model.element
 
 case class Level(id: LevelId,
+                 form: Int,
+                 size: Int,
                  width: Double,
                  height: Double,
-                 form: Int,
                  board: Grid,
                  blocks: List[Grid])
 
