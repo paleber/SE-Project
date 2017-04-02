@@ -23,14 +23,20 @@ object Game {
 
 object x extends App {
 
-  val level = LevelBuilder.build(null, Plan(4, List(List(List()))))
+  val level = LevelBuilder.build(null, Plan(4, List(List(List(), List(0)))))
 
-  val game = new Game(level, AnchorField(4, 0))
+
+
+  var game = new Game(level, AnchorField(4, 0))
+  println(game.currentState.board.position, game.currentState.blocks.head.position)
+
+  game = new Game(game.currentState, AnchorField(4, 0))
+  println(game.currentState.board.position, game.currentState.blocks.head.position)
 
 }
 
 class Game(level: Level, field: AnchorField) {
-
+ // field.anchors.foreach(println)
   private val (board, boardAnchors, restAnchors) = {
     val (grid, used, blocked) = anchorGrid(level.board.copy(position = Point(field.width / 2, field.height / 3)), field.anchors)
     (grid, used, field.anchors.filter(a => !blocked.contains(a)))
@@ -42,7 +48,9 @@ class Game(level: Level, field: AnchorField) {
                          maxDistance: Double = Double.PositiveInfinity): (Grid, List[Point], List[Point]) = {
 
     def anchorGridOnAnchor(grid: Grid, anchor: Point, anchors: List[Point]): (Option[Grid], List[Point]) = {
+      println("anchorGridOnAnchor on", anchor)
       val v = Vector.stretch(grid.absolute.anchors.head, anchor)
+      println("V:::", v, grid.absolute.anchors.head, anchor)
       val gridAnchors = grid.absolute.anchors.map(_ + v)
       val usedAnchors = ListBuffer.empty[Point]
       gridAnchors.foreach(gridAnchors => {
@@ -62,7 +70,7 @@ class Game(level: Level, field: AnchorField) {
       foreach(anchor => {
         val (anchoredGrid, usedAnchors) = anchorGridOnAnchor(grid, anchor, anchors)
         if (anchoredGrid.isDefined) {
-          return (grid, usedAnchors, usedAnchors.flatMap(a => field.neighbors(a)).distinct)
+          return (anchoredGrid.get, usedAnchors, usedAnchors.flatMap(a => field.neighbors(a)).distinct)
         }
       })
     throw new IllegalArgumentException("Anchoring grid failed")
@@ -80,10 +88,13 @@ class Game(level: Level, field: AnchorField) {
     val blockedRest = elements.flatMap(_.blocked).distinct
     val freeRest = restAnchors.filter(a => !blockedRest.contains(a))
 
-
+    println("vvv")
+    freeRest.foreach(println)
 
     val (grid, _, blocked) = anchorGrid(elements(index).grid.copy(position = position), freeRest)
-    println(index, "asd",grid.position)
+
+    println("GridPos:::::::", grid.position)
+
     elements(index).grid = grid
     elements(index).blocked = blocked
   }

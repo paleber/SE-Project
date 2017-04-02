@@ -133,11 +133,8 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     xOffset = (getWidth - level.width * scaleFactor) / 2
     yOffset = (getHeight - level.height * scaleFactor) / 2
 
-    // Convert corners to polygon
-    convertCornersToPoly(level.board.polygons(0), Point.ZERO, boardPoly) // TODO a block can have multiple polygons
-    for (i <- blocks.indices) {
-      convertCornersToPoly(blocks(i).polygons(0), blocks(i).position, blockPolys(i))
-    }
+
+
 
     // Draw the Background
     g.setColor(Color.GRAY)
@@ -158,22 +155,43 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     g2.setStroke(new BasicStroke((0.05 * scaleFactor).toInt))
 
 
-    // Draw the board
-    g.setColor(Color.LIGHT_GRAY)
-    g.fillPolygon(boardPoly)
 
-    g.setColor(Color.GRAY)
-    g.drawPolygon(boardPoly)
+    // Convert corners to polygon
+    level.board.absolute.polygons.foreach(p => {
 
-    for (line <- level.board.edges) {
-      g.drawLine(
-        scaleX(line.start.x),
-        scaleY(line.start.y),
-        scaleX(line.end.x),
-        scaleY(line.end.y))
-    }
+      convertCornersToPoly(p, Point.ZERO, boardPoly)
+
+      // Draw the board
+      g.setColor(Color.LIGHT_GRAY)
+      g.fillPolygon(boardPoly)
+
+      g.setColor(Color.GRAY)
+      g.drawPolygon(boardPoly)
+
+      for (line <- level.board.absolute.edges) {
+        g.drawLine(
+          scaleX(line.start.x),
+          scaleY(line.start.y),
+          scaleX(line.end.x),
+          scaleY(line.end.y))
+      }
+
+    })
+
+
 
     // Draw unselected the blocks
+
+
+
+
+
+    for (i <- blocks.indices) {
+      convertCornersToPoly(blocks(i).polygons(0), blocks(i).position, blockPolys(i))
+    }
+
+
+
     for (poly <- blockPolys if selected.isEmpty ||
       blockPolys.indexOf(poly) != selected.get.index) {
 
@@ -196,6 +214,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
       g.setColor(new Color(0, 139, 0))
       g.drawPolygon(selected.get.poly)
+
     }
 
     if (finished.isDefined) {

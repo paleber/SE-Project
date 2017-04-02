@@ -62,9 +62,18 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
       log.debug("Switching state to game")
       context.become(gameState(views))
 
-      val game = new Game(level, AnchorField(level.form, 3))
+      //val game = new Game(level, AnchorField(level.form, 3))
 
-      game.currentState.blocks.foreach(x => println(x.position)) // TODO remove
+      //game.currentState.blocks.foreach(x => println(x.position)) // TODO remove
+
+      val game = new Game(level, AnchorField(level.form, level.size))
+
+      println("<---start--->")
+      println(game.currentState.board.position, game.currentState.board.anchors)
+      println("<--------->")
+      game.currentState.blocks.foreach(b => println(b.position, b.anchors))
+      println("<---end--->")
+
 
       views.foreach(_ ! LevelLoaded(game.currentState))
 

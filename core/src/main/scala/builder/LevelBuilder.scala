@@ -64,8 +64,7 @@ object LevelBuilder {
       anchors.map(_ + v)
     }
 
-    val blockAnchors = plan.shifts.map(s => centerAnchors(createAnchors(s)))
-    val boardAnchors = centerAnchors(blockAnchors.flatten)
+
 
     def createGrid(anchors: List[Point]): Grid = {
 
@@ -84,8 +83,9 @@ object LevelBuilder {
       Grid(anchors, corners, edges, Point.ZERO)
     }
 
-    val board = createGrid(boardAnchors)
-    val blocks = blockAnchors.map(createGrid)
+    val decentralizedBlockAnchors = plan.shifts.map(createAnchors)
+    val board = createGrid(centerAnchors(decentralizedBlockAnchors.flatten))
+    val blocks = decentralizedBlockAnchors.map(a => createGrid(centerAnchors(a)))
 
 
     /*val anchors = buildAnchors(dirs, plan.shifts)
