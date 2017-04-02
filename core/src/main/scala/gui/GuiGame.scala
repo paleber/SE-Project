@@ -115,7 +115,6 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
   })
 
 
-
   private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
     poly.reset()
     for (i <- points.indices) {
@@ -135,7 +134,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     yOffset = (getHeight - level.height * scaleFactor) / 2
 
     // Convert corners to polygon
-    convertCornersToPoly(level.board.polygons(0), Point.ZERO, boardPoly)  // TODO a block can have multiple polygons
+    convertCornersToPoly(level.board.polygons(0), Point.ZERO, boardPoly) // TODO a block can have multiple polygons
     for (i <- blocks.indices) {
       convertCornersToPoly(blocks(i).polygons(0), blocks(i).position, blockPolys(i))
     }
@@ -248,9 +247,8 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
       this.level = level
       blocks = level.blocks.toArray
       blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
-     finished = None
-
-      context.parent ! Gui.SetContentPane(this, level.id.name)
+      finished = None
+      context.parent ! Gui.SetContentPane(this, "game - " + level.id.category + " " + level.id.name)
 
     case BlockUpdated(index, block) =>
       blocks(index) = block

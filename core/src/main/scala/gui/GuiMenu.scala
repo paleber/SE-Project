@@ -15,6 +15,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
     case MenuLoaded(info) =>
       log.debug("Showing menu")
       context.parent ! Gui.SetContentPane(this, "menu")
+      removeAll()
 
       info.foreach { case (category, names) =>
         names.foreach { name =>
@@ -30,7 +31,6 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
         }
       }
       revalidate()
-
 
   }
 

@@ -1,7 +1,7 @@
 package persistence
 
 import akka.actor.{Actor, ActorLogging}
-import model.builder.LevelBuilder
+import builder.LevelBuilder
 import model.element.{Level, LevelId}
 import model.msg.PersistenceMessages._
 import model.msg.{ClientMsg, ServerMsg}

@@ -1,11 +1,13 @@
-package model.builder
+package builder
 
 import model.basic._
 import model.element.{Grid, Level, LevelId, Plan}
 
 object LevelBuilder {
 
-  private val (anchorToAnchors: Map[Int, Array[Vector]], anchorToCorners: Map[Int, Array[Vector]]) = {
+  private[builder] val (anchorVectors: Map[Int, List[Vector]], cornerVectors: Map[Int, List[Vector]]) = {
+
+    println("InitBuilder")
 
     def createLines(form: Int) = {
       var p = Point.ZERO
@@ -20,17 +22,17 @@ object LevelBuilder {
       }
 
       val centeringVector = Vector.stretch(lines(lines.length / 2 - 1).end, Point.ZERO) * 0.5
-      lines.transform(l => l + centeringVector)
+      lines.transform(l => l + centeringVector).toList
     }
 
     val lines = Map(4 -> createLines(4), 6 -> createLines(6))
 
-    def createAnchorVectors(form: Int): Array[Vector] = {
-      lines(form).map(line => Vector.stretch(Point.ZERO, line.mid) * 2).toArray
+    def createAnchorVectors(form: Int): List[Vector] = {
+      lines(form).map(line => Vector.stretch(Point.ZERO, line.mid) * 2)
     }
 
-    def createCornerVectors(form: Int): Array[Vector] = {
-      lines(form).map(line => Vector.stretch(Point.ZERO, line.start)).toArray
+    def createCornerVectors(form: Int): List[Vector] = {
+      lines(form).map(line => Vector.stretch(Point.ZERO, line.start))
     }
 
     (Map(4 -> createAnchorVectors(4),
@@ -41,11 +43,12 @@ object LevelBuilder {
   }
 
   def build(id: LevelId, plan: Plan): Level = {
-    val anchorVectors = anchorToAnchors(plan.form)
-    val cornerVectors = anchorToCorners(plan.form)
+
+    val aVectors = anchorVectors(plan.form)
+    val cVectors = cornerVectors(plan.form)
 
     def shiftAnchors(shifts: List[Int]): Point = {
-      shifts.map(s => anchorVectors(s)).foldLeft(Point.ZERO)(_ + _)
+      shifts.map(s => aVectors(s)).foldLeft(Point.ZERO)(_ + _)
     }
 
     def createAnchors(blockShifts: List[List[Int]]): List[Point] = {
@@ -65,7 +68,7 @@ object LevelBuilder {
     def createGrid(anchors: List[Point]): Grid = {
 
       val corners = anchors.map(a =>
-        cornerVectors.map(v => a + v).toList)
+        cVectors.map(v => a + v).toList)
 
       val edges = corners.flatMap(corners =>
         corners.indices.map(index =>
