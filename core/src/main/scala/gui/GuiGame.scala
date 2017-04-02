@@ -30,9 +30,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
   private var level: Level = _
 
   private var blocks: Array[Grid] = Array.empty
-  private var blockPolys: Array[Polygon] = Array.empty
-
-  private val boardPoly = new Polygon()
+  //private var blockPolys: Array[Polygon] = Array.empty
 
   private var scaleFactor: Double = 1
   private var xOffset, yOffset: Double = 0
@@ -49,7 +47,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
   )
 
   private class Selected(var index: Int, var block: Grid) {
-    val poly = new Polygon()
+    //val poly = new Polygon()
   }
 
   private var selected: Option[Selected] = None
@@ -114,27 +112,21 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     }
   })
 
-
-  private def convertCornersToPoly(points: List[Point], position: Point, poly: Polygon): Unit = {
-    poly.reset()
-    for (i <- points.indices) {
-      poly.addPoint(
-        scaleX(points(i).x + position.x),
-        scaleY(points(i).y + position.y)
-      )
-    }
+  private def createPoly(points: List[Point], position: Point): Polygon = {
+     val poly = new Polygon()
+     points.foreach(p => poly.addPoint(
+       scaleX(p.x + position.x),
+       scaleY(p.y + position.y)
+     ))
+     poly
   }
 
   override def paint(g: Graphics): Unit = {
-
 
     // Calculate scaleFactor and offsets
     scaleFactor = Math.min(getWidth / level.width, getHeight / level.height)
     xOffset = (getWidth - level.width * scaleFactor) / 2
     yOffset = (getHeight - level.height * scaleFactor) / 2
-
-
-
 
     // Draw the Background
     g.setColor(Color.GRAY)
@@ -154,12 +146,10 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     val g2 = g.asInstanceOf[Graphics2D]
     g2.setStroke(new BasicStroke((0.05 * scaleFactor).toInt))
 
-
-
     // Convert corners to polygon
     level.board.absolute.polygons.foreach(p => {
 
-      convertCornersToPoly(p, Point.ZERO, boardPoly)
+      val boardPoly = createPoly(p, Point.ZERO)
 
       // Draw the board
       g.setColor(Color.LIGHT_GRAY)
@@ -186,12 +176,42 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
 
 
-    for (i <- blocks.indices) {
+    /*for (i <- blocks.indices) {
       convertCornersToPoly(blocks(i).polygons(0), blocks(i).position, blockPolys(i))
+    } */
+
+    blocks.foreach(block => {
+
+
+      block.polygons.foreach(p => {
+        val poly = createPoly(p, block.position)
+        if(selected.isEmpty || blocks.indexOf(block) != selected.get.index) {
+          g.setColor(new Color(100, 255, 255))
+          g.fillPolygon(poly)
+
+          g.setColor(new Color(0, 139, 139))
+          g.drawPolygon(poly)
+        }
+      })
+    })
+
+
+    if(selected.isDefined) {
+      selected.get.block.polygons.foreach(p => {
+        val poly = createPoly(p, selected.get.block.position)
+
+        g.setColor(new Color(100, 255, 100))
+        g.fillPolygon(poly)
+
+        g.setColor(new Color(0, 139, 0))
+        g.drawPolygon(poly)
+
+      })
+
+
     }
 
-
-
+/*
     for (poly <- blockPolys if selected.isEmpty ||
       blockPolys.indexOf(poly) != selected.get.index) {
 
@@ -215,7 +235,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
       g.setColor(new Color(0, 139, 0))
       g.drawPolygon(selected.get.poly)
 
-    }
+    } */
 
     if (finished.isDefined) {
       g.setColor(Color.BLUE)
@@ -265,7 +285,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
       level = lv
       blocks = level.blocks.toArray
-      blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
+      //blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
       finished = None
       context.parent ! Gui.SetContentPane(this, "game - " + level.id.category + " " + level.id.name)
 
@@ -288,15 +308,21 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     case SelectBlock(position) =>
       if (finished.isEmpty) {
         selected = None
-        for (poly <- blockPolys) {
-          if (poly.contains(position)) {
-            lastX = position.x
-            lastY = position.y
-            val index = blockPolys.indexOf(poly)
-            selected = Some(new Selected(index, blocks(index)))
-            setCursor(blankCursor)
-          }
-        }
+
+        blocks.foreach(block => {
+          block.polygons.foreach(p => {
+            val poly = createPoly(p, block.position)
+            if (poly.contains(position)) {
+              lastX = position.x
+              lastY = position.y
+              val index = blocks.indexOf(block)
+              selected = Some(new Selected(index, block))
+              setCursor(blankCursor)
+            }
+          })
+        })
+
+
       }
 
     case ReleaseBlock =>
