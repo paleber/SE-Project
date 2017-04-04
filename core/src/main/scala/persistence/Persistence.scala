@@ -10,4 +10,7 @@ trait Persistence  {
   @throws[Exception]
   def loadPlan(levelId: LevelId): Plan
 
+  @throws[Exception]
+  def savePlan(levelId: LevelId, plan: Plan): Unit
+
 }

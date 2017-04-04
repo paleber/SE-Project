@@ -29,4 +29,8 @@ final class FilePersistence extends Persistence {
     read[Plan](Source.fromFile(new File(s"$path/${id.category}/${id.name}.json")).mkString)
   }
 
+  override def savePlan(levelId: LevelId, plan: Plan): Unit = {
+      // TODO
+  }
+
 }
