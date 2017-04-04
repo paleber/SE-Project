@@ -6,16 +6,14 @@ import java.awt.{BasicStroke, Color, Cursor, Font, Graphics, Graphics2D, Polygon
 import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging, Props}
-import control.GameControl._
+import builder.Game._
 import model.basic.Point
 import model.element.{Grid, Level}
-import model.msg.ServerMsg.{BlockUpdated, LevelFinished}
 import persistence.ResourceManager.{LevelLoaded, LoadMenu}
 
-import scala.concurrent.duration._
-
-import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object GuiGame {
 
@@ -108,7 +106,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
       case KeyEvent.VK_ENTER => self ! BackToMenuWhenFinished
       case KeyEvent.VK_SPACE => self ! BackToMenuWhenFinished
 
-      case msg => log.warning(s"Ignoring Key: ${e.getKeyCode} - ${e.getKeyChar}")
+      case _ => log.warning(s"Ignoring Key: ${e.getKeyCode} - ${e.getKeyChar}")
     }
   })
 

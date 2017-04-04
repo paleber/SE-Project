@@ -23,12 +23,18 @@ object AnchorField {
 
   private def build(form: Int, n: Int): AnchorField = {
 
-    val border = maxNeighborDistance(form)
+    val distance = if (form == 4) {
+      maxNeighborDistance(form) * 0.6
+    } else {
+      maxNeighborDistance(form) * 0.7
+    }
+
     val aVectors = anchorVectors(form)
 
-    val width = (aVectors.head.x * n + border) * 2
+    val width = (aVectors.head.x * n + distance) * 2
     val height = width * 0.625
 
+    val border = distance
     val xyMin = border - 0.1
     val xMax = width - border + 0.1
     val yMax = height - border + 0.1
@@ -48,7 +54,7 @@ object AnchorField {
     }
 
     addAnchor(Point(width / 2, height / 2))
-    AnchorField(anchors.toList, width, height, border)
+    AnchorField(anchors.toList, width, height, maxNeighborDistance(form))
   }
 
 }

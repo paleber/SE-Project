@@ -22,7 +22,7 @@ class Wui(control: ActorRef, connection: ActorRef) extends Actor with ActorLoggi
 
   private implicit val formats = Serialization.formats(ShortTypeHints(List(classOf[ScongoMsg])))
 
-  override def receive: PartialFunction[Any, Unit] = {
+  override def receive: Receive = {
 
     case msg: String =>
       parser ! msg

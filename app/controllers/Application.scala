@@ -9,15 +9,19 @@ import akka.util.Timeout
 import com.mohiva.play.silhouette.api.{LogoutEvent, Silhouette}
 import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import control.MainControl
+import control.MainControl.CreateAndRegisterView
 import gui.Gui
-import model.msg.ClientMsg.LoadMenu
 import models.Wui
+import module.ScongoModule
+import persistence.ResourceManager.LoadMenu
 import play.api.Mode
 import play.api.http.ContentTypes
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Comet
 import play.api.libs.streams.ActorFlow
 import play.api.mvc._
+import scaldi.Injector
+import scaldi.akka.AkkaInjectable
 import utils.auth.DefaultEnv
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,9 +34,11 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
                             val messagesApi: MessagesApi,
                             socialProviderRegistry: SocialProviderRegistry,
                             implicit val env: play.api.Environment,
-                            implicit val system: ActorSystem,
                             implicit val mat: Materializer,
-                            implicit val webJarAssets: WebJarAssets) extends Controller with I18nSupport {
+                            implicit val webJarAssets: WebJarAssets) extends Controller with I18nSupport with AkkaInjectable{
+
+  private implicit val injector: Injector = ScongoModule
+  private implicit val system = inject[ActorSystem]
 
   private implicit val timeout: Timeout = 5.seconds
 
@@ -69,9 +75,9 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
   }
 
   def socket: WebSocket = WebSocket.accept[String, String] { _ =>
-    val control = system.actorOf(MainControl.props)
+    val control = injectActorRef[MainControl]
     if (env.mode != Mode.Prod) {
-      system.actorOf(Gui.props(control))
+      control ! CreateAndRegisterView(injectActorProps[Gui], "gui")
     }
     ActorFlow.actorRef(socket => Wui.props(control, socket))
   }
@@ -86,9 +92,9 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
       .actorRef[String](bufferSize = 0, OverflowStrategy.fail)
       .mapMaterializedValue(actor => {
 
-        val control = system.actorOf(MainControl.props)
+        val control = injectActorRef[MainControl]
         if (env.mode != Mode.Prod) {
-          system.actorOf(Gui.props(control))
+          control ! CreateAndRegisterView(injectActorProps[Gui], "gui")
         }
         system.actorOf(Wui.props(control, actor))
 

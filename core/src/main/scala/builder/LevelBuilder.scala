@@ -64,8 +64,6 @@ object LevelBuilder {
       anchors.map(_ + v)
     }
 
-
-
     def createGrid(anchors: List[Point]): Grid = {
 
       val corners = anchors.map(a =>
@@ -104,12 +102,12 @@ object LevelBuilder {
       val field = AnchorField(level.form, level.size)
 
       Try(
-        Range(0, 5).foreach(_ =>
+        Range(0, 100).foreach(_ =>
           new Game(level, field)
         )
       ) match {
         case Success(_) =>
-          val toleranceSize = level.size + 0
+          val toleranceSize = level.size + 3
           val field = AnchorField(level.form, toleranceSize)
           level.copy(size = toleranceSize, width = field.width, height = field.height)
 

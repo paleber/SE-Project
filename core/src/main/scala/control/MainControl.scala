@@ -2,14 +2,17 @@ package control
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
+import builder.Game._
 import builder.{AnchorField, Game}
 import control.MainControl.{CreateAndRegisterView, RegisterView}
-import model.msg.{ClientMsg, InternalMsg, ServerMsg}
+import model.element.{Grid, Level}
+import model.msg.InternalMsg
 import persistence.ResourceManager.{LevelLoaded, LoadLevel, LoadMenu, MenuLoaded}
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable
 
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 object MainControl {
 
@@ -27,7 +30,6 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
   private implicit val timeout: Timeout = 5.seconds
 
   private val levelManager = inject[ActorRef]('resourceRouter)
-  private val game = context.actorOf(Props[GameControl], "game")
 
   private def receiveLoadMenu(views: List[ActorRef]): Receive = {
     case LoadMenu =>
@@ -60,35 +62,51 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
 
     case LevelLoaded(level) =>
       log.debug("Switching state to game")
-      context.become(gameState(views))
 
-      //val game = new Game(level, AnchorField(level.form, 3))
+      def initGame(level: Level): Unit = {
+        Try(new Game(level, AnchorField(level.form, level.size))) match {
+          case Success(game) =>
+            views.foreach(_ ! LevelLoaded(game.currentState))
+            context.become(gameState(views, game))
+          case Failure(_) =>
+            val field = AnchorField(level.form, level.size + 1)
+            initGame(level.copy(
+              size = level.size + 1,
+              width = field.width,
+              height = field.height
+            ))
+        }
+      }
 
-      //game.currentState.blocks.foreach(x => println(x.position)) // TODO remove
-
-      val game = new Game(level, AnchorField(level.form, level.size))
-
-      println("<---start--->")
-      println(game.currentState.board.position, game.currentState.board.anchors)
-      println("<--------->")
-      game.currentState.blocks.foreach(b => println(b.position, b.anchors))
-      println("<---end--->")
-
-
-      views.foreach(_ ! LevelLoaded(game.currentState))
-
+      initGame(level)
   }
 
-  private def gameState(views: List[ActorRef]): Receive =
+  private def gameState(views: List[ActorRef], game: Game): Receive =
     receiveLoadMenu(views) orElse {
 
-      case msg: ServerMsg =>
-        views.foreach(_ ! msg)
+      case UpdateBlockPosition(index, position) =>
+        updateGame(views, index, game.updateBlockPosition(index, position))
 
-      case msg: ClientMsg =>
-        game ! msg
+      case RotateBlockLeft(index) =>
+        updateGame(views, index, game.rotateBlockLeft(index))
+
+      case RotateBlockRight(index) =>
+        updateGame(views, index, game.rotateBlockRight(index))
+
+      case MirrorBlockVertical(index) =>
+        updateGame(views, index, game.mirrorBlockVertical(index))
+
+      case MirrorBlockHorizontal(index) =>
+        updateGame(views, index, game.mirrorBlockHorizontal(index))
 
     }
+
+  private def updateGame(views: List[ActorRef], index: Int, blockAndTime: (Grid, Option[Int])): Unit = {
+    views.foreach(_ ! BlockUpdated(index, blockAndTime._1))
+    if (blockAndTime._2.isDefined) {
+      views.foreach(_ ! LevelFinished(blockAndTime._2.get))
+    }
+  }
 
   override def receive: Receive = initState(List.empty)
 

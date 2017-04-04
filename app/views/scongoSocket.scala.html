@@ -73,7 +73,7 @@
                     switch (data.jsonClass) {
                         case 'ServerMsg$ShowMenu$':
                             this.game.hide();
-                            this.menu.show();
+                            this.menu.show(data);
                             break;
                         case 'ServerMsg$ShowGame':
                             this.menu.hide();

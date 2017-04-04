@@ -2,10 +2,9 @@ package persistence
 
 import akka.actor.{Actor, ActorLogging}
 import builder.LevelBuilder
-import model.element.{Level, LevelId}
-import model.msg.PersistenceMessages._
+import model.element.{Level, LevelId, Plan}
 import model.msg.{ClientMsg, ServerMsg}
-import persistence.ResourceManager.{LevelLoaded, LoadLevel, LoadMenu, MenuLoaded}
+import persistence.ResourceManager._
 import scaldi.{Injectable, Injector}
 
 import scala.util.{Failure, Success, Try}
@@ -19,6 +18,16 @@ object ResourceManager {
   case class LoadLevel(id: LevelId) extends ClientMsg
 
   case class LevelLoaded(level: Level) extends ServerMsg
+
+
+  // TODO
+  case class LoadingLevelFailed(id: LevelId) extends ServerMsg
+
+  case class SaveLevel(id: LevelId, plan: Plan) extends ClientMsg
+
+  case class LevelSaved(id: LevelId) extends ServerMsg
+
+  case class LevelAlreadyExists(id: LevelId) extends ServerMsg
 
 }
 

@@ -1,6 +1,6 @@
 package model.console
 
-import control.GameControl._
+import builder.Game._
 import model.basic.Point
 import model.element.LevelId
 import model.msg.ClientMsg
