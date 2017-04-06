@@ -14,7 +14,11 @@ lazy val core = (project in file("core")).
       "org.scaldi" %% "scaldi" % "0.5.8",
       "org.scaldi" %% "scaldi-akka" % "0.5.8",
       "org.scalactic" %% "scalactic" % "3.0.1",
-      "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+      "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+      "com.typesafe.slick" %% "slick" % "3.2.0",
+      "org.slf4j" % "slf4j-nop" % "1.6.4",
+      "com.typesafe.slick" %% "slick-hikaricp" % "3.2.0",
+      "com.h2database" % "h2" % "1.4.194"
     )
   )
 

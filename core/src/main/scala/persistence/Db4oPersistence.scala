@@ -14,7 +14,7 @@ class Db4oPersistence extends Persistence {
 
   private case class Db4oEntry(category: String, name: String, plan: String)
 
-  def doDatabaseAction[T](f: ObjectContainer => T): T = {
+  private def doDatabaseAction[T](f: ObjectContainer => T): T = {
     val db = Db4oEmbedded.openFile(
       Db4oEmbedded.newConfiguration(),
       "db4o-database"
