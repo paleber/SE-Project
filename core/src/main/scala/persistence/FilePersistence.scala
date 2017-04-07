@@ -30,7 +30,7 @@ final class FilePersistence extends Persistence {
   }
 
   override def savePlan(levelId: LevelId, plan: Plan): Unit = {
-      // TODO
+    throw new UnsupportedOperationException("saving into filesystem not allowed")
   }
 
 }

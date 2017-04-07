@@ -52,7 +52,7 @@ class SlickH2Persistence extends Persistence {
     }
   }
 
-  def loadPlan(id: LevelId): Plan = {
+  override def loadPlan(id: LevelId): Plan = {
     val query = plans.filter(plan =>
       plan.category === id.category &&
         plan.name === id.name).map(_.shifts)
