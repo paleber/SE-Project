@@ -1,39 +1,67 @@
 package persistence
 
-import java.io.File
+import java.io.{BufferedWriter, File, PrintWriter}
 
 import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.read
-import persistence.FilePersistence.path
+import org.json4s.jackson.Serialization.{read, write}
+import scaldi.{Injectable, Injector}
 
 import scala.io.Source
 
-object FilePersistence {
 
-  private val path = "core/src/main/resources/lvNew"
-
-}
-
-final class FilePersistence extends Persistence {
+final class FilePersistence(implicit inj: Injector) extends Persistence with Injectable {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private def loadMetaInfo: Map[String, List[String]] = {
-    new File(path).listFiles.map(file =>
-      (file.getName, file.listFiles.map(_.getName.replace(".json", "")).toList)).toMap
-  }
+  private val path = inject[String]('filePersistencePath)
+  new File(path).mkdirs()
+
+  private def createFile(id: LevelId): File = new File(s"$path/${id.category}/${id.name}.json")
+
+  private def createDir(id: LevelId): File = new File(s"$path/${id.category}")
 
   override def loadPlan(id: LevelId): Plan = {
-    read[Plan](Source.fromFile(new File(s"$path/${id.category}/${id.name}.json")).mkString)
+    val file = Source.fromFile(createFile(id))
+    try {
+      read[Plan](file.mkString)
+    } finally {
+      file.close()
+    }
   }
 
-  override def savePlan(levelId: LevelId, plan: Plan): Unit = {
-    throw new UnsupportedOperationException("saving into filesystem not allowed")
+  override def savePlan(id: LevelId, plan: Plan): Unit = {
+    val file = createFile(id)
+    createDir(id).mkdir()
+    if (!file.createNewFile()) {
+      throw new IllegalStateException("cant create file, maybe it exists already")
+    }
+    val writer = new BufferedWriter(new PrintWriter(file))
+    try {
+      writer.write(write(plan))
+    } finally {
+      writer.close()
+    }
   }
 
-  override def loadIds: List[LevelId] = ???
+  override def loadIds: List[LevelId] = {
+    new File(path).listFiles.flatMap(cat => cat.listFiles.map(name =>
+      LevelId(cat.getName, name.getName.replace(".json", "")))).toList
+  }
 
-  override def removePlan(id: LevelId): Unit = ???
+  override def removePlan(id: LevelId): Unit = {
+    val file = createFile(id)
+
+    println(file.exists() + " " + file.canWrite)
+
+    if(!file.delete()) {
+      throw new NoSuchElementException("cant delete file, maybe it does not exist")
+    }
+    val dir = createDir(id)
+    if(dir.list.isEmpty) {
+      dir.delete()
+    }
+  }
+
 }

@@ -36,7 +36,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
 
   private val persistence = inject[Persistence]
 
-  private def state(info: Map[String, List[String]], levels: Map[LevelId, Level]) : Receive = {
+  private def state(info: Map[String, List[String]], levels: Map[LevelId, Level]): Receive = {
 
     case LoadMenu =>
       log.debug("Loading menu")
@@ -55,7 +55,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
             val level = LevelBuilder.build(id, plan)
             sender ! LevelLoaded(level)
             context.become(state(info, levels.updated(id, level)))
-            
+
           case Failure(f) =>
             log.error(s"Loading level from persistence failed: $id ($f)")
             sender ! LoadingLevelFailed(id)
@@ -64,7 +64,11 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
       }
 
   }
-  
-  override def receive: Receive = state(persistence.loadMetaInfo, Map.empty)
+
+  override def receive: Receive = state(convertIdList(persistence.loadIds), Map.empty)
+
+  private def convertIdList(ids: List[LevelId]): Map[String, List[String]] = {
+    ids.map(_.category).distinct.map(cat => (cat, ids.filter(_.category == cat).map(_.name))).toMap
+  }
 
 }
