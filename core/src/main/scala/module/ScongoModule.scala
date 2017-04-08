@@ -17,7 +17,7 @@ object ScongoModule extends Module with AkkaInjectable {
   binding toProvider new Tui
   binding toProvider new Gui
 
-  bind[Persistence] toProvider new FilePersistence
+  bind[Persistence] to new FilePersistence
 
   bind[ActorRef] identifiedBy 'resourceRouter to {
     inject[ActorSystem].actorOf(

@@ -20,7 +20,7 @@ final class FilePersistence extends Persistence {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  override def loadMetaInfo: Map[String, List[String]] = {
+  private def loadMetaInfo: Map[String, List[String]] = {
     new File(path).listFiles.map(file =>
       (file.getName, file.listFiles.map(_.getName.replace(".json", "")).toList)).toMap
   }
@@ -33,4 +33,7 @@ final class FilePersistence extends Persistence {
     throw new UnsupportedOperationException("saving into filesystem not allowed")
   }
 
+  override def loadIds: List[LevelId] = ???
+
+  override def removePlan(id: LevelId): Unit = ???
 }

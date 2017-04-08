@@ -14,7 +14,7 @@ import scala.language.postfixOps
 import scala.util.Try
 
 
-class SlickH2Persistence extends Persistence {
+final class SlickH2Persistence extends Persistence {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -44,7 +44,7 @@ class SlickH2Persistence extends Persistence {
   )))
 
   private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): R = {
-    val db = Database.forURL("jdbc:h2:~/scongo3;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
+    val db = Database.forURL("jdbc:h2:~/scongo;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
     try {
       Await.result(db.run(query), 5 seconds)
     } finally {
@@ -61,7 +61,7 @@ class SlickH2Persistence extends Persistence {
     read[Plan](data.head)
   }
 
-  override def loadMetaInfo: Map[String, List[String]] = {
+  private def loadMetaInfo: Map[String, List[String]] = {
     val query = for (p <- plans) yield (p.category, p.name)
     val data = doDatabaseAction(query.result)
 
@@ -76,4 +76,7 @@ class SlickH2Persistence extends Persistence {
     )
   )
 
+  override def loadIds: List[LevelId] = ???
+
+  override def removePlan(id: LevelId): Unit = ???
 }

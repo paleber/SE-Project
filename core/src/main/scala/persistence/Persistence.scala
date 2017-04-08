@@ -4,13 +4,15 @@ import model.element.{LevelId, Plan}
 
 trait Persistence  {
 
-  @throws[Exception]
-  def loadMetaInfo: Map[String, List[String]]
+  def loadIds: List[LevelId]
 
   @throws[Exception]
-  def loadPlan(levelId: LevelId): Plan
+  def loadPlan(id: LevelId): Plan
 
   @throws[Exception]
-  def savePlan(levelId: LevelId, plan: Plan): Unit
+  def savePlan(id: LevelId, plan: Plan): Unit
+
+  @throws[Exception]
+  def removePlan(id: LevelId)
 
 }

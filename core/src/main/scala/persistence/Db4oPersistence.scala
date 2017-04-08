@@ -5,19 +5,22 @@ import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
+import scaldi.{Injectable, Injector}
 
 import scala.collection.JavaConversions._
 
-class Db4oPersistence extends Persistence {
+final class Db4oPersistence(implicit inj: Injector) extends Persistence with Injectable {
+
+  private case class Db4oEntry(category: String, name: String, plan: String)
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private case class Db4oEntry(category: String, name: String, plan: String)
+  private val databaseName = inject[String]('db4oDatabaseName)
 
   private def doDatabaseAction[T](f: ObjectContainer => T): T = {
     val db = Db4oEmbedded.openFile(
       Db4oEmbedded.newConfiguration(),
-      "db4o-database"
+      databaseName
     )
     try {
       f(db)
@@ -26,7 +29,7 @@ class Db4oPersistence extends Persistence {
     }
   }
 
-  override def loadMetaInfo: Map[String, List[String]] = doDatabaseAction { db =>
+  private def loadMetaInfo: Map[String, List[String]] = doDatabaseAction { db =>
     val query = db.query()
     query.constrain(classOf[Db4oEntry])
     val set = query.execute[Db4oEntry]()
@@ -60,4 +63,7 @@ class Db4oPersistence extends Persistence {
     db.store(Db4oEntry(levelId.category, levelId.name, write(plan)))
   }
 
+  override def loadIds: List[LevelId] = ???
+
+  override def removePlan(id: LevelId): Unit = ???
 }

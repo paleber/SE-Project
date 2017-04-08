@@ -24,47 +24,36 @@ object MongoPersistence extends Persistence {
 
   doPlanCollectionAction {
     _.indexesManager.ensure(Index(Seq(
-      ("id.category", IndexType.Ascending),
-      ("id.name", IndexType.Ascending)),
+      ("category", IndexType.Ascending),
+      ("name", IndexType.Ascending)),
       unique = true))
   }
 
 
   private val idProjection = BSONDocument("_id" -> 0, "category" -> 1, "name" -> 1)
 
-  override def loadMetaInfo: Map[String, List[String]] = {
+  override def loadIds: List[LevelId] = doPlanCollectionAction {
     implicit val reader = Macros.reader[LevelId]
-    val entries = doPlanCollectionAction {
-      _.find(BSONDocument.empty, idProjection).cursor().
-        collect(-1, Cursor.FailOnError[List[LevelId]]())
-    }
-    entries.map(_.category).distinct.map(cat => (cat, entries.filter(_.category == cat).map(_.name))).toMap
+    _.find(BSONDocument.empty, idProjection).cursor().
+      collect(-1, Cursor.FailOnError[List[LevelId]]())
   }
 
 
-  private case class PlanWrapper(plan: Plan)
+  private val planProjection = BSONDocument("_id" -> 0, "form" -> 1, "shifts" -> 1)
 
-  private val planProjection = BSONDocument("_id" -> 0, "plan" -> 1)
-
-  override def loadPlan(id: LevelId): Plan = {
-    implicit val reader = {
-      implicit val planReader = Macros.reader[Plan]
-      Macros.reader[PlanWrapper]
-    }
-
-    doPlanCollectionAction {
-      _.find(BSONDocument("category" -> id.category, "name" -> id.name), planProjection).requireOne
-    }.plan
+  override def loadPlan(id: LevelId): Plan = doPlanCollectionAction {
+    implicit val reader = Macros.reader[Plan]
+    _.find(BSONDocument("category" -> id.category, "name" -> id.name), planProjection).requireOne
   }
 
 
-  override def savePlan(id: LevelId, plan: Plan): Unit = doPlanCollectionAction { col =>
-    implicit val writer = Macros.writer[Plan]
-    col.insert(BSONDocument(
-      "category" -> id.category,
-      "name" -> id.name,
-      "plan" -> plan
-    ))
+  private case class Entry(category: String, name: String, form: Int, shifts: List[List[List[Int]]])
+
+  override def savePlan(id: LevelId, plan: Plan): Unit = doPlanCollectionAction {
+    implicit val writer = Macros.writer[Entry]
+    _.insert(Entry(id.category, id.name, plan.form, plan.shifts))
   }
 
+
+  override def removePlan(id: LevelId): Unit = ???
 }
