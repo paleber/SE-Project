@@ -13,7 +13,7 @@ object ResourceManager {
 
   case object LoadMenu extends ClientMsg
 
-  case class MenuLoaded(info: Map[String, List[String]]) extends ServerMsg
+  case class MenuLoaded(info: Map[String, Seq[String]]) extends ServerMsg
 
   case class LoadLevel(id: LevelId) extends ClientMsg
 
@@ -36,7 +36,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
 
   private val persistence = inject[Persistence]
 
-  private def state(info: Map[String, List[String]], levels: Map[LevelId, Level]): Receive = {
+  private def state(info: Map[String, Seq[String]], levels: Map[LevelId, Level]): Receive = {
 
     case LoadMenu =>
       log.debug("Loading menu")
@@ -67,7 +67,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
 
   override def receive: Receive = state(convertIdList(persistence.loadIds), Map.empty)
 
-  private def convertIdList(ids: List[LevelId]): Map[String, List[String]] = {
+  private def convertIdList(ids: Seq[LevelId]): Map[String, Seq[String]] = {
     ids.map(_.category).distinct.map(cat => (cat, ids.filter(_.category == cat).map(_.name))).toMap
   }
 

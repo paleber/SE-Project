@@ -4,6 +4,7 @@ import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
+import scaldi.{Injectable, Injector}
 import slick.dbio.NoStream
 import slick.jdbc.H2Profile.api._
 import slick.lifted.{PrimaryKey, ProvenShape}
@@ -14,9 +15,11 @@ import scala.language.postfixOps
 import scala.util.Try
 
 
-final class SlickH2Persistence extends Persistence {
+final class SlickH2Persistence(implicit inj: Injector) extends Persistence with Injectable{
 
   private implicit val formats = Serialization.formats(NoTypeHints)
+
+  private val databaseName = inject[String]('slickH2Database)
 
   private class Plans(tag: Tag) extends Table[(String, String, String)](tag, "PLANS") {
 
@@ -44,7 +47,7 @@ final class SlickH2Persistence extends Persistence {
   )))
 
   private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): R = {
-    val db = Database.forURL("jdbc:h2:~/scongo;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
+    val db = Database.forURL(s"jdbc:h2:~/$databaseName;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
     try {
       Await.result(db.run(query), 5 seconds)
     } finally {
@@ -61,22 +64,27 @@ final class SlickH2Persistence extends Persistence {
     read[Plan](data.head)
   }
 
-  private def loadMetaInfo: Map[String, List[String]] = {
-    val query = for (p <- plans) yield (p.category, p.name)
-    val data = doDatabaseAction(query.result)
-
-    data.map(_._1).distinct.map(category =>
-      (category, data.filter(_._1 == category).map(_._2).toList)
-    ).toMap
-  }
-
   override def savePlan(id: LevelId, plan: Plan): Unit = doDatabaseAction(
     DBIO.seq(
       plans += (id.category, id.name, write(plan))
     )
   )
 
-  override def loadIds: List[LevelId] = ???
+  override def loadIds: Seq[LevelId] = {
+    val query = for (p <- plans) yield (p.category, p.name)
+    doDatabaseAction(query.result).map {
+      case (category, name) => LevelId(category, name)
+    }
+  }
 
-  override def removePlan(id: LevelId): Unit = ???
+  override def removePlan(id: LevelId): Unit = {
+    val query = plans.filter(plan =>
+      plan.category === id.category &&
+        plan.name === id.name).delete
+
+    if(doDatabaseAction(query) != 1) {
+      throw new IllegalStateException("id not found")
+    }
+  }
+
 }

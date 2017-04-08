@@ -15,7 +15,7 @@ final class Db4oPersistence(implicit inj: Injector) extends Persistence with Inj
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val databaseName = inject[String]('db4oDatabaseName)
+  private val databaseName = inject[String]('db4oDatabase)
 
   private def doDatabaseAction[T](f: ObjectContainer => T): T = {
     val db = Db4oEmbedded.openFile(
@@ -27,14 +27,6 @@ final class Db4oPersistence(implicit inj: Injector) extends Persistence with Inj
     } finally {
       db.close()
     }
-  }
-
-  private def loadMetaInfo: Map[String, List[String]] = doDatabaseAction { db =>
-    val query = db.query()
-    query.constrain(classOf[Db4oEntry])
-    val set = query.execute[Db4oEntry]()
-    val categories: List[String] = set.map(_.category).toList
-    categories.map(category => (category, set.filter(_.category == category).map(_.name).toList)).toMap
   }
 
   override def loadPlan(levelId: LevelId): Plan = doDatabaseAction { db =>
@@ -63,7 +55,27 @@ final class Db4oPersistence(implicit inj: Injector) extends Persistence with Inj
     db.store(Db4oEntry(levelId.category, levelId.name, write(plan)))
   }
 
-  override def loadIds: List[LevelId] = ???
+  override def loadIds: Seq[LevelId] = doDatabaseAction { db =>
+    val query = db.query()
+    query.constrain(classOf[Db4oEntry])
+    val set = query.execute[Db4oEntry]()
+    set.map(entry => LevelId(entry.category, entry.name))
+  }
 
-  override def removePlan(id: LevelId): Unit = ???
+  override def removePlan(id: LevelId): Unit = doDatabaseAction { db =>
+    val query = db.query()
+
+    query.constrain(classOf[Db4oEntry])
+    query.descend("category").constrain(id.category).equal()
+    query.descend("name").constrain(id.name).equal()
+
+    val set = query.execute[Db4oEntry]()
+    if (set.size != 1) {
+      throw new NoSuchElementException("id not found")
+    }
+    db.delete(set.get(0))
+
+  }
+
+
 }

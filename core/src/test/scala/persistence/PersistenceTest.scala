@@ -33,17 +33,17 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
       persistence.savePlan(id2, plan2)
       val ids = persistence.loadIds
       ids.size shouldBe 2
-      ids should contain (id1)
-      ids should contain (id2)
+      ids should contain(id1)
+      ids should contain(id2)
     }
 
     it should "save a third plan" in {
       persistence.savePlan(id3, plan3)
       val ids = persistence.loadIds
       ids.size shouldBe 3
-      ids should contain (id1)
-      ids should contain (id2)
-      ids should contain (id3)
+      ids should contain(id1)
+      ids should contain(id2)
+      ids should contain(id3)
     }
 
     it should "throw any exception, when saving an already existing plan" in {
@@ -69,8 +69,8 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
       val ids = persistence.loadIds
       ids.size shouldBe 2
       ids should not contain id1
-      ids should contain (id2)
-      ids should contain (id3)
+      ids should contain(id2)
+      ids should contain(id3)
     }
 
     it should "throw any exception, when removing a non-existent plan" in {
@@ -88,19 +88,35 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
   }
 
-  /*
-  "db4oPersistence" should behave like persistenceBehavior({
-    implicit object Injector extends Module {
-      bind[Persistence] toProvider new Db4oPersistence
-      bind[String] identifiedBy 'db4oPersistenceFile to "testDb4oDatabase"
-    }
-    inject[Persistence]
-  }) */
 
   "filePersistence" should behave like persistenceBehavior({
     implicit object Injector extends Module {
       bind[Persistence] toProvider new FilePersistence
-      bind[String] identifiedBy 'filePersistencePath to "core/src/test/resources/plans"
+      bind[String] identifiedBy 'fileDatabase to "core/src/test/resources/plans"
+    }
+    inject[Persistence]
+  })
+
+  "db4oPersistence" should behave like persistenceBehavior({
+    implicit object Injector extends Module {
+      bind[Persistence] toProvider new Db4oPersistence
+      bind[String] identifiedBy 'db4oDatabase to "scongo-test.db4o"
+    }
+    inject[Persistence]
+  })
+
+  "slickH2Persistence" should behave like persistenceBehavior({
+    implicit object Injector extends Module {
+      bind[Persistence] toProvider new SlickH2Persistence
+      bind[String] identifiedBy 'slickH2Database to "scongo-test"
+    }
+    inject[Persistence]
+  })
+
+  "mongoPersistence" should behave like persistenceBehavior({
+    implicit object Injector extends Module {
+      bind[Persistence] toProvider new MongoPersistence
+      bind[String] identifiedBy 'mongoDatabase to "scongo-test"
     }
     inject[Persistence]
   })

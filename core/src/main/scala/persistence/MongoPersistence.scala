@@ -5,20 +5,23 @@ import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.api.{Cursor, MongoDriver}
 import reactivemongo.bson.{BSONDocument, Macros}
+import scaldi.{Injectable, Injector}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
-object MongoPersistence extends Persistence {
+final class MongoPersistence(implicit inj: Injector) extends Persistence with Injectable {
 
   private val connection = Future.fromTry {
     MongoDriver().connection("localhost")
   }
 
+  private val databaseName = inject[String]('mongoDatabase)
+
   private def doPlanCollectionAction[T](f: BSONCollection => Future[T]): T = {
-    val collection = connection.flatMap(_.database("scongo")).map(_.collection("plans"))
+    val collection = connection.flatMap(_.database(databaseName)).map(_.collection("plans"))
     Await.result(collection.flatMap(f), 5.seconds)
   }
 
@@ -55,5 +58,13 @@ object MongoPersistence extends Persistence {
   }
 
 
-  override def removePlan(id: LevelId): Unit = ???
+  override def removePlan(id: LevelId): Unit = {
+    val result = doPlanCollectionAction {
+      _.remove(BSONDocument("category" -> id.category, "name" -> id.name))
+    }
+    if(result.n != 1) {
+      throw new NoSuchElementException("id not found")
+    }
+  }
+
 }

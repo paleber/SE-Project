@@ -15,7 +15,7 @@ final class FilePersistence(implicit inj: Injector) extends Persistence with Inj
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val path = inject[String]('filePersistencePath)
+  private val path = inject[String]('fileDatabase)
   new File(path).mkdirs()
 
   private def createFile(id: LevelId): File = new File(s"$path/${id.category}/${id.name}.json")
@@ -45,21 +45,18 @@ final class FilePersistence(implicit inj: Injector) extends Persistence with Inj
     }
   }
 
-  override def loadIds: List[LevelId] = {
+  override def loadIds: Seq[LevelId] = {
     new File(path).listFiles.flatMap(cat => cat.listFiles.map(name =>
       LevelId(cat.getName, name.getName.replace(".json", "")))).toList
   }
 
   override def removePlan(id: LevelId): Unit = {
     val file = createFile(id)
-
-    println(file.exists() + " " + file.canWrite)
-
-    if(!file.delete()) {
+    if (!file.delete()) {
       throw new NoSuchElementException("cant delete file, maybe it does not exist")
     }
     val dir = createDir(id)
-    if(dir.list.isEmpty) {
+    if (dir.list.isEmpty) {
       dir.delete()
     }
   }
