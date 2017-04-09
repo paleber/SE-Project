@@ -51,7 +51,7 @@
                     };
 
                     this.socket.onmessage = msg => {
-                        console.log("message received: " + JSON.parse(msg.data).jsonClass);
+                        console.log("message received: " + JSON.stringify(JSON.parse(msg.data)));
                         this.handleMsg(msg);
                     };
 

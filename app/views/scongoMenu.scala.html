@@ -74,6 +74,7 @@
                 },
 
                 show: function (data) {
+                    $("scongo-level-button").remove();
                     let $content = $(this.$$("#contentMenu"));
                     $.each(data.info, function (category, names) {
                         $.each(names, function (index, name) {
@@ -83,6 +84,7 @@
                             Polymer.dom(document.querySelector("#" + category)).appendChild(btn);
                         });
                     });
+
                     $content.css("display", "block");
                 },
 
