@@ -5,58 +5,56 @@
     <template>
 
         <style>
-        #contentMenu {
-            margin: 1em;
-        }
+                #contentMenu {
+                    margin: 1em;
+                }
 
-        #wellEasy {
-            background: #74fffd
-        }
+                #wellEasy {
+                    background: #74fffd
+                }
 
-        #wellNormal {
-            background: #d1ff81
-        }
+                #wellNormal {
+                    background: #d1ff81
+                }
 
-        #wellDifficult {
-            background: #ffbe62
-        }
+                #wellDifficult {
+                    background: #ffbe62
+                }
 
-        #wellExtreme {
-            background: #ff8d77
-        }
+                #wellExtreme {
+                    background: #ff8d77
+                }
 
-        paper-button {
-            margin-bottom: 5px;
-            background: white;
-            font-weight: bold;
-            width: 80px;
-        }
-
-        h3 {
-            margin-top: 0;
-            font-weight: bold;
-            text-align: center;
-        }
+                h3 {
+                    margin-top: 0;
+                    font-weight: bold;
+                    text-align: center;
+                }
 
         </style>
 
         <div id="contentMenu" style="display: none;">
 
-            <!--
-            for(difficulty <- persistence.LevelManagerOld.levels.keys) {
-                defining("well" + difficulty.capitalize) { wellId =>
-                    <div id="wellId" class="well">
-                        <h3>difficulty.capitalize</h3>
-                        defining(persistence.LevelManagerOld.levels(difficulty)) { levels =>
-                            for(level <- levels) {
-                                <paper-button raised on-click="levelClicked" level="level">Level {
-                                    levels.indexOf(level) + 1
-                                }</paper-button>
-                            }
-                        }
-                    </div>
-                }
-            } -->
+
+            <div id="wellEasy" class="well">
+                <h3>Easy</h3>
+                <div id="easy"></div>
+            </div>
+
+            <div id="wellNormal" class="well">
+                <h3>Normal</h3>
+                <div id="normal"></div>
+            </div>
+
+            <div id="wellDifficult" class="well">
+                <h3>Difficult</h3>
+                <div id="difficult"></div>
+            </div>
+
+            <div id="wellExtreme" class="well">
+                <h3>Extreme</h3>
+                <div id="extreme"></div>
+            </div>
 
         </div>
 
@@ -68,7 +66,7 @@
 
                 properties: {
                     socketId: String,
-                    socket: Object,
+                    socket: Object
                 },
 
                 ready: function () {
@@ -76,22 +74,22 @@
                 },
 
                 show: function (data) {
-                    console.log(JSON.stringify(data.info));
-                    // this.initGame(data.game);
-
-
-
-
-                    $('#contentMenu').css("display", "block");
+                    let $content = $(this.$$("#contentMenu"));
+                    $.each(data.info, function (category, names) {
+                        $.each(names, function (index, name) {
+                            let btn = document.createElement("scongo-level-button");
+                            btn.category = category;
+                            btn.name = name;
+                            Polymer.dom(document.querySelector("#" + category)).appendChild(btn);
+                        });
+                    });
+                    $content.css("display", "block");
                 },
 
                 hide: function () {
                     $('#contentMenu').css("display", "none");
-                },
+                }
 
-                levelClicked: function (e) {
-                    this.socket.sendMsg("game " + e.target.getAttribute("level"));
-                },
             });
     </script>
 

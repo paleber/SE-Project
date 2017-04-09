@@ -75,14 +75,14 @@
                             this.game.hide();
                             this.menu.show(data);
                             break;
-                        case 'ServerMsg$ShowGame':
+                        case 'ResourceManager$LevelLoaded':
                             this.menu.hide();
                             this.game.show(data);
                             break;
-                        case 'ServerMsg$UpdateBlock':
+                        case 'Game$BlockUpdated':
                             this.game.updateBlock(data);
                             break;
-                        case 'ServerMsg$LevelFinished':
+                        case 'Game$LevelFinished':
                             this.finish.show(data);
                             break;
                         default:

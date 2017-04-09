@@ -1,33 +1,34 @@
-GET           /                               controllers.Application.index
+GET         /                               controllers.Application.index
 
-GET           /guide                          controllers.Application.guide
-GET           /console                        controllers.Application.console
-GET           /game                           controllers.Application.game
+GET         /guide                          controllers.Application.guide
+GET         /console                        controllers.Application.console
+GET         /game                           controllers.Application.game
 
-GET           /scongoSocket                   controllers.Application.scongoSocket
-GET           /scongoMenu                     controllers.Application.scongoMenu
-GET           /scongoGame                     controllers.Application.scongoGame
-GET           /scongoFinish                   controllers.Application.scongoFinish
+GET         /scongoSocket                   controllers.Application.scongoSocket
+GET         /scongoMenu                     controllers.Application.scongoMenu
+GET         /scongoLevelButton              controllers.Application.scongoLevelButton
+GET         /scongoGame                     controllers.Application.scongoGame
+GET         /scongoFinish                   controllers.Application.scongoFinish
 
-GET           /socket                         controllers.Application.socket
+GET         /socket                         controllers.Application.socket
 
-GET           /comet                          controllers.Application.comet
-GET           /cometStream                    controllers.Application.cometStream
+GET         /comet                          controllers.Application.comet
+GET         /cometStream                    controllers.Application.cometStream
 
-GET           /signOut                        controllers.Application.signOut
-GET           /authenticate/:provider         controllers.SocialAuthController.authenticate(provider)
+GET         /signOut                        controllers.Application.signOut
+GET         /authenticate/:provider         controllers.SocialAuthController.authenticate(provider)
 
-GET           /signUp                         controllers.SignUpController.view
-POST          /signUp                         controllers.SignUpController.submit
+GET         /signUp                         controllers.SignUpController.view
+POST        /signUp                         controllers.SignUpController.submit
 
-GET           /signIn                         controllers.SignInController.view
-POST          /signIn                         controllers.SignInController.submit
+GET         /signIn                         controllers.SignInController.view
+POST        /signIn                         controllers.SignInController.submit
 
-GET           /account/email/:email           controllers.ActivateAccountController.send(email: String)
-GET           /account/activate/:token        controllers.ActivateAccountController.activate(token: java.util.UUID)
+GET         /account/email/:email           controllers.ActivateAccountController.send(email: String)
+GET         /account/activate/:token        controllers.ActivateAccountController.activate(token: java.util.UUID)
 
-GET           /assets/*file                   controllers.Assets.at(path="/public", file)
+GET         /assets/*file                   controllers.Assets.at(path="/public", file)
 
 # Angular
-GET           /angular                        controllers.Application.angular
-GET           /angular/*path                  controllers.Application.angularSub(path)
+GET         /angular                        controllers.Application.angular
+GET         /angular/*path                  controllers.Application.angularSub(path)

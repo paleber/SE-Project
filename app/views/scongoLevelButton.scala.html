@@ -1,0 +1,37 @@
+@()(implicit request: RequestHeader, messages: Messages, webJarAssets: WebJarAssets)
+<link rel='import' href='@routes.Assets.at("bower_components/polymer/polymer.html")'>
+<link rel='import' href='@routes.Assets.at("bower_components/paper-button/paper-button.html")'>
+
+<dom-module id='scongo-level-button'>
+
+    <template>
+
+        <style>
+                paper-button {
+                    margin-bottom: 5px;
+                    background: white;
+                    font-weight: bold;
+                    width: 80px;
+                }
+        </style>
+
+        <paper-button raised on-click='onClick'>{{name}}</paper-button>
+
+    </template>
+
+    <script>
+            Polymer({
+                is: "scongo-level-button",
+                properties: {
+                    category: String,
+                    name: String
+                },
+
+                onClick: function () {
+                    socket.sendMsg("game " + this.category + " " + this.name);
+                }
+
+            });
+    </script>
+
+</dom-module>

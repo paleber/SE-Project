@@ -74,6 +74,10 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
     Ok(views.html.scongoFinish())
   }
 
+  def scongoLevelButton = Action { implicit request =>
+    Ok(views.html.scongoLevelButton())
+  }
+
   def socket: WebSocket = WebSocket.accept[String, String] { _ =>
     val control = injectActorRef[MainControl]
     if (env.mode != Mode.Prod) {

@@ -2,7 +2,6 @@
 .idea/
 target/
 project/target/
-
-
-
-
+Scongo.iml
+core/src/test/resources/
+project/project/
