@@ -325,9 +325,6 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     case HandleBlockAction =>
       handleBlockAction()
 
-    case msg =>
-      log.warning("Unhandled message: " + msg)
-
   }
 
   private def handleBlockAction(): Unit = {

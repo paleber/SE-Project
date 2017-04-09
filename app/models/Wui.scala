@@ -1,8 +1,8 @@
 package models
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
-import control.MainControl
-import control.MainControl.CreateAndRegisterView
+import control.UserControl
+import control.UserControl.{CreateAndRegisterView, Shutdown}
 import gui.Gui
 import model.console.CmdParser
 import model.msg.{ClientMsg, ParserMsg, ScongoMsg, ServerMsg}
@@ -21,13 +21,13 @@ object Wui {
 class Wui(connection: ActorRef, isProductive: Boolean)(implicit inj: Injector) extends Actor with AkkaInjectable with ActorLogging {
   log.info("Initializing")
 
-  private val control = injectActorRef[MainControl]("main")
+  private val control = injectActorRef[UserControl]("main")
 
   if (!isProductive) {
     control ! CreateAndRegisterView(injectActorProps[Gui], "gui")
   }
 
-  control ! MainControl.RegisterView(self)
+  control ! UserControl.RegisterView(self)
   control ! LoadMenu
 
   private val parser = context.actorOf(Props[CmdParser], "parser")
@@ -55,7 +55,7 @@ class Wui(connection: ActorRef, isProductive: Boolean)(implicit inj: Injector) e
 
   override def postStop: Unit = {
     log.debug("Stopping")
-    control ! PoisonPill
+    control ! Shutdown
   }
 
 }

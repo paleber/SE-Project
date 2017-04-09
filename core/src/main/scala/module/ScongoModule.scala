@@ -2,7 +2,7 @@ package module
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.routing.{DefaultOptimalSizeExploringResizer, SmallestMailboxPool}
-import control.MainControl
+import control.UserControl
 import gui.Gui
 import persistence.{FilePersistence, Persistence, ResourceManager}
 import scaldi.Module
@@ -12,7 +12,7 @@ import tui.Tui
 object ScongoModule extends Module with AkkaInjectable {
 
   binding to ActorSystem("scongo")
-  binding toProvider new MainControl
+  binding toProvider new UserControl
 
   binding toProvider new Tui
   binding toProvider new Gui

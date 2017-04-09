@@ -1,7 +1,7 @@
 package model.console
 
 import builder.Game._
-import control.MainControl.Shutdown
+import control.UserControl.Shutdown
 import model.basic.Point
 import model.element.LevelId
 import model.msg.ClientMsg

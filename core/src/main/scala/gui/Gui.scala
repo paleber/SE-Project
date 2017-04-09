@@ -6,7 +6,7 @@ import java.awt.event.{WindowAdapter, WindowEvent}
 import javax.swing.{JFrame, JPanel}
 
 import akka.actor.{Actor, ActorLogging, Props}
-import control.MainControl.Shutdown
+import control.UserControl.Shutdown
 import gui.Gui.SetContentPane
 import model.msg.{ClientMsg, ServerMsg}
 import persistence.ResourceManager.{LevelLoaded, MenuLoaded}

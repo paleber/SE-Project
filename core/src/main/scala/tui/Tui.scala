@@ -3,7 +3,7 @@ package tui
 import java.io.{BufferedReader, InputStreamReader}
 
 import akka.actor.{Actor, ActorLogging, Props}
-import control.MainControl.Shutdown
+import control.UserControl.Shutdown
 import model.console.CmdParser
 import model.msg.{ClientMsg, ParserMsg, ServerMsg}
 import scaldi.Injector
