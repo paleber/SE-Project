@@ -5,7 +5,8 @@ import java.awt.Dimension
 import java.awt.event.{WindowAdapter, WindowEvent}
 import javax.swing.{JFrame, JPanel}
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, Props}
+import control.MainControl.Shutdown
 import gui.Gui.SetContentPane
 import model.msg.{ClientMsg, ServerMsg}
 import persistence.ResourceManager.{LevelLoaded, MenuLoaded}
@@ -35,7 +36,7 @@ final class Gui(implicit inj: Injector) extends Actor with ActorLogging {
   frame.setVisible(true)
   frame.addWindowListener(new WindowAdapter {
     override def windowClosing(e: WindowEvent): Unit = {
-      context.parent ! PoisonPill
+      context.parent ! Shutdown
     }
   })
 
@@ -65,9 +66,11 @@ final class Gui(implicit inj: Injector) extends Actor with ActorLogging {
       content = game
       content ! msg
 
-    case msg: ServerMsg => content ! msg
+    case msg: ServerMsg =>
+      content ! msg
 
-    case msg: ClientMsg => context.parent ! msg
+    case msg: ClientMsg =>
+      context.parent ! msg
 
   }
 

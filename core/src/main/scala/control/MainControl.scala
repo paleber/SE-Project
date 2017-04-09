@@ -1,12 +1,12 @@
 package control
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.util.Timeout
 import builder.Game._
 import builder.{AnchorField, Game}
-import control.MainControl.{CreateAndRegisterView, RegisterView}
+import control.MainControl.{CreateAndRegisterView, RegisterView, Shutdown}
 import model.element.{Grid, Level}
-import model.msg.InternalMsg
+import model.msg.{ClientMsg, InternalMsg}
 import persistence.ResourceManager.{LevelLoaded, LoadLevel, LoadMenu, MenuLoaded}
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable
@@ -21,6 +21,8 @@ object MainControl {
 
   // Add an external view actor
   case class RegisterView(view: ActorRef) extends InternalMsg
+
+  case object Shutdown extends ClientMsg
 
 }
 
@@ -41,6 +43,12 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
       views.foreach(_ ! msg)
   }
 
+  private def receiveShutdown(views: List[ActorRef]): Receive = {
+    case Shutdown =>
+      views.foreach(_ ! PoisonPill)
+      context.stop(self)
+  }
+
   private def initState(views: List[ActorRef]): Receive =
     receiveLoadMenu(views).orElse {
 
@@ -55,34 +63,36 @@ class MainControl(implicit inj: Injector) extends Actor with AkkaInjectable with
 
     }
 
-  private def menuState(views: List[ActorRef]): Receive = {
+  private def menuState(views: List[ActorRef]): Receive =
+    receiveShutdown(views) orElse {
 
-    case msg: LoadLevel =>
-      levelManager ! msg
+      case msg: LoadLevel =>
+        levelManager ! msg
 
-    case LevelLoaded(level) =>
-      log.debug("Switching state to game")
+      case LevelLoaded(level) =>
+        log.debug("Switching state to game")
 
-      def initGame(level: Level): Unit = {
-        Try(new Game(level, AnchorField(level.form, level.size))) match {
-          case Success(game) =>
-            views.foreach(_ ! LevelLoaded(game.currentState))
-            context.become(gameState(views, game))
-          case Failure(_) =>
-            val field = AnchorField(level.form, level.size + 1)
-            initGame(level.copy(
-              size = level.size + 1,
-              width = field.width,
-              height = field.height
-            ))
+        def initGame(level: Level): Unit = {
+          Try(new Game(level, AnchorField(level.form, level.size))) match {
+            case Success(game) =>
+              views.foreach(_ ! LevelLoaded(game.currentState))
+              context.become(gameState(views, game))
+            case Failure(_) =>
+              val field = AnchorField(level.form, level.size + 1)
+              initGame(level.copy(
+                size = level.size + 1,
+                width = field.width,
+                height = field.height
+              ))
+          }
         }
-      }
 
-      initGame(level)
-  }
+        initGame(level)
+    }
 
   private def gameState(views: List[ActorRef], game: Game): Receive =
-    receiveLoadMenu(views) orElse {
+    receiveLoadMenu(views) orElse
+      receiveShutdown(views) orElse {
 
       case UpdateBlockPosition(index, position) =>
         updateGame(views, index, game.updateBlockPosition(index, position))

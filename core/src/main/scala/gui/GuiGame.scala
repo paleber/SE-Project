@@ -24,11 +24,9 @@ object GuiGame {
 private class GuiGame extends JPanel with Actor with ActorLogging {
   log.debug("Initializing")
 
-
   private var level: Level = _
 
   private var blocks: Array[Grid] = Array.empty
-  //private var blockPolys: Array[Polygon] = Array.empty
 
   private var scaleFactor: Double = 1
   private var xOffset, yOffset: Double = 0
@@ -111,12 +109,12 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
   })
 
   private def createPoly(points: List[Point], position: Point): Polygon = {
-     val poly = new Polygon()
-     points.foreach(p => poly.addPoint(
-       scaleX(p.x + position.x),
-       scaleY(p.y + position.y)
-     ))
-     poly
+    val poly = new Polygon()
+    points.foreach(p => poly.addPoint(
+      scaleX(p.x + position.x),
+      scaleY(p.y + position.y)
+    ))
+    poly
   }
 
   override def paint(g: Graphics): Unit = {
@@ -163,27 +161,13 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
           scaleX(line.end.x),
           scaleY(line.end.y))
       }
-
     })
 
-
-
     // Draw unselected the blocks
-
-
-
-
-
-    /*for (i <- blocks.indices) {
-      convertCornersToPoly(blocks(i).polygons(0), blocks(i).position, blockPolys(i))
-    } */
-
     blocks.foreach(block => {
-
-
       block.polygons.foreach(p => {
         val poly = createPoly(p, block.position)
-        if(selected.isEmpty || blocks.indexOf(block) != selected.get.index) {
+        if (selected.isEmpty || blocks.indexOf(block) != selected.get.index) {
           g.setColor(new Color(100, 255, 255))
           g.fillPolygon(poly)
 
@@ -193,8 +177,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
       })
     })
 
-
-    if(selected.isDefined) {
+    if (selected.isDefined) {
       selected.get.block.polygons.foreach(p => {
         val poly = createPoly(p, selected.get.block.position)
 
@@ -205,35 +188,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
         g.drawPolygon(poly)
 
       })
-
-
     }
-
-/*
-    for (poly <- blockPolys if selected.isEmpty ||
-      blockPolys.indexOf(poly) != selected.get.index) {
-
-      g.setColor(new Color(100, 255, 255))
-      g.fillPolygon(poly)
-
-      g.setColor(new Color(0, 139, 139))
-      g.drawPolygon(poly)
-    }
-
-    if (selected.isDefined) {
-      convertCornersToPoly(
-        selected.get.block.polygons(0),
-        selected.get.block.position,
-        selected.get.poly
-      )
-
-      g.setColor(new Color(100, 255, 100))
-      g.fillPolygon(selected.get.poly)
-
-      g.setColor(new Color(0, 139, 0))
-      g.drawPolygon(selected.get.poly)
-
-    } */
 
     if (finished.isDefined) {
       g.setColor(Color.BLUE)
@@ -279,11 +234,8 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
   override def receive: Receive = {
 
     case LevelLoaded(lv) =>
-      log.info("TODO")
-
       level = lv
       blocks = level.blocks.toArray
-      //blockPolys = Array.fill[Polygon](blocks.length)(new Polygon())
       finished = None
       context.parent ! Gui.SetContentPane(this, "game - " + level.id.category + " " + level.id.name)
 
@@ -319,8 +271,6 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
             }
           })
         })
-
-
       }
 
     case ReleaseBlock =>
@@ -384,9 +334,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     if (activeAction.isDefined) {
       activeAction.get.action match {
 
-
         case RotateLeft =>
-
           selected.get.block = activeAction.get.startGrid.rotate(
             -Math.PI * 2 / level.form / activeAction.get.maxSteps * activeAction.get.curStep
           )

@@ -2,24 +2,15 @@ package tui
 
 import java.io.{BufferedReader, InputStreamReader}
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, Props}
+import control.MainControl.Shutdown
 import model.console.CmdParser
 import model.msg.{ClientMsg, ParserMsg, ServerMsg}
 import scaldi.Injector
 import scaldi.akka.AkkaInjectable
-import tui.Tui.Shutdown
-
-
-object Tui {
-
-  case object Shutdown extends ClientMsg
-
-}
 
 final class Tui(implicit inj: Injector) extends Actor with AkkaInjectable with ActorLogging {
   log.debug("Initializing")
-
-  //context.parent ! MainControl.RegisterView(self)
 
   private val parser = context.actorOf(Props[CmdParser], "parser")
 
@@ -47,7 +38,7 @@ final class Tui(implicit inj: Injector) extends Actor with AkkaInjectable with A
   override def receive: Receive = {
 
     case Shutdown =>
-      context.parent ! PoisonPill
+      context.parent ! Shutdown
 
     case msg: ClientMsg =>
       context.parent ! msg

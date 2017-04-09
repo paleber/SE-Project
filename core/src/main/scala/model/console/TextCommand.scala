@@ -1,11 +1,11 @@
 package model.console
 
 import builder.Game._
+import control.MainControl.Shutdown
 import model.basic.Point
 import model.element.LevelId
 import model.msg.ClientMsg
 import persistence.ResourceManager.{LoadLevel, LoadMenu}
-import tui.Tui
 
 
 private[console] trait TextCommand {
@@ -23,7 +23,7 @@ private[console] object CmdShutdown extends TextCommand {
   override val description = "- Shutdown the application"
   override val numberArgs = 0
 
-  override def parse(args: Array[String]) = Tui.Shutdown
+  override def parse(args: Array[String]) = Shutdown
 }
 
 private[console] object CmdShowGame extends TextCommand {

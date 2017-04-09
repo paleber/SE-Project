@@ -43,7 +43,6 @@
 
                     this.socket.onopen = () => {
                         console.log("socket opened");
-                        this.socket.send("menu");
                     };
 
                     this.socket.onerror = msg => {

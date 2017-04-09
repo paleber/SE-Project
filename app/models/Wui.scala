@@ -2,21 +2,33 @@ package models
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import control.MainControl
+import control.MainControl.CreateAndRegisterView
+import gui.Gui
 import model.console.CmdParser
 import model.msg.{ClientMsg, ParserMsg, ScongoMsg, ServerMsg}
 import org.json4s.ShortTypeHints
 import org.json4s.jackson.Serialization
+import persistence.ResourceManager.LoadMenu
+import scaldi.Injector
+import scaldi.akka.AkkaInjectable
 
 object Wui {
 
-  def props(control: ActorRef, socket: ActorRef) = Props(new Wui(control, socket))
+  def props(socket: ActorRef, isProductive: Boolean)(implicit injector: Injector) = Props(new Wui(socket, isProductive))
 
 }
 
-class Wui(control: ActorRef, connection: ActorRef) extends Actor with ActorLogging {
+class Wui(connection: ActorRef, isProductive: Boolean)(implicit inj: Injector) extends Actor with AkkaInjectable with ActorLogging {
   log.info("Initializing")
 
+  private val control = injectActorRef[MainControl]("main")
+
+  if (!isProductive) {
+    control ! CreateAndRegisterView(injectActorProps[Gui], "gui")
+  }
+
   control ! MainControl.RegisterView(self)
+  control ! LoadMenu
 
   private val parser = context.actorOf(Props[CmdParser], "parser")
 
@@ -42,6 +54,7 @@ class Wui(control: ActorRef, connection: ActorRef) extends Actor with ActorLoggi
   }
 
   override def postStop: Unit = {
+    log.debug("Stopping")
     control ! PoisonPill
   }
 

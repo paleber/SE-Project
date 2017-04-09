@@ -8,12 +8,8 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.util.Timeout
 import com.mohiva.play.silhouette.api.{LogoutEvent, Silhouette}
 import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
-import control.MainControl
-import control.MainControl.CreateAndRegisterView
-import gui.Gui
 import models.Wui
 import module.ScongoModule
-import persistence.ResourceManager.LoadMenu
 import play.api.Mode
 import play.api.http.ContentTypes
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -24,8 +20,6 @@ import scaldi.Injector
 import scaldi.akka.AkkaInjectable
 import utils.auth.DefaultEnv
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -38,6 +32,7 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
                             implicit val webJarAssets: WebJarAssets) extends Controller with I18nSupport with AkkaInjectable{
 
   private implicit val injector: Injector = ScongoModule
+
   private implicit val system = inject[ActorSystem]
 
   private implicit val timeout: Timeout = 5.seconds
@@ -79,11 +74,7 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
   }
 
   def socket: WebSocket = WebSocket.accept[String, String] { _ =>
-    val control = injectActorRef[MainControl]
-    if (env.mode != Mode.Prod) {
-      control ! CreateAndRegisterView(injectActorProps[Gui], "gui")
-    }
-    ActorFlow.actorRef(socket => Wui.props(control, socket))
+    ActorFlow.actorRef(socket => Wui.props(socket, env.mode == Mode.Prod))
   }
 
   def comet = silhouette.UserAwareAction { implicit request =>
@@ -91,24 +82,11 @@ class Application @Inject()(silhouette: Silhouette[DefaultEnv],
   }
 
   def cometStream() = Action {
-
     val source = Source
       .actorRef[String](bufferSize = 0, OverflowStrategy.fail)
-      .mapMaterializedValue(actor => {
-
-        val control = injectActorRef[MainControl]
-        if (env.mode != Mode.Prod) {
-          control ! CreateAndRegisterView(injectActorProps[Gui], "gui")
-        }
-        system.actorOf(Wui.props(control, actor))
-
-        Future {
-          Thread.sleep(100)
-          control ! LoadMenu
-        }
-
+      .mapMaterializedValue(stream => {
+        system.actorOf(Wui.props(stream, env.mode == Mode.Prod))
       })
-
     Ok.chunked(source via Comet.string("parent.cometPush")).as(ContentTypes.HTML)
   }
 
