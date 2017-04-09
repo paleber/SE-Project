@@ -4,8 +4,6 @@ import model.element.{LevelId, Plan}
 import org.scalatest.{FlatSpec, Matchers}
 import scaldi.{Injectable, Module}
 
-import scala.collection.mutable
-
 class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
   private val id1 = LevelId("cat1", "lv1")
@@ -85,21 +83,19 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
       persistence.loadIds shouldBe List.empty
     }
 
-
   }
-
 
   "filePersistence" should behave like persistenceBehavior({
     implicit object Injector extends Module {
-      bind[Persistence] toProvider new FilePersistence
-      bind[String] identifiedBy 'fileDatabase to "core/src/test/resources/plans"
+      bind[Persistence] to new FilePersistence
+      bind[String] identifiedBy 'filePath to "core/src/test/resources/plans"
     }
     inject[Persistence]
   })
 
   "db4oPersistence" should behave like persistenceBehavior({
     implicit object Injector extends Module {
-      bind[Persistence] toProvider new Db4oPersistence
+      bind[Persistence] to new Db4oPersistence
       bind[String] identifiedBy 'db4oDatabase to "scongo-test.db4o"
     }
     inject[Persistence]
@@ -107,7 +103,7 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
   "slickH2Persistence" should behave like persistenceBehavior({
     implicit object Injector extends Module {
-      bind[Persistence] toProvider new SlickH2Persistence
+      bind[Persistence] to new SlickH2Persistence
       bind[String] identifiedBy 'slickH2Database to "scongo-test"
     }
     inject[Persistence]
@@ -115,18 +111,10 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
   "mongoPersistence" should behave like persistenceBehavior({
     implicit object Injector extends Module {
-      bind[Persistence] toProvider new MongoPersistence
+      bind[Persistence] to new MongoPersistence
       bind[String] identifiedBy 'mongoDatabase to "scongo-test"
     }
     inject[Persistence]
   })
-
-
-  /*
-    private val plan1 = Plan(4, List(List(List())))
-    private val id1 = LevelId("cat1", "lv1")
-
-    persistence.savePlan(id1, plan1)
-  */
 
 }

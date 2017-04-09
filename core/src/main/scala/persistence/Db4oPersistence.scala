@@ -64,7 +64,6 @@ final class Db4oPersistence(implicit inj: Injector) extends Persistence with Inj
 
   override def removePlan(id: LevelId): Unit = doDatabaseAction { db =>
     val query = db.query()
-
     query.constrain(classOf[Db4oEntry])
     query.descend("category").constrain(id.category).equal()
     query.descend("name").constrain(id.name).equal()
@@ -74,8 +73,6 @@ final class Db4oPersistence(implicit inj: Injector) extends Persistence with Inj
       throw new NoSuchElementException("id not found")
     }
     db.delete(set.get(0))
-
   }
-
 
 }

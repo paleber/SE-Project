@@ -15,7 +15,7 @@ final class FilePersistence(implicit inj: Injector) extends Persistence with Inj
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val path = inject[String]('fileDatabase)
+  private val path = inject[String]('filePath)
   new File(path).mkdirs()
 
   private def createFile(id: LevelId): File = new File(s"$path/${id.category}/${id.name}.json")

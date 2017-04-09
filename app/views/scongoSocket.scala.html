@@ -71,7 +71,7 @@
                     const data = JSON.parse(msg.data);
 
                     switch (data.jsonClass) {
-                        case 'ServerMsg$ShowMenu$':
+                        case 'ResourceManager$MenuLoaded':
                             this.game.hide();
                             this.menu.show(data);
                             break;

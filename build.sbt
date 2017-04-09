@@ -9,14 +9,15 @@ lazy val core = (project in file("core")).
   settings(
     name := "scongo-core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.4.11",
+      "com.typesafe.akka" %% "akka-actor" % "2.4.17",
       "org.json4s" %% "json4s-jackson" % "3.4.1",
       "org.scaldi" %% "scaldi" % "0.5.8",
       "org.scaldi" %% "scaldi-akka" % "0.5.8",
       "org.scalactic" %% "scalactic" % "3.0.1",
       "org.scalatest" %% "scalatest" % "3.0.1" % "test",
       "com.typesafe.slick" %% "slick" % "3.2.0",
-      "org.slf4j" % "slf4j-nop" % "1.6.4",
+      "ch.qos.logback" % "logback-classic" % "1.2.2",
+      "org.clapper" %% "grizzled-slf4j" % "1.3.0",
       "com.typesafe.slick" %% "slick-hikaricp" % "3.2.0",
       "com.h2database" % "h2" % "1.4.194",
       "org.reactivemongo" %% "reactivemongo" % "0.12.1"
@@ -28,8 +29,6 @@ lazy val scongo = (project in file(".")).
   settings(
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.4.11",
-      "org.json4s" %% "json4s-jackson" % "3.4.1",
 
       //angular2 dependencies
       "org.webjars.npm" % "angular__common" % "2.2.0",
