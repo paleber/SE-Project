@@ -3,6 +3,7 @@ package builder
 import model.basic._
 import model.element.{Grid, Level, LevelId, Plan}
 
+import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
 object LevelBuilder {
@@ -64,45 +65,47 @@ object LevelBuilder {
       anchors.map(_ + v)
     }
 
-    def createGrid(anchors: List[Point]): Grid = {
+    def createGrid(anchors: List[Point], isBoard: Boolean): Grid = {
 
       val corners = anchors.map(a =>
         cVectors.map(v => a + v))
 
       val edges = corners.flatMap(corners =>
         corners.indices.map(index =>
-          Line(corners(index), corners((index + 1) % corners.length))))
+          Line(corners(index), corners((index + 1) % corners.length)))).to[ListBuffer]
 
-      // TODO remove double border edges
-      // TODO optimize border edges
+      // remove redundant edges
+      for (l <- edges; k <- edges if k != l && k.equalsNearly(l, 1e-5)) {
+        edges -= l
+        if (!isBoard) {
+          edges -= k
+        }
+      }
+
+      // connect neighbor edges with same direction
+      for (l <- edges; k <- edges if l != k) {
+        val c = l.connect(k, 1e-5)
+        if (c.isDefined && edges.contains(l)) {
+          edges -= l
+          edges -= k
+          edges += c.get
+        }
+      }
+
       // TODO optimize polygons
 
-
-      Grid(anchors, corners, edges, Point.ZERO)
+      Grid(anchors, corners, edges.toList, Point.ZERO)
     }
 
     val decentralizedBlockAnchors = plan.shifts.map(createAnchors)
-    val board = createGrid(centerAnchors(decentralizedBlockAnchors.flatten))
-    val blocks = decentralizedBlockAnchors.map(a => createGrid(centerAnchors(a)))
-
-
-    /*val anchors = buildAnchors(dirs, plan.shifts)
-    centerElements(coreLines, anchors)
-
-    val allLines = buildAllLines(coreLines, anchors)
-    val lines = extractInnerLines(allLines)
-    optimizeLines(lines)
-    optimizeLines(allLines)
-
-    val corners = buildCorners(allLines)
-    AnchoredGrid(Grid(corners, lines.toList), plan.form, anchors.toList) */
-
+    val board = createGrid(centerAnchors(decentralizedBlockAnchors.flatten), isBoard = true)
+    val blocks = decentralizedBlockAnchors.map(a => createGrid(centerAnchors(a), isBoard = false))
 
     def findOptimalSize(level: Level): Level = {
       val field = AnchorField(level.form, level.size)
 
       Try(
-        Range(0, 100).foreach(_ =>
+        Range(0, 20).foreach(_ =>
           new Game(level, field)
         )
       ) match {
@@ -127,68 +130,5 @@ object LevelBuilder {
 
   }
 
-  /*
-  private def extractInnerLines(allLines: ListBuffer[Line]): ListBuffer[Line] = {
-    val innerLines = ListBuffer.empty[Line]
-    var index = 0
-    while (index < allLines.length) {
-      val line = extractEqualLine(allLines, index)
-      if (line.isDefined) {
-        innerLines += line.get
-      } else {
-        index += 1
-      }
-    }
-    innerLines
-  }
-
-  private def extractEqualLine(lines: ListBuffer[Line], startIndex: Int): Option[Line] = {
-    for (i <- (startIndex + 1) until lines.length) {
-      if (lines(startIndex).equalsNearly(lines(i), 1e-5)) {
-        lines.remove(i)
-        return Some(lines.remove(startIndex))
-      }
-    }
-    None
-  }
-
-  private def buildCorners(allLines: ListBuffer[Line]): List[Point] = {
-    var line = allLines.remove(0)
-    var corners = ListBuffer(line.start)
-
-    while (allLines.nonEmpty) {
-      if (line.start.distanceTo(corners.last) > line.end.distanceTo(corners.last)) {
-        corners += line.start
-      } else {
-        corners += line.end
-      }
-      line = extractNextLine(allLines, corners.last)
-    }
-    corners.toList
-  }
-
-  private def extractNextLine(allLines: ListBuffer[Line], p: Point): Line = {
-    for (i <- allLines.indices) {
-      if (allLines(i).start.distanceTo(p) < 1e-5 || allLines(i).end.distanceTo(p) < 1e-5) {
-        return allLines.remove(i)
-      }
-    }
-    throw new IllegalStateException("Next line not found, inconsistent plan")
-  }
-
-  private def optimizeLines(lines: ListBuffer[Line]): Unit = {
-    for (i <- lines.indices) {
-      for (j <- (i + 1) until lines.length) {
-        val line = lines(i).connect(lines(j), 1e-5)
-        if (line.isDefined) {
-          lines.remove(j)
-          lines.remove(i)
-          lines += line.get
-          optimizeLines(lines)
-          return
-        }
-      }
-    }
-  }*/
 
 }

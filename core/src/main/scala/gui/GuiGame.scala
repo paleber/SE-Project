@@ -7,7 +7,7 @@ import javax.swing.JPanel
 
 import akka.actor.{Actor, ActorLogging, Props}
 import builder.Game._
-import model.basic.Point
+import model.basic.{Line, Point}
 import model.element.{Grid, Level}
 import persistence.ResourceManager.{LevelLoaded, LoadMenu}
 
@@ -42,9 +42,7 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     null
   )
 
-  private class Selected(var index: Int, var block: Grid) {
-    //val poly = new Polygon()
-  }
+  private class Selected(var index: Int, var block: Grid)
 
   private var selected: Option[Selected] = None
 
@@ -117,6 +115,15 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
     poly
   }
 
+  private def createEdge(points: List[Point], position: Point): Polygon = {
+    val poly = new Polygon()
+    points.foreach(p => poly.addPoint(
+      scaleX(p.x + position.x),
+      scaleY(p.y + position.y)
+    ))
+    poly
+  }
+
   override def paint(g: Graphics): Unit = {
 
     // Calculate scaleFactor and offsets
@@ -165,29 +172,26 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
 
     // Draw unselected the blocks
     blocks.foreach(block => {
-      block.polygons.foreach(p => {
-        val poly = createPoly(p, block.position)
-        if (selected.isEmpty || blocks.indexOf(block) != selected.get.index) {
-          g.setColor(new Color(100, 255, 255))
+      if (selected.isEmpty || blocks.indexOf(block) != selected.get.index) {
+        g.setColor(new Color(100, 255, 255))
+        block.polygons.foreach(p => {
+          val poly = createPoly(p, block.position)
           g.fillPolygon(poly)
-
-          g.setColor(new Color(0, 139, 139))
-          g.drawPolygon(poly)
-        }
-      })
+        })
+        g.setColor(new Color(0, 139, 139))
+        block.edges.foreach(edge => drawEdge(g, edge, block.position))
+      }
     })
 
     if (selected.isDefined) {
+      g.setColor(new Color(100, 255, 100))
       selected.get.block.polygons.foreach(p => {
         val poly = createPoly(p, selected.get.block.position)
-
-        g.setColor(new Color(100, 255, 100))
         g.fillPolygon(poly)
-
-        g.setColor(new Color(0, 139, 0))
-        g.drawPolygon(poly)
-
       })
+
+      g.setColor(new Color(0, 139, 0))
+      selected.get.block.edges.foreach(edge => drawEdge(g, edge, selected.get.block.position))
     }
 
     if (finished.isDefined) {
@@ -217,6 +221,15 @@ private class GuiGame extends JPanel with Actor with ActorLogging {
         getHeight / 2
       )
     }
+  }
+
+  private def drawEdge(g: Graphics, edge: Line, position: Point): Unit = {
+    g.drawLine(
+      scaleX(edge.start.x + position.x),
+      scaleY(edge.start.y + position.y),
+      scaleX(edge.end.x + position.x),
+      scaleY(edge.end.y + position.y)
+    )
   }
 
   private def scale(z: Double): Int = {

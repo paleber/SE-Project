@@ -18,7 +18,7 @@ object ScongoModule extends Module with AkkaInjectable {
   binding toProvider new Gui
 
   bind[Persistence] to new FilePersistence
-  bind[String] identifiedBy 'filePath to "core/src/main/resources/lvNew"
+  bind[String] identifiedBy 'filePath to "core/src/main/resources/levels"
 
   bind[ActorRef] identifiedBy 'resourceRouter to {
     inject[ActorSystem].actorOf(
