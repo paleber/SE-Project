@@ -32,7 +32,7 @@ object UserControl {
 class UserControl(implicit inj: Injector) extends Actor with AkkaInjectable with ActorLogging {
   log.debug("Initializing")
 
-  private implicit val timeout: Timeout = 5.seconds
+  private implicit val timeout: Timeout = 15.seconds
 
   private val resourceManager = inject[ActorRef]('resourceRouter)
 

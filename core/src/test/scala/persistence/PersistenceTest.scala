@@ -112,6 +112,7 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
   "mongoPersistence" should behave like persistenceBehavior({
     implicit object Injector extends Module {
       bind[Persistence] to new MongoPersistence
+      bind[String] identifiedBy 'mongoUri to "localhost:27017"
       bind[String] identifiedBy 'mongoDatabase to "scongo-test"
     }
     inject[Persistence]

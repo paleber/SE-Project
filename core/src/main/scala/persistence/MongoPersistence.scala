@@ -14,15 +14,14 @@ import scala.concurrent.{Await, Future}
 
 final class MongoPersistence(implicit inj: Injector) extends Persistence with Injectable {
 
-  private val connection = Future.fromTry {
-    MongoDriver().connection("localhost")
-  }
-
   private val databaseName = inject[String]('mongoDatabase)
+  private val connection = Future.fromTry {
+    MongoDriver().connection(inject[String]('mongoUri))
+  }
 
   private def doPlanCollectionAction[T](f: BSONCollection => Future[T]): T = {
     val collection = connection.flatMap(_.database(databaseName)).map(_.collection("plans"))
-    Await.result(collection.flatMap(f), 5.seconds)
+    Await.result(collection.flatMap(f), 15.seconds)
   }
 
   doPlanCollectionAction {
