@@ -20,7 +20,9 @@ lazy val core = (project in file("core")).
       "org.clapper" %% "grizzled-slf4j" % "1.3.0",
       "com.typesafe.slick" %% "slick-hikaricp" % "3.2.0",
       "com.h2database" % "h2" % "1.4.194",
-      "org.reactivemongo" %% "reactivemongo" % "0.12.1"
+      "org.reactivemongo" %% "reactivemongo" % "0.12.1",
+      "net.codingwell" %% "scala-guice" % "4.0.1",
+      "com.typesafe.play" %% "play-ws" % "2.5.4"
     )
   )
 
@@ -66,7 +68,6 @@ lazy val scongo = (project in file(".")).
       "com.adrianhurt" %% "play-bootstrap" % "1.0-P25-B3",
       "com.mohiva" %% "play-silhouette-testkit" % "4.0.0" % "test")
   ).
-  enablePlugins(PlayScala).
   dependsOn(core).
   enablePlugins(PlayScala, SbtWeb)
 

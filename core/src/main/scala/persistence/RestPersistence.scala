@@ -1,6 +1,11 @@
 package persistence
 
+import javax.inject.Inject
+
 import model.element.{LevelId, Plan}
+import play.api.libs.json._
+import play.api.libs.ws.WSClient
+import play.libs.Json
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.api.{Cursor, MongoDriver}
@@ -12,7 +17,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
-final case class MongoPersistenceModule(uri: String, database: String) extends Module {
+final case class RestPersistenceModule(uri: String, database: String) extends Module {
+
 
   bind[Persistence] to new MongoPersistence
   bind[String] identifiedBy 'mongoPersistenceUri to uri
@@ -20,7 +26,7 @@ final case class MongoPersistenceModule(uri: String, database: String) extends M
 
 }
 
-private final class MongoPersistence(implicit inj: Injector) extends Persistence with Injectable {
+private final class RestPersistence @Inject()(implicit inj: Injector, ws: WSClient) extends Persistence with Injectable {
 
   private val connection = Future.fromTry {
     MongoDriver().connection(inject[String]('mongoPersistenceUri))
@@ -43,10 +49,22 @@ private final class MongoPersistence(implicit inj: Injector) extends Persistence
 
   private val idProjection = BSONDocument("_id" -> 0, "category" -> 1, "name" -> 1)
 
-  override def loadIds: List[LevelId] = doPlanCollectionAction {
-    implicit val reader = Macros.reader[LevelId]
-    _.find(BSONDocument.empty, idProjection).cursor().
-      collect(-1, Cursor.FailOnError[List[LevelId]]())
+  override def loadIds: List[LevelId] = {
+
+    import play.api.libs.json._
+    Json.re
+    implicit val personReads = Json.reads[Plan]
+    val x = Await.result(
+      ws.url("localhost").get().map {
+        response => (response.json \ "plan").validate[Plan]
+      }, 5.seconds)
+
+
+    doPlanCollectionAction {
+      implicit val reader = Macros.reader[LevelId]
+      _.find(BSONDocument.empty, idProjection).cursor().
+        collect(-1, Cursor.FailOnError[List[LevelId]]())
+    }
   }
 
 
@@ -70,7 +88,7 @@ private final class MongoPersistence(implicit inj: Injector) extends Persistence
     val result = doPlanCollectionAction {
       _.remove(BSONDocument("category" -> id.category, "name" -> id.name))
     }
-    if(result.n != 1) {
+    if (result.n != 1) {
       throw new NoSuchElementException("id not found")
     }
   }

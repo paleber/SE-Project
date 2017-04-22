@@ -1,23 +1,15 @@
-import persistence.{FilePersistence, MongoPersistence, Persistence}
-import scaldi.{Injectable, Module}
+import persistence._
+import scaldi.Injectable
 
 object PersistenceTransfer extends App with Injectable {
 
   private val source = {
-    implicit object Injector extends Module {
-      bind[Persistence] to new FilePersistence
-      bind[String] identifiedBy 'filePath to "core/src/main/resources/levels"
-    }
+    implicit val injector = FilePersistenceModule("core/src/main/resources/levels")
     inject[Persistence]
   }
 
-
   private val target = {
-    implicit object Injector extends Module {
-      bind[Persistence] to new MongoPersistence
-      bind[String] identifiedBy 'mongoUri to "localhost:24999"
-      bind[String] identifiedBy 'mongoDatabase to "scongo"
-    }
+    implicit val injector = MongoPersistenceModule("localhost:24999", "scongo")
     inject[Persistence]
   }
 

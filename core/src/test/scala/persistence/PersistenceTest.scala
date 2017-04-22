@@ -2,7 +2,7 @@ package persistence
 
 import model.element.{LevelId, Plan}
 import org.scalatest.{FlatSpec, Matchers}
-import scaldi.{Injectable, Module}
+import scaldi.{Injectable, Injector}
 
 class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
@@ -15,7 +15,9 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
   private val id3 = LevelId("cat2", "lv1")
   private val plan3 = Plan(6, List(List(List(1))))
 
-  def persistenceBehavior(persistence: Persistence): Unit = {
+  def persistenceBehavior(implicit injector: Injector): Unit = {
+
+    val persistence = inject[Persistence]
 
     it should "remove all already existing plans" in {
       persistence.loadIds foreach persistence.removePlan
@@ -85,37 +87,20 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
   }
 
-  "filePersistence" should behave like persistenceBehavior({
-    implicit object Injector extends Module {
-      bind[Persistence] to new FilePersistence
-      bind[String] identifiedBy 'filePath to "core/src/test/resources/plans"
-    }
-    inject[Persistence]
-  })
+  "filePersistence" should behave like persistenceBehavior(
+    FilePersistenceModule("core/src/test/resources/plans")
+  )
 
-  "db4oPersistence" should behave like persistenceBehavior({
-    implicit object Injector extends Module {
-      bind[Persistence] to new Db4oPersistence
-      bind[String] identifiedBy 'db4oDatabase to "scongo-test.db4o"
-    }
-    inject[Persistence]
-  })
+  "db4oPersistence" should behave like persistenceBehavior(
+    Db4oPersistenceModule("core/src/test/resources/scongo-test.db4o")
+  )
 
-  "slickH2Persistence" should behave like persistenceBehavior({
-    implicit object Injector extends Module {
-      bind[Persistence] to new SlickH2Persistence
-      bind[String] identifiedBy 'slickH2Database to "scongo-test"
-    }
-    inject[Persistence]
-  })
+  "slickH2Persistence" should behave like persistenceBehavior(
+    SlickH2PersistenceModule("scongo-test")
+  )
 
-  "mongoPersistence" should behave like persistenceBehavior({
-    implicit object Injector extends Module {
-      bind[Persistence] to new MongoPersistence
-      bind[String] identifiedBy 'mongoUri to "localhost:27017"
-      bind[String] identifiedBy 'mongoDatabase to "scongo-test"
-    }
-    inject[Persistence]
-  })
+  "mongoPersistence" should behave like persistenceBehavior(
+    MongoPersistenceModule("localhost:27017", "scongo-test")
+   )
 
 }

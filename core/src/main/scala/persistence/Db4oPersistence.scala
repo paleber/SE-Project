@@ -5,17 +5,25 @@ import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import scaldi.{Injectable, Injector}
+import scaldi.{Injectable, Injector, Module}
 
 import scala.collection.JavaConversions._
 
-final class Db4oPersistence(implicit inj: Injector) extends Persistence with Injectable {
+
+final case class Db4oPersistenceModule(path: String) extends Module {
+
+  bind[Persistence] to new Db4oPersistence
+  bind[String] identifiedBy 'db4oPersistencePath to path
+
+}
+
+private final class Db4oPersistence(implicit inj: Injector) extends Persistence with Injectable {
 
   private case class Db4oEntry(category: String, name: String, plan: String)
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val databaseName = inject[String]('db4oDatabase)
+  private val databaseName = inject[String]('db4oPersistencePath)
 
   private def doDatabaseAction[T](f: ObjectContainer => T): T = {
     val db = Db4oEmbedded.openFile(

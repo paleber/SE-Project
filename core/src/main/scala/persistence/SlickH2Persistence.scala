@@ -4,7 +4,7 @@ import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import scaldi.{Injectable, Injector}
+import scaldi.{Injectable, Injector, Module}
 import slick.dbio.NoStream
 import slick.jdbc.H2Profile.api._
 import slick.lifted.{PrimaryKey, ProvenShape}
@@ -15,11 +15,18 @@ import scala.language.postfixOps
 import scala.util.Try
 
 
-final class SlickH2Persistence(implicit inj: Injector) extends Persistence with Injectable{
+final case class SlickH2PersistenceModule(database: String) extends Module {
+
+  bind[Persistence] to new SlickH2Persistence
+  bind[String] identifiedBy 'slickH2PersistenceDatabase to database
+
+}
+
+private final class SlickH2Persistence(implicit inj: Injector) extends Persistence with Injectable{
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val databaseName = inject[String]('slickH2Database)
+  private val databaseName = inject[String]('slickH2PersistenceDatabase)
 
   private class Plans(tag: Tag) extends Table[(String, String, String)](tag, "PLANS") {
 
