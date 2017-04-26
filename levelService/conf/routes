@@ -1,0 +1,3 @@
+GET        /                controllers.Application.getIds
+GET        /levelIds        controllers.Application.getIds
+

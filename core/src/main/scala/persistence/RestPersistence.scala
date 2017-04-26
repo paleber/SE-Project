@@ -51,13 +51,13 @@ private final class RestPersistence @Inject()(implicit inj: Injector, ws: WSClie
 
   override def loadIds: List[LevelId] = {
 
-    import play.api.libs.json._
-    Json.re
+
+    /*  Json.re
     implicit val personReads = Json.reads[Plan]
     val x = Await.result(
       ws.url("localhost").get().map {
         response => (response.json \ "plan").validate[Plan]
-      }, 5.seconds)
+      }, 5.seconds)*/
 
 
     doPlanCollectionAction {
