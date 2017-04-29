@@ -1,8 +1,12 @@
 package persistence
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import model.element.{LevelId, Plan}
 import org.scalatest.{FlatSpec, Matchers}
-import scaldi.{Injectable, Injector}
+import play.api.libs.ws.WSClient
+import play.api.libs.ws.ahc.AhcWSClient
+import scaldi.{Injectable, Injector, Module}
 
 class PersistenceTest extends FlatSpec with Matchers with Injectable {
 
@@ -88,7 +92,7 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
   }
 
   "filePersistence" should behave like persistenceBehavior(
-    FilePersistenceModule("core/src/test/resources/plans")
+    new Module {bind[Persistence] to FilePersistence("core/src/test/resources/plans")}
   )
 
   "db4oPersistence" should behave like persistenceBehavior(
@@ -102,5 +106,14 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
   "mongoPersistence" should behave like persistenceBehavior(
     MongoPersistenceModule("localhost:27017", "scongo-test")
    )
+
+  "restPersistence" should behave like persistenceBehavior(
+    new Module {
+      binding to ActorSystem("scongo-rest-test")
+      bind[Materializer] to ActorMaterializer()(inject[ActorSystem])
+      bind[WSClient] to AhcWSClient()(inject[Materializer])
+      bind[Persistence] to RestPersistence("http://localhost:9000")
+    }
+  )
 
 }

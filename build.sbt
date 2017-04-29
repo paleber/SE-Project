@@ -13,6 +13,7 @@ lazy val core = (project in file("core")).
       "org.json4s" %% "json4s-jackson" % "3.4.1",
       "org.scaldi" %% "scaldi" % "0.5.8",
       "org.scaldi" %% "scaldi-akka" % "0.5.8",
+      "org.scaldi" %% "scaldi-play" % "0.5.15",
       "org.scalactic" %% "scalactic" % "3.0.1",
       "org.scalatest" %% "scalatest" % "3.0.1" % "test",
       "com.typesafe.slick" %% "slick" % "3.2.0",
@@ -70,6 +71,11 @@ lazy val scongo = (project in file(".")).
   ).
   dependsOn(core).
   enablePlugins(PlayScala, SbtWeb)
+
+lazy val levelService = (project in file("levelService")).
+  settings(commonSettings: _*).
+  dependsOn(core).
+  enablePlugins(PlayScala)
 
 
 dependencyOverrides += "org.webjars.npm" % "minimatch" % "3.0.0"

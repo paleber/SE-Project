@@ -6,24 +6,23 @@ import model.element.{LevelId, Plan}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import scaldi.{Injectable, Injector, Module}
+import scaldi.Module
 
 import scala.io.Source
 
 
 final case class FilePersistenceModule(path: String) extends Module {
 
-  bind[Persistence] to new FilePersistence
+  bind[Persistence] to FilePersistence(path)
   bind[String] identifiedBy 'filePersistencePath to path
 
 }
 
 
-private final class FilePersistence(implicit inj: Injector) extends Persistence with Injectable {
+final case class FilePersistence(path: String) extends Persistence {
 
   private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val path = inject[String]('filePersistencePath)
   new File(path).mkdirs()
 
   private def createFile(id: LevelId): File = new File(s"$path/${id.category}/${id.name}.json")

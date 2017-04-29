@@ -1,3 +1,8 @@
-GET        /                controllers.Application.getIds
-GET        /levelIds        controllers.Application.getIds
+GET        /                controllers.Application.index
+GET        /levelIds        controllers.Application.loadIds
+
+GET     /level/:id          controllers.Application.loadPlan(id: String)
+PUT     /level/:id          controllers.Application.savePlan(id: String)
+DELETE     /level/:id          controllers.Application.removePlan(id: String)
+
 

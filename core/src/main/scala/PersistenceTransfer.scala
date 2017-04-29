@@ -4,7 +4,7 @@ import scaldi.Injectable
 object PersistenceTransfer extends App with Injectable {
 
   private val source = {
-    implicit val injector = FilePersistenceModule("core/src/main/resources/levels")
+    implicit val injector =  FilePersistenceModule("core/src/main/resources/levels")
     inject[Persistence]
   }
 

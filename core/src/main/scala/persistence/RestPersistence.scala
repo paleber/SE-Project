@@ -1,95 +1,59 @@
 package persistence
 
-import javax.inject.Inject
-
 import model.element.{LevelId, Plan}
-import play.api.libs.json._
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.{read, write}
 import play.api.libs.ws.WSClient
-import play.libs.Json
-import reactivemongo.api.collections.bson.BSONCollection
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.api.{Cursor, MongoDriver}
-import reactivemongo.bson.{BSONDocument, Macros}
 import scaldi.{Injectable, Injector, Module}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
+final case class RestPersistenceModule(url: String) extends Module {
 
-final case class RestPersistenceModule(uri: String, database: String) extends Module {
-
-
-  bind[Persistence] to new MongoPersistence
-  bind[String] identifiedBy 'mongoPersistenceUri to uri
-  bind[String] identifiedBy 'mongoPersistenceDatabase to database
+  bind[Persistence] to RestPersistence(url)
 
 }
 
-private final class RestPersistence @Inject()(implicit inj: Injector, ws: WSClient) extends Persistence with Injectable {
+final case class RestPersistence(url: String)(implicit inj: Injector) extends Persistence with Injectable {
 
-  private val connection = Future.fromTry {
-    MongoDriver().connection(inject[String]('mongoPersistenceUri))
-  }
+  private implicit val formats = Serialization.formats(NoTypeHints)
 
-  private val databaseName = inject[String]('mongoPersistenceDatabase)
-
-  private def doPlanCollectionAction[T](f: BSONCollection => Future[T]): T = {
-    val collection = connection.flatMap(_.database(databaseName)).map(_.collection("plans"))
-    Await.result(collection.flatMap(f), 15.seconds)
-  }
-
-  doPlanCollectionAction {
-    _.indexesManager.ensure(Index(Seq(
-      ("category", IndexType.Ascending),
-      ("name", IndexType.Ascending)),
-      unique = true))
-  }
-
-
-  private val idProjection = BSONDocument("_id" -> 0, "category" -> 1, "name" -> 1)
+  private val ws = inject[WSClient]
 
   override def loadIds: List[LevelId] = {
+    val request = ws.url(s"$url/levelIds").get()
+    val result = Await.result(request, 5 seconds)
+    if(result.status != 200) {
+      throw new IllegalStateException("Status:" + result.status)
+    }
+    read[List[LevelId]](result.json.toString)
+  }
 
+  override def loadPlan(id: LevelId): Plan = {
+    val request = ws.url(s"$url/level/${write(id)}").get()
+    val result = Await.result(request, 5 seconds)
+    if(result.status != 200) {
+      throw new IllegalStateException("Status:" + result.status)
+    }
+    read[Plan](result.json.toString)
+  }
 
-    /*  Json.re
-    implicit val personReads = Json.reads[Plan]
-    val x = Await.result(
-      ws.url("localhost").get().map {
-        response => (response.json \ "plan").validate[Plan]
-      }, 5.seconds)*/
-
-
-    doPlanCollectionAction {
-      implicit val reader = Macros.reader[LevelId]
-      _.find(BSONDocument.empty, idProjection).cursor().
-        collect(-1, Cursor.FailOnError[List[LevelId]]())
+  override def savePlan(id: LevelId, plan: Plan): Unit = {
+    val request = ws.url(s"$url/level/${write(id)}").put(write(plan))
+    val result = Await.result(request, 5 seconds)
+    if(result.status != 200) {
+      throw new IllegalStateException("Status:" + result.status)
     }
   }
-
-
-  private val planProjection = BSONDocument("_id" -> 0, "form" -> 1, "shifts" -> 1)
-
-  override def loadPlan(id: LevelId): Plan = doPlanCollectionAction {
-    implicit val reader = Macros.reader[Plan]
-    _.find(BSONDocument("category" -> id.category, "name" -> id.name), planProjection).requireOne
-  }
-
-
-  private case class Entry(category: String, name: String, form: Int, shifts: List[List[List[Int]]])
-
-  override def savePlan(id: LevelId, plan: Plan): Unit = doPlanCollectionAction {
-    implicit val writer = Macros.writer[Entry]
-    _.insert(Entry(id.category, id.name, plan.form, plan.shifts))
-  }
-
 
   override def removePlan(id: LevelId): Unit = {
-    val result = doPlanCollectionAction {
-      _.remove(BSONDocument("category" -> id.category, "name" -> id.name))
-    }
-    if (result.n != 1) {
-      throw new NoSuchElementException("id not found")
+    val request = ws.url(s"$url/level/${write(id)}").delete()
+    val result = Await.result(request, 5 seconds)
+    if(result.status != 200) {
+      throw new IllegalStateException("Status:" + result.status)
     }
   }
 

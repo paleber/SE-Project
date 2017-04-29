@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.routing.{DefaultOptimalSizeExploringResizer, SmallestMailboxPool}
 import control.UserControl
 import gui.Gui
-import persistence.ResourceManager
+import persistence.{FilePersistence, Persistence, ResourceManager}
 import scaldi.Module
 import tui.Tui
 
@@ -24,5 +24,7 @@ class CoreModule extends Module {
       "resourceRouter"
     )
   }
+
+  bind[Persistence] to FilePersistence("restTest")
 
 }
