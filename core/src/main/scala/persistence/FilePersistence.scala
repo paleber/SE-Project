@@ -2,6 +2,7 @@ package persistence
 
 import java.io.{BufferedWriter, File, PrintWriter}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import model.element.LevelKey
@@ -16,7 +17,7 @@ import scala.io.Source
 import org.json4s.Formats
 
 
-final case class FilePersistenceModule(path: String) extends Module {
+final class FilePersistenceModule(path: String) extends Module {
 
   bind[Persistence] to FilePersistence(path)
   bind[String] identifiedBy 'filePersistencePath to path
@@ -24,7 +25,7 @@ final case class FilePersistenceModule(path: String) extends Module {
 }
 
 
-final case class FilePersistence(path: String) extends Persistence {
+private final case class FilePersistence(path: String) extends Persistence {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
@@ -62,10 +63,10 @@ final case class FilePersistence(path: String) extends Persistence {
     }
   }
 
-  override def readAllKeys: Future[Seq[LevelKey]] = {
+  override def readAllKeys(): Future[Set[LevelKey]] = {
     Future {
       new File(path).listFiles.flatMap(cat => cat.listFiles.map(name =>
-        LevelKey(cat.getName, name.getName.replace(".json", "")))).toList
+        LevelKey(cat.getName, name.getName.replace(".json", "")))).toSet
     }
   }
 

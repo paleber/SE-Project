@@ -11,7 +11,7 @@ import tui.Tui
 object Scongo extends App with AkkaInjectable {
 
   private implicit val injector = ScongoModule ++
-    FilePersistenceModule("core/src/main/resources/levels")
+    new FilePersistenceModule("core/src/main/resources/levels")
 
   private implicit val system = inject[ActorSystem]
 

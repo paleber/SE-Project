@@ -1,22 +1,29 @@
 package persistence
 
+import scala.concurrent.Future
+
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, Materializer}
-import model.element.{LevelKey, Plan}
-import org.scalatest.{FlatSpec, Matchers}
+import akka.stream.ActorMaterializer
+import akka.stream.Materializer
+import model.element.LevelKey
+import model.element.Plan
+import org.scalatest.AsyncFlatSpec
+import org.scalatest.Matchers
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
-import scaldi.{Injectable, Injector, Module}
+import scaldi.Injectable
+import scaldi.Injector
+import scaldi.Module
 
-class PersistenceTest extends FlatSpec with Matchers with Injectable {
+class PersistenceTest extends AsyncFlatSpec with Matchers with Injectable {
 
-  private val id1 = LevelKey("cat1", "lv1")
+  private val key1 = LevelKey("cat1", "lv1")
   private val plan1 = Plan(4, List(List(List())))
 
-  private val id2 = LevelKey("cat1", "lv2")
+  private val key2 = LevelKey("cat1", "lv2")
   private val plan2 = Plan(4, List(List(List(1, 2), List(3, 2)), List(List(1, 2, 2)), List(List(2, 3))))
 
-  private val id3 = LevelKey("cat2", "lv1")
+  private val key3 = LevelKey("cat2", "lv1")
   private val plan3 = Plan(6, List(List(List(1))))
 
   def persistenceBehavior(implicit injector: Injector): Unit = {
@@ -24,90 +31,111 @@ class PersistenceTest extends FlatSpec with Matchers with Injectable {
     val persistence = inject[Persistence]
 
     it should "remove all already existing plans" in {
-      persistence.readAllKeys foreach persistence.deletePlan
-      persistence.readAllKeys shouldBe List.empty
+      for {
+        existingKeys <- persistence.readAllKeys()
+        _ <- Future.sequence(existingKeys.map(persistence.deletePlan))
+        keys <- persistence.readAllKeys()
+      } yield {
+        keys shouldBe Set.empty
+      }
     }
 
     it should "save a plan" in {
-      persistence.createPlan(id1, plan1)
-      persistence.readAllKeys shouldBe List(id1)
+      for {
+        _ <- persistence.createPlan(key1, plan1)
+        keys <- persistence.readAllKeys()
+      } yield {
+        keys shouldBe Set(key1)
+      }
     }
 
     it should "save a second plan" in {
-      persistence.createPlan(id2, plan2)
-      val ids = persistence.readAllKeys
-      ids.size shouldBe 2
-      ids should contain(id1)
-      ids should contain(id2)
+      for {
+        _ <- persistence.createPlan(key2, plan2)
+        keys <- persistence.readAllKeys()
+      } yield {
+        keys shouldBe Set(key1, key2)
+      }
     }
 
     it should "save a third plan" in {
-      persistence.createPlan(id3, plan3)
-      val ids = persistence.readAllKeys
-      ids.size shouldBe 3
-      ids should contain(id1)
-      ids should contain(id2)
-      ids should contain(id3)
+      for {
+        _ <- persistence.createPlan(key3, plan3)
+        keys <- persistence.readAllKeys()
+      } yield {
+        keys shouldBe Set(key1, key2, key3)
+      }
     }
 
     it should "throw any exception, when saving an already existing plan" in {
-      intercept[Exception] {
-        persistence.createPlan(id2, plan3)
+      recoverToSucceededIf[Exception] {
+        persistence.createPlan(key2, plan3)
       }
     }
 
     it should "load the first, second and third plan in" in {
-      persistence.readPlan(id1) shouldBe plan1
-      persistence.readPlan(id2) shouldBe plan2
-      persistence.readPlan(id3) shouldBe plan3
+      for {
+        p1 <- persistence.readPlan(key1)
+        p2 <- persistence.readPlan(key2)
+        p3 <- persistence.readPlan(key3)
+      } yield {
+        p1 shouldBe plan1
+        p2 shouldBe plan2
+        p3 shouldBe plan3
+      }
     }
 
     it should "throw any exception, when loading a non-existent plan" in {
-      intercept[Exception] {
+      recoverToSucceededIf[Exception] {
         persistence.readPlan(LevelKey("cat2", "lv2"))
       }
     }
 
     it should "remove the first plan" in {
-      persistence.deletePlan(id1)
-      val ids = persistence.readAllKeys
-      ids.size shouldBe 2
-      ids should not contain id1
-      ids should contain(id2)
-      ids should contain(id3)
+      for {
+        _ <- persistence.deletePlan(key1)
+        keys <- persistence.readAllKeys()
+      } yield {
+        keys shouldBe Set(key2, key3)
+      }
     }
 
     it should "throw any exception, when removing a non-existent plan" in {
-      intercept[Exception] {
-        persistence.deletePlan(id1)
+      recoverToSucceededIf[Exception] {
+        persistence.deletePlan(key1)
       }
     }
 
     it should "remove the second and third plan" in {
-      persistence.deletePlan(id2)
-      persistence.deletePlan(id3)
-      persistence.readAllKeys shouldBe List.empty
+      for {
+        _ <- persistence.deletePlan(key1)
+        _ <- persistence.deletePlan(key2)
+        keys <- persistence.readAllKeys()
+      } yield {
+        keys shouldBe Set.empty
+      }
     }
 
   }
 
   "filePersistence" should behave like persistenceBehavior(
-    new Module {bind[Persistence] to FilePersistence("core/src/test/resources/plans")}
+    new FilePersistenceModule("core/src/test/resources/plans")
   )
 
   "db4oPersistence" should behave like persistenceBehavior(
-    Db4oPersistenceModule("core/src/test/resources/scongo-test.db4o")
+    new Db4oPersistenceModule("core/src/test/resources/scongo-test.db4o")
   )
 
   "slickH2Persistence" should behave like persistenceBehavior(
-    SlickH2PersistenceModule("scongo-test")
+    new SlickH2PersistenceModule("scongo-test")
   )
 
   "mongoPersistence" should behave like persistenceBehavior(
-    MongoPersistenceModule("localhost:27017", "scongo-test")
-   )
+    new MongoPersistenceModule("localhost:27017", "scongo-test")
+  )
 
   "restPersistence" should behave like persistenceBehavior(
+
     new Module {
       binding to ActorSystem("scongo-rest-test")
       bind[Materializer] to ActorMaterializer()(inject[ActorSystem])

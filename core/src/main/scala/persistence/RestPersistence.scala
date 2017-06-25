@@ -1,18 +1,22 @@
 package persistence
 
-import model.element.{LevelKey, Plan}
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read, write}
-import play.api.libs.ws.WSClient
-import scaldi.{Injectable, Injector, Module}
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.language.postfixOps
 
+import model.element.LevelKey
+import model.element.Plan
 import org.json4s.Formats
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.read
+import org.json4s.jackson.Serialization.write
+import play.api.libs.ws.WSClient
+import scaldi.Injectable
+import scaldi.Injector
+import scaldi.Module
 
-final case class RestPersistenceModule(url: String) extends Module {
+final class RestPersistenceModule(url: String) extends Module {
 
   bind[Persistence] to RestPersistence(url)
 
@@ -24,38 +28,44 @@ final case class RestPersistence(url: String)(implicit inj: Injector) extends Pe
 
   private val ws: WSClient = inject[WSClient]
 
-  override def readAllKeys: List[LevelKey] = {
-    val request = ws.url(s"$url/levelIds").get()
-    val result = Await.result(request, 5 seconds)
-    if(result.status != 200) {
-      throw new IllegalStateException("Status:" + result.status)
-    }
-    read[List[LevelKey]](result.json.toString)
+  override def readAllKeys(): Future[Set[LevelKey]] = {
+    ws.url(s"$url/levelIds").get().flatMap(result =>
+      if (result.status == 200) {
+        Future.failed(new IllegalStateException("Status:" + result.status))
+      } else {
+        Future.successful(read[Set[LevelKey]](result.json.toString))
+      }
+    )
   }
 
-  override def readPlan(id: LevelKey): Plan = {
-    val request = ws.url(s"$url/level/${write(id)}").get()
-    val result = Await.result(request, 5 seconds)
-    if(result.status != 200) {
-      throw new IllegalStateException("Status:" + result.status)
-    }
-    read[Plan](result.json.toString)
+  override def readPlan(key: LevelKey): Future[Plan] = {
+    ws.url(s"$url/level/${write(key)}").get().flatMap(result =>
+      if (result.status == 200) {
+        Future.failed(new IllegalStateException("Status:" + result.status))
+      } else {
+        Future.successful(read[Plan](result.json.toString))
+      }
+    )
   }
 
-  override def createPlan(id: LevelKey, plan: Plan): Unit = {
-    val request = ws.url(s"$url/level/${write(id)}").put(write(plan))
-    val result = Await.result(request, 5 seconds)
-    if(result.status != 200) {
-      throw new IllegalStateException("Status:" + result.status)
-    }
+  override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
+    ws.url(s"$url/level/${write(key)}").put(write(plan)).flatMap(result =>
+      if (result.status == 200) {
+        Future.failed(new IllegalStateException("Status:" + result.status))
+      } else {
+        Future.successful(())
+      }
+    )
   }
 
-  override def deletePlan(id: LevelKey): Unit = {
-    val request = ws.url(s"$url/level/${write(id)}").delete()
-    val result = Await.result(request, 5 seconds)
-    if(result.status != 200) {
-      throw new IllegalStateException("Status:" + result.status)
-    }
+  override def deletePlan(key: LevelKey): Future[Unit] = {
+    ws.url(s"$url/level/${write(key)}").delete().flatMap(result =>
+      if (result.status == 200) {
+        Future.failed(new IllegalStateException("Status:" + result.status))
+      } else {
+        Future.successful(())
+      }
+    )
   }
 
 }

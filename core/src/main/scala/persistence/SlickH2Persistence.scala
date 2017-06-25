@@ -1,5 +1,6 @@
 package persistence
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
 
@@ -19,7 +20,7 @@ import slick.lifted.PrimaryKey
 import slick.lifted.ProvenShape
 
 
-final case class SlickH2PersistenceModule(database: String) extends Module {
+final class SlickH2PersistenceModule(database: String) extends Module {
 
   bind[Persistence] to new SlickH2Persistence
   bind[String] identifiedBy 'slickH2PersistenceDatabase to database
@@ -54,51 +55,52 @@ private final class SlickH2Persistence(implicit inj: Injector) extends Persisten
     def * : ProvenShape[(String, String, String)] = {
       (category, name, shifts)
     }
+
   }
 
   private val plans: TableQuery[Plans] = TableQuery[Plans]
 
-
-  private val schemasEnsured: Future[Unit] = doDatabaseAction(DBIO.seq(plans.schema.create))
+  private val schemasCreated: Future[Unit] = doDatabaseAction(plans.schema.create)
 
   private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): Future[R] = {
     val db = Database.forURL(s"jdbc:h2:~/$databaseName;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
-    schemasEnsured.flatMap(_ =>
+    schemasCreated.flatMap(_ =>
       db.run(query)
     ).andThen {
       case _ => db.close()
     }
   }
 
-  override def readPlan(id: LevelKey): Future[Plan] = {
-    val query = plans.filter(plan => plan.category === id.category && plan.name === id.name).map(_.shifts)
+  override def readPlan(key: LevelKey): Future[Plan] = {
+    val query = plans.filter(plan => plan.category === key.category && plan.name === key.name).map(_.shifts)
     doDatabaseAction(query.result).map {
       data =>
         read[Plan](data.head)
     }
   }
 
-  override def createPlan(id: LevelKey, plan: Plan): Unit = {
+  override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
     doDatabaseAction(
-      DBIO.seq(plans += (id.category, id.name, write(plan)))
-    )
+     plans += (key.category, key.name, write(plan))
+    ).flatMap(_ => Future.successful(()))
   }
 
-  override def readAllKeys(): Future[Seq[LevelKey]] = {
+  override def readAllKeys(): Future[Set[LevelKey]] = {
     val query = plans.map(plan => (plan.category, plan.name))
     doDatabaseAction(query.result).map(_.map {
       case (category, name) => LevelKey(category, name)
-    })
+    }).map(_.toSet)
   }
 
-  override def deletePlan(id: LevelKey): Future[Unit] = {
-    val query = plans.filter(plan =>
-      plan.category === id.category &&
-        plan.name === id.name).delete
-
-    if (doDatabaseAction(query) != 1) {
-      throw new IllegalStateException("id not found")
-    }
+  override def deletePlan(key: LevelKey): Future[Unit] = {
+    val query = plans.filter(plan => plan.category === key.category && plan.name === key.name).delete
+    doDatabaseAction(query).flatMap(result =>
+      if (result > 0) {
+        Future.successful(())
+      } else {
+        Future.failed(new IllegalStateException("key not found"))
+      }
+    )
   }
 
 }
