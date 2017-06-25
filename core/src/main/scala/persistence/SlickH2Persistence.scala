@@ -1,18 +1,22 @@
 package persistence
 
-import model.element.{LevelId, Plan}
+import scala.concurrent.Future
+import scala.language.postfixOps
+
+import model.element.LevelKey
+import model.element.Plan
+import org.json4s.Formats
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read, write}
-import scaldi.{Injectable, Injector, Module}
+import org.json4s.jackson.Serialization.read
+import org.json4s.jackson.Serialization.write
+import scaldi.Injectable
+import scaldi.Injector
+import scaldi.Module
 import slick.dbio.NoStream
 import slick.jdbc.H2Profile.api._
-import slick.lifted.{PrimaryKey, ProvenShape}
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import scala.util.Try
+import slick.lifted.PrimaryKey
+import slick.lifted.ProvenShape
 
 
 final case class SlickH2PersistenceModule(database: String) extends Module {
@@ -22,74 +26,77 @@ final case class SlickH2PersistenceModule(database: String) extends Module {
 
 }
 
-private final class SlickH2Persistence(implicit inj: Injector) extends Persistence with Injectable{
+private final class SlickH2Persistence(implicit inj: Injector) extends Persistence with Injectable {
 
-  private implicit val formats = Serialization.formats(NoTypeHints)
+  private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  private val databaseName = inject[String]('slickH2PersistenceDatabase)
+  private val databaseName: String = inject[String]('slickH2PersistenceDatabase)
 
   private class Plans(tag: Tag) extends Table[(String, String, String)](tag, "PLANS") {
 
-    def category: Rep[String] =
+    def category: Rep[String] = {
       column[String]("CATEGORY")
+    }
 
-    def name: Rep[String] =
+    def name: Rep[String] = {
       column[String]("NAME")
+    }
 
-    def shifts: Rep[String] =
+    def shifts: Rep[String] = {
       column[String]("SHIFTS")
+    }
 
-    def pk: PrimaryKey =
+    def pk: PrimaryKey = {
       primaryKey("pk", (category, name))
+    }
 
     // Every table needs a * projection with the same type as the table's type parameter
-    def * : ProvenShape[(String, String, String)] =
+    def * : ProvenShape[(String, String, String)] = {
       (category, name, shifts)
+    }
   }
 
-  private val plans = TableQuery[Plans]
+  private val plans: TableQuery[Plans] = TableQuery[Plans]
 
-  Try(doDatabaseAction(DBIO.seq(
-    plans.schema.create
-  )))
 
-  private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): R = {
+  private val schemasEnsured: Future[Unit] = doDatabaseAction(DBIO.seq(plans.schema.create))
+
+  private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): Future[R] = {
     val db = Database.forURL(s"jdbc:h2:~/$databaseName;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
-    try {
-      Await.result(db.run(query), 5 seconds)
-    } finally {
-      db.close()
+    schemasEnsured.flatMap(_ =>
+      db.run(query)
+    ).andThen {
+      case _ => db.close()
     }
   }
 
-  override def loadPlan(id: LevelId): Plan = {
-    val query = plans.filter(plan =>
-      plan.category === id.category &&
-        plan.name === id.name).map(_.shifts)
-
-    val data = doDatabaseAction(query.result)
-    read[Plan](data.head)
-  }
-
-  override def savePlan(id: LevelId, plan: Plan): Unit = doDatabaseAction(
-    DBIO.seq(
-      plans += (id.category, id.name, write(plan))
-    )
-  )
-
-  override def loadIds: Seq[LevelId] = {
-    val query = for (p <- plans) yield (p.category, p.name)
+  override def readPlan(id: LevelKey): Future[Plan] = {
+    val query = plans.filter(plan => plan.category === id.category && plan.name === id.name).map(_.shifts)
     doDatabaseAction(query.result).map {
-      case (category, name) => LevelId(category, name)
+      data =>
+        read[Plan](data.head)
     }
   }
 
-  override def removePlan(id: LevelId): Unit = {
+  override def createPlan(id: LevelKey, plan: Plan): Unit = {
+    doDatabaseAction(
+      DBIO.seq(plans += (id.category, id.name, write(plan)))
+    )
+  }
+
+  override def readAllKeys(): Future[Seq[LevelKey]] = {
+    val query = plans.map(plan => (plan.category, plan.name))
+    doDatabaseAction(query.result).map(_.map {
+      case (category, name) => LevelKey(category, name)
+    })
+  }
+
+  override def deletePlan(id: LevelKey): Future[Unit] = {
     val query = plans.filter(plan =>
       plan.category === id.category &&
         plan.name === id.name).delete
 
-    if(doDatabaseAction(query) != 1) {
+    if (doDatabaseAction(query) != 1) {
       throw new IllegalStateException("id not found")
     }
   }

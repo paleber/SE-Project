@@ -1,6 +1,6 @@
 package model.element
 
-case class Level(id: LevelId,
+case class Level(id: LevelKey,
                  form: Int,
                  size: Int,
                  width: Double,
@@ -8,4 +8,4 @@ case class Level(id: LevelId,
                  board: Grid,
                  blocks: List[Grid])
 
-case class LevelId(category: String, name: String)
+case class LevelKey(category: String, name: String)

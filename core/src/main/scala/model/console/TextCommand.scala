@@ -3,7 +3,7 @@ package model.console
 import builder.Game._
 import control.UserControl.Shutdown
 import model.basic.Point
-import model.element.LevelId
+import model.element.LevelKey
 import model.msg.ClientMsg
 import persistence.ResourceManager.{LoadLevel, LoadMenu}
 
@@ -30,7 +30,7 @@ private[console] object CmdShowGame extends TextCommand {
   override val description = "category:STRING name:String - Show the game"
   override val numberArgs = 2
 
-  override def parse(args: Array[String]) = LoadLevel(LevelId(args(1), args(2)))
+  override def parse(args: Array[String]) = LoadLevel(LevelKey(args(1), args(2)))
 }
 
 private[console] object CmdShowMenu extends TextCommand {

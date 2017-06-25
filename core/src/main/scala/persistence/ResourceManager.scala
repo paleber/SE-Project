@@ -2,7 +2,7 @@ package persistence
 
 import akka.actor.{Actor, ActorLogging}
 import builder.LevelBuilder
-import model.element.{Level, LevelId}
+import model.element.{Level, LevelKey}
 import model.msg.{ClientMsg, ServerMsg}
 import persistence.ResourceManager._
 import scaldi.{Injectable, Injector}
@@ -15,7 +15,7 @@ object ResourceManager {
 
   case class MenuLoaded(info: Map[String, Seq[String]]) extends ServerMsg
 
-  case class LoadLevel(id: LevelId) extends ClientMsg
+  case class LoadLevel(id: LevelKey) extends ClientMsg
 
   case class LevelLoaded(level: Level) extends ServerMsg
 
@@ -28,7 +28,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
 
   private val persistence = inject[Persistence]
 
-  private def state(info: Map[String, Seq[String]], levels: Map[LevelId, Level]): Receive = {
+  private def state(info: Map[String, Seq[String]], levels: Map[LevelKey, Level]): Receive = {
 
     case LoadMenu =>
       log.debug("Loading menu")
@@ -41,7 +41,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
         sender ! LevelLoaded(level.get)
       } else {
 
-        Try(persistence.loadPlan(id)) match {
+        Try(persistence.readPlan(id)) match {
           case Success(plan) =>
             log.debug("Loading level from persistence: " + id)
             val level = LevelBuilder.build(id, plan)
@@ -56,9 +56,9 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
 
   }
 
-  override def receive: Receive = state(convertIdList(persistence.loadIds), Map.empty)
+  override def receive: Receive = state(convertIdList(persistence.readAllKeys), Map.empty)
 
-  private def convertIdList(ids: Seq[LevelId]): Map[String, Seq[String]] = {
+  private def convertIdList(ids: Seq[LevelKey]): Map[String, Seq[String]] = {
     ids.map(_.category).distinct.map(cat => (cat, ids.filter(_.category == cat).map(_.name))).toMap
   }
 

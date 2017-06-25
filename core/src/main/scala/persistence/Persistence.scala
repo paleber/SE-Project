@@ -1,18 +1,18 @@
 package persistence
 
-import model.element.{LevelId, Plan}
+import scala.concurrent.Future
+
+import model.element.LevelKey
+import model.element.Plan
 
 trait Persistence {
 
-  def loadIds: Seq[LevelId]
+  def readAllKeys(): Future[Seq[LevelKey]]
 
-  @throws[Exception]
-  def loadPlan(id: LevelId): Plan
+  def readPlan(key: LevelKey): Future[Plan]
 
-  @throws[Exception]
-  def savePlan(id: LevelId, plan: Plan): Unit
+  def createPlan(key: LevelKey, plan: Plan): Future[Unit]
 
-  @throws[Exception]
-  def removePlan(id: LevelId): Unit
+  def deletePlan(key: LevelKey): Future[Unit]
 
 }

@@ -4,7 +4,7 @@ import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JPanel}
 
 import akka.actor.{Actor, ActorLogging}
-import model.element.LevelId
+import model.element.LevelKey
 import persistence.ResourceManager.{LoadLevel, MenuLoaded}
 
 class GuiMenu extends JPanel with Actor with ActorLogging {
@@ -24,7 +24,7 @@ class GuiMenu extends JPanel with Actor with ActorLogging {
           bn.addActionListener(new ActionListener {
             override def actionPerformed(e: ActionEvent): Unit = {
               log.info(s"Button clicked: Level $category - $name")
-              context.parent ! LoadLevel(LevelId(category, name))
+              context.parent ! LoadLevel(LevelKey(category, name))
             }
           })
           add(bn)

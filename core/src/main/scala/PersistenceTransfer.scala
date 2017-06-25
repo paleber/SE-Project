@@ -13,8 +13,8 @@ object PersistenceTransfer extends App with Injectable {
     inject[Persistence]
   }
 
-  source.loadIds.foreach(id => {
-    target.savePlan(id, source.loadPlan(id))
+  source.readAllKeys.foreach(id => {
+    target.createPlan(id, source.readPlan(id))
   })
 
 }

@@ -1,7 +1,7 @@
 package builder
 
 import model.basic._
-import model.element.{Grid, Level, LevelId, Plan}
+import model.element.{Grid, Level, LevelKey, Plan}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
@@ -45,7 +45,7 @@ object LevelBuilder {
 
   }
 
-  def build(id: LevelId, plan: Plan): Level = {
+  def build(id: LevelKey, plan: Plan): Level = {
 
     val aVectors = anchorVectors(plan.form)
     val cVectors = cornerVectors(plan.form)
