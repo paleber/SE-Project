@@ -25,6 +25,6 @@ class CoreModule extends Module {
     )
   }
 
-  bind[Persistence] to FilePersistence("restTest")
+  bind[Persistence] to new FilePersistence("restTest")
 
 }

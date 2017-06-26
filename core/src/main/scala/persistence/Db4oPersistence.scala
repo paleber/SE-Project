@@ -14,24 +14,13 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
 import scaldi.Injectable
-import scaldi.Injector
-import scaldi.Module
 
 
-final class Db4oPersistenceModule(path: String) extends Module {
-
-  bind[Persistence] to new Db4oPersistence
-  bind[String] identifiedBy 'db4oPersistencePath to path
-
-}
-
-private final class Db4oPersistence(implicit inj: Injector) extends Persistence with Injectable {
+final class Db4oPersistence(path: String, databaseName: String) extends Persistence with Injectable {
 
   private case class Db4oEntry(category: String, name: String, plan: String)
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
-
-  private val databaseName: String = inject[String]('db4oPersistencePath)
 
   private def doDatabaseAction[T](f: ObjectContainer => T): Future[T] = {
     Future {
@@ -57,7 +46,7 @@ private final class Db4oPersistence(implicit inj: Injector) extends Persistence 
     if (set.isEmpty) {
       throw new NoSuchElementException("plan not found")
     }
-    read[Plan](set.get(0).plan)
+    read[Plan](set.head.plan)
   }
 
   override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = doDatabaseAction { db =>

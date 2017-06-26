@@ -34,7 +34,7 @@ class UserControl(implicit inj: Injector) extends Actor with AkkaInjectable with
 
   private implicit val timeout: Timeout = 15.seconds
 
-  private val resourceManager = inject[ActorRef]('resourceRouter)
+  private val resourceManager: ActorRef = inject[ActorRef]('resourceRouter)
 
   private def receiveLoadMenu(views: List[ActorRef]): Receive = {
     case LoadMenu =>

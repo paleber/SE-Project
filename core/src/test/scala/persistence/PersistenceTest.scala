@@ -4,16 +4,12 @@ import scala.concurrent.Future
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.Materializer
 import model.element.LevelKey
 import model.element.Plan
 import org.scalatest.AsyncFlatSpec
 import org.scalatest.Matchers
-import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
 import scaldi.Injectable
-import scaldi.Injector
-import scaldi.Module
 
 class PersistenceTest extends AsyncFlatSpec with Matchers with Injectable {
 
@@ -26,9 +22,7 @@ class PersistenceTest extends AsyncFlatSpec with Matchers with Injectable {
   private val key3 = LevelKey("cat2", "lv1")
   private val plan3 = Plan(6, List(List(List(1))))
 
-  def persistenceBehavior(implicit injector: Injector): Unit = {
-
-    val persistence = inject[Persistence]
+  def persistenceBehavior(persistence: Persistence): Unit = {
 
     it should "remove all already existing plans" in {
       for {
@@ -119,29 +113,27 @@ class PersistenceTest extends AsyncFlatSpec with Matchers with Injectable {
   }
 
   "filePersistence" should behave like persistenceBehavior(
-    new FilePersistenceModule("core/src/test/resources/plans")
+    new FilePersistence("core/src/test/resources/plans")
   )
 
   "db4oPersistence" should behave like persistenceBehavior(
-    new Db4oPersistenceModule("core/src/test/resources/scongo-test.db4o")
+    new Db4oPersistence("core/src/test/resources/scongo-test.db4o", "test.db4o")
   )
 
   "slickH2Persistence" should behave like persistenceBehavior(
-    new SlickH2PersistenceModule("scongo-test")
+    new SlickH2Persistence("scongo-test")
   )
 
   "mongoPersistence" should behave like persistenceBehavior(
-    new MongoPersistenceModule("localhost:27017", "scongo-test")
+    new MongoPersistence("localhost:27017", "scongo-test")
   )
 
-  "restPersistence" should behave like persistenceBehavior(
+  private implicit val system = ActorSystem()
+  private implicit val materializer = ActorMaterializer()
 
-    new Module {
-      binding to ActorSystem("scongo-rest-test")
-      bind[Materializer] to ActorMaterializer()(inject[ActorSystem])
-      bind[WSClient] to AhcWSClient()(inject[Materializer])
-      bind[Persistence] to RestPersistence("http://localhost:9000")
-    }
+
+  "restPersistence" should behave like persistenceBehavior(
+    new RestPersistence("http://localhost:9000", AhcWSClient())
   )
 
 }

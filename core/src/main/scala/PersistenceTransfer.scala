@@ -11,15 +11,9 @@ import scaldi.Injectable
 
 object PersistenceTransfer extends App with Injectable {
 
-  private val source = {
-    implicit val injector = new FilePersistenceModule("core/src/main/resources/levels")
-    inject[Persistence]
-  }
+  private val source = new FilePersistence("core/src/main/resources/levels")
 
-  private val target = {
-    implicit val injector = new MongoPersistenceModule("localhost:24999", "scongo")
-    inject[Persistence]
-  }
+  private val target = new MongoPersistence("localhost:24999", "scongo")
 
   Await.result(
     for {

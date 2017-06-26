@@ -20,19 +20,12 @@ import scaldi.Injector
 import scaldi.Module
 
 
-final class MongoPersistenceModule(uri: String, database: String) extends Module {
 
-  bind[Persistence] to new MongoPersistence
-  bind[String] identifiedBy 'mongoPersistenceUri to uri
-  bind[String] identifiedBy 'mongoPersistenceDatabase to database
-
-}
-
-private final class MongoPersistence(implicit inj: Injector) extends Persistence with Injectable {
+final class MongoPersistence(uri: String, databaseName: String) extends Persistence  {
 
 
-  private val connection: Future[MongoConnection] = Future.fromTry(MongoDriver().connection(inject[String]('mongoPersistenceUri)))
-  private val database: Future[DefaultDB] = connection.flatMap(_.database(inject[String]('mongoPersistenceDatabase)))
+  private val connection: Future[MongoConnection] = Future.fromTry(MongoDriver().connection(uri))
+  private val database: Future[DefaultDB] = connection.flatMap(_.database(databaseName))
 
   private val collection: Future[BSONCollection] =
     database.map(_.collection[BSONCollection]("plans"))

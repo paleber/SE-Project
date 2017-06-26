@@ -11,27 +11,14 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
-import scaldi.Injectable
-import scaldi.Injector
-import scaldi.Module
 import slick.dbio.NoStream
 import slick.jdbc.H2Profile.api._
 import slick.lifted.PrimaryKey
 import slick.lifted.ProvenShape
 
-
-final class SlickH2PersistenceModule(database: String) extends Module {
-
-  bind[Persistence] to new SlickH2Persistence
-  bind[String] identifiedBy 'slickH2PersistenceDatabase to database
-
-}
-
-private final class SlickH2Persistence(implicit inj: Injector) extends Persistence with Injectable {
+final class SlickH2Persistence(databaseName: String) extends Persistence {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
-
-  private val databaseName: String = inject[String]('slickH2PersistenceDatabase)
 
   private class Plans(tag: Tag) extends Table[(String, String, String)](tag, "PLANS") {
 

@@ -11,21 +11,12 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
-import scaldi.Module
 import scala.io.Source
 
 import org.json4s.Formats
 
 
-final class FilePersistenceModule(path: String) extends Module {
-
-  bind[Persistence] to FilePersistence(path)
-  bind[String] identifiedBy 'filePersistencePath to path
-
-}
-
-
-private final case class FilePersistence(path: String) extends Persistence {
+final class FilePersistence(path: String) extends Persistence {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 

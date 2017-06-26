@@ -12,21 +12,11 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
 import play.api.libs.ws.WSClient
-import scaldi.Injectable
-import scaldi.Injector
-import scaldi.Module
 
-final class RestPersistenceModule(url: String) extends Module {
 
-  bind[Persistence] to RestPersistence(url)
-
-}
-
-final case class RestPersistence(url: String)(implicit inj: Injector) extends Persistence with Injectable {
+class RestPersistence(url: String, ws: WSClient) extends Persistence {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
-
-  private val ws: WSClient = inject[WSClient]
 
   override def readAllKeys(): Future[Set[LevelKey]] = {
     ws.url(s"$url/levelIds").get().flatMap(result =>
