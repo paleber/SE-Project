@@ -49,7 +49,7 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
           log.debug("Loading level from persistence: " + id)
           val level = LevelBuilder.build(id, plan)
           self ! LevelLoaded(level)
-          target ! LevelLoaded
+          target ! LevelLoaded(level)
         }.recover { case e =>
           log.error(s"Loading level from persistence failed: $id (${e.getMessage})")
           target ! LoadingLevelFailed
