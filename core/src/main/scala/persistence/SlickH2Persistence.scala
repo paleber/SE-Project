@@ -12,11 +12,12 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
 import slick.dbio.NoStream
+import slick.jdbc.H2Profile
 import slick.jdbc.H2Profile.api._
 import slick.lifted.PrimaryKey
 import slick.lifted.ProvenShape
 
-final class SlickH2Persistence(databaseName: String) extends Persistence {
+final class SlickH2Persistence(database: H2Profile.backend.DatabaseDef) extends Persistence {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
@@ -47,15 +48,12 @@ final class SlickH2Persistence(databaseName: String) extends Persistence {
 
   private val plans: TableQuery[Plans] = TableQuery[Plans]
 
-  private val schemasCreated: Future[Unit] = doDatabaseAction(plans.schema.create)
+  private val schemasCreated: Future[Unit] = database.run(plans.schema.create).recoverWith { case _ => Future.successful(()) }
 
   private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): Future[R] = {
-    val db = Database.forURL(s"jdbc:h2:~/$databaseName;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver", user = "sa")
     schemasCreated.flatMap(_ =>
-      db.run(query)
-    ).andThen {
-      case _ => db.close()
-    }
+      database.run(query)
+    )
   }
 
   override def readPlan(key: LevelKey): Future[Plan] = {
@@ -68,7 +66,7 @@ final class SlickH2Persistence(databaseName: String) extends Persistence {
 
   override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
     doDatabaseAction(
-     plans += (key.category, key.name, write(plan))
+      plans += (key.category, key.name, write(plan))
     ).flatMap(_ => Future.successful(()))
   }
 

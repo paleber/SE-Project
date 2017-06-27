@@ -74,10 +74,10 @@ final class MongoPersistence(uri: String, databaseName: String) extends Persiste
     collection.flatMap {
       _.remove(BSONDocument("category" -> key.category, "name" -> key.name))
     }.flatMap(result =>
-      if (result.n > 1) {
+      if (result.n > 0) {
         Future.successful(())
       } else {
-        Future.failed(new NoSuchElementException("id not found"))
+        Future.failed(new NoSuchElementException("key not found"))
       }
     )
   }

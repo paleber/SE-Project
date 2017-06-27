@@ -19,41 +19,41 @@ class RestPersistence(url: String, ws: WSClient) extends Persistence {
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   override def readAllKeys(): Future[Set[LevelKey]] = {
-    ws.url(s"$url/levelIds").get().flatMap(result =>
+    ws.url(s"$url/planKeys").get().flatMap(result =>
       if (result.status == 200) {
-        Future.failed(new IllegalStateException("Status:" + result.status))
-      } else {
         Future.successful(read[Set[LevelKey]](result.json.toString))
+      } else {
+        Future.failed(new IllegalStateException("Status:" + result.status))
       }
     )
   }
 
   override def readPlan(key: LevelKey): Future[Plan] = {
-    ws.url(s"$url/level/${write(key)}").get().flatMap(result =>
+    ws.url(s"$url/plan/${write(key)}").get().flatMap(result =>
       if (result.status == 200) {
-        Future.failed(new IllegalStateException("Status:" + result.status))
-      } else {
         Future.successful(read[Plan](result.json.toString))
+      } else {
+        Future.failed(new IllegalStateException("Status:" + result.status))
       }
     )
   }
 
   override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
-    ws.url(s"$url/level/${write(key)}").put(write(plan)).flatMap(result =>
+    ws.url(s"$url/plan/${write(key)}").put(write(plan)).flatMap(result =>
       if (result.status == 200) {
-        Future.failed(new IllegalStateException("Status:" + result.status))
-      } else {
         Future.successful(())
+      } else {
+        Future.failed(new IllegalStateException("Status:" + result.status))
       }
     )
   }
 
   override def deletePlan(key: LevelKey): Future[Unit] = {
-    ws.url(s"$url/level/${write(key)}").delete().flatMap(result =>
+    ws.url(s"$url/plan/${write(key)}").delete().flatMap(result =>
       if (result.status == 200) {
-        Future.failed(new IllegalStateException("Status:" + result.status))
-      } else {
         Future.successful(())
+      } else {
+        Future.failed(new IllegalStateException("Status:" + result.status))
       }
     )
   }

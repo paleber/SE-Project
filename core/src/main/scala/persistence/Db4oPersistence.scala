@@ -16,7 +16,7 @@ import org.json4s.jackson.Serialization.write
 import scaldi.Injectable
 
 
-final class Db4oPersistence(path: String, databaseName: String) extends Persistence with Injectable {
+final class Db4oPersistence(path: String) extends Persistence with Injectable {
 
   private case class Db4oEntry(category: String, name: String, plan: String)
 
@@ -26,7 +26,7 @@ final class Db4oPersistence(path: String, databaseName: String) extends Persiste
     Future {
       val db = Db4oEmbedded.openFile(
         Db4oEmbedded.newConfiguration(),
-        databaseName
+        path
       )
       try {
         f(db)
@@ -79,7 +79,7 @@ final class Db4oPersistence(path: String, databaseName: String) extends Persiste
     if (set.isEmpty) {
       throw new NoSuchElementException("id not found")
     }
-    db.delete(set)
+    db.delete(set.head)
   }
 
 }
