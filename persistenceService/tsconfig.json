@@ -13,7 +13,8 @@
     "sourceMap": true,
     "mapRoot": "/assets",
     "sourceRoot": "/assets",
-    "rootDirs": ["app/assets","test/assets"],
+    "rootDirs": [
+      "app/assets","test/assets"],
     "baseUrl": "./web",
     "paths": {
       "*": [

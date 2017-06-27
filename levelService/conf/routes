@@ -1,6 +1,0 @@
-GET           /                 controllers.LevelServiceApplication.index
-GET           /levelIds         controllers.LevelServiceApplication.readAllKeys
-
-GET           /level/:id        controllers.LevelServiceApplication.readPlan(id: String)
-PUT           /level/:id        controllers.LevelServiceApplication.createPlan(id: String)
-DELETE        /level/:id        controllers.LevelServiceApplication.deletePlan(id: String)

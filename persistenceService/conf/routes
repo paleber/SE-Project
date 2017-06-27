@@ -1,0 +1,5 @@
+GET           /plan/:key        controllers.PlanService.readPlan(key: String)
+PUT           /plan/:key        controllers.PlanService.createPlan(key: String)
+DELETE        /plan/:key        controllers.PlanService.deletePlan(key: String)
+
+GET           /planKeys         controllers.PlanService.readKeys

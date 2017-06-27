@@ -72,7 +72,7 @@ lazy val scongo = (project in file(".")).
   dependsOn(core).
   enablePlugins(PlayScala, SbtWeb)
 
-lazy val levelService = (project in file("levelService")).
+lazy val persistenceService = (project in file("persistenceService")).
   settings(commonSettings: _*).
   dependsOn(core).
   enablePlugins(PlayScala)
