@@ -11,14 +11,14 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
-import persistence.SlickH2Persistence._
+import persistence.SlickPersistence._
 import slick.dbio.NoStream
 import slick.jdbc.H2Profile
 import slick.jdbc.H2Profile.api._
 import slick.lifted.PrimaryKey
 import slick.lifted.ProvenShape
 
-private object SlickH2Persistence {
+private object SlickPersistence {
 
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
@@ -51,9 +51,9 @@ private object SlickH2Persistence {
 
 }
 
-final class SlickH2Persistence(database: H2Profile.backend.DatabaseDef) extends Persistence {
+final class SlickPersistence(database: H2Profile.backend.DatabaseDef) extends Persistence {
 
-  private val dbReady: Future[Unit] = database.run(plans.schema.create).recoverWith { case _ => Future.successful(()) }
+  private val dbReady: Future[Unit] = database.run(plans.schema.create)
 
   private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): Future[R] = {
     dbReady.flatMap(_ =>
