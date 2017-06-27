@@ -39,21 +39,20 @@ class ResourceManager(implicit inj: Injector) extends Actor with ActorLogging wi
       sender ! MenuLoaded(info)
 
     case LoadLevel(id) =>
-      val level = levels.get(id)
-      if (level.isDefined) {
-        log.debug("Loading level from cache: " + id)
-        sender ! LevelLoaded(level.get)
-      } else {
+      levels.get(id).fold[Unit] {
+
         val target = sender
         persistence.readPlan(id).map { plan =>
-          log.debug("Loading level from persistence: " + id)
           val level = LevelBuilder.build(id, plan)
           self ! LevelLoaded(level)
           target ! LevelLoaded(level)
-        }.recover { case e =>
-          log.error(s"Loading level from persistence failed: $id (${e.getMessage})")
+        }.recover { case _ =>
           target ! LoadingLevelFailed
         }
+
+      } { level =>
+        log.debug("Loading level from cache: " + id)
+        sender ! LevelLoaded(level)
       }
 
     case LevelLoaded(level) =>
