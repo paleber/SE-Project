@@ -6,23 +6,46 @@ import scala.util.Success
 
 import model.element.LevelKey
 import model.element.Plan
-import reactivemongo.api.collections.bson.BSONCollection
-import reactivemongo.api.indexes.Index
-import reactivemongo.api.indexes.IndexType
+import persistence.MongoPersistence.Entry
+import persistence.MongoPersistence.entryWriter
+import persistence.MongoPersistence.idProjection
+import persistence.MongoPersistence.levelKeyReader
+import persistence.MongoPersistence.planProjection
+import persistence.MongoPersistence.planReader
 import reactivemongo.api.Cursor
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.MongoConnection
 import reactivemongo.api.MongoDriver
+import reactivemongo.api.collections.bson.BSONCollection
+import reactivemongo.api.indexes.Index
+import reactivemongo.api.indexes.IndexType
 import reactivemongo.bson.BSONDocument
+import reactivemongo.bson.BSONDocumentReader
+import reactivemongo.bson.BSONDocumentWriter
 import reactivemongo.bson.Macros
-import scaldi.Injectable
-import scaldi.Injector
-import scaldi.Module
 
+private object MongoPersistence {
 
+  case class Entry(
+      category: String,
+      name: String,
+      form: Int,
+      shifts: List[List[List[Int]]]
+  )
 
-final class MongoPersistence(uri: String, databaseName: String) extends Persistence  {
+  implicit val entryWriter: BSONDocumentWriter[Entry] = Macros.writer[Entry]
 
+  implicit val planReader: BSONDocumentReader[Plan] = Macros.reader[Plan]
+
+  implicit val levelKeyReader: BSONDocumentReader[LevelKey] = Macros.reader[LevelKey]
+
+  val idProjection = BSONDocument("_id" -> 0, "category" -> 1, "name" -> 1)
+
+  val planProjection = BSONDocument("_id" -> 0, "form" -> 1, "shifts" -> 1)
+
+}
+
+final class MongoPersistence(uri: String, databaseName: String) extends Persistence {
 
   private val connection: Future[MongoConnection] = Future.fromTry(MongoDriver().connection(uri))
   private val database: Future[DefaultDB] = connection.flatMap(_.database(databaseName))
@@ -41,34 +64,19 @@ final class MongoPersistence(uri: String, databaseName: String) extends Persiste
         )
       }
 
-  private val idProjection = BSONDocument("_id" -> 0, "category" -> 1, "name" -> 1)
-
-  override def readAllKeys(): Future[Set[LevelKey]] = {
+  override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
     collection.flatMap {
-      implicit val reader = Macros.reader[LevelKey]
-      _.find(BSONDocument.empty, idProjection).cursor().
-        collect(-1, Cursor.FailOnError[List[LevelKey]]())
-    }.map(_.toSet)
+      _.insert(Entry(key.category, key.name, plan.form, plan.shifts))
+    }.flatMap(_ =>
+      Future.successful(())
+    )
   }
-
-  private val planProjection = BSONDocument("_id" -> 0, "form" -> 1, "shifts" -> 1)
 
   override def readPlan(key: LevelKey): Future[Plan] = {
     collection.flatMap {
-      implicit val reader = Macros.reader[Plan]
-      _.find(BSONDocument("category" -> key.category, "name" -> key.name), planProjection).requireOne
+      _.find(BSONDocument("category" -> key.category, "name" -> key.name), planProjection).requireOne[Plan]
     }
   }
-
-  private case class Entry(category: String, name: String, form: Int, shifts: List[List[List[Int]]])
-
-  override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
-    collection.flatMap {
-      implicit val writer = Macros.writer[Entry]
-      _.insert(Entry(key.category, key.name, plan.form, plan.shifts))
-    }.flatMap(_ => Future.successful(()))
-  }
-
 
   override def deletePlan(key: LevelKey): Future[Unit] = {
     collection.flatMap {
@@ -80,6 +88,13 @@ final class MongoPersistence(uri: String, databaseName: String) extends Persiste
         Future.failed(new NoSuchElementException("key not found"))
       }
     )
+  }
+
+  override def readAllKeys(): Future[Set[LevelKey]] = {
+    collection.flatMap {
+      _.find(BSONDocument.empty, idProjection).cursor[LevelKey]().
+        collect(-1, Cursor.FailOnError[List[LevelKey]]())
+    }.map(_.toSet)
   }
 
 }

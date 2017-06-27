@@ -26,18 +26,6 @@ final class FilePersistence(path: String) extends Persistence {
 
   private def createDir(key: LevelKey): File = new File(s"$path/${key.category}")
 
-  override def readPlan(key: LevelKey): Future[Plan] = {
-    Future {
-      val file = Source.fromFile(createFile(key))
-      try {
-        read[Plan](file.mkString)
-      } finally {
-        file.close()
-      }
-    }
-  }
-
-
   override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
     Future {
       val file = createFile(key)
@@ -54,10 +42,14 @@ final class FilePersistence(path: String) extends Persistence {
     }
   }
 
-  override def readAllKeys(): Future[Set[LevelKey]] = {
+  override def readPlan(key: LevelKey): Future[Plan] = {
     Future {
-      new File(path).listFiles.flatMap(cat => cat.listFiles.map(name =>
-        LevelKey(cat.getName, name.getName.replace(".json", "")))).toSet
+      val file = Source.fromFile(createFile(key))
+      try {
+        read[Plan](file.mkString)
+      } finally {
+        file.close()
+      }
     }
   }
 
@@ -71,6 +63,13 @@ final class FilePersistence(path: String) extends Persistence {
       if (dir.list.isEmpty) {
         dir.delete()
       }
+    }
+  }
+
+  override def readAllKeys(): Future[Set[LevelKey]] = {
+    Future {
+      new File(path).listFiles.flatMap(cat => cat.listFiles.map(name =>
+        LevelKey(cat.getName, name.getName.replace(".json", "")))).toSet
     }
   }
 

@@ -11,17 +11,18 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import org.json4s.jackson.Serialization.write
+import persistence.SlickH2Persistence._
 import slick.dbio.NoStream
 import slick.jdbc.H2Profile
 import slick.jdbc.H2Profile.api._
 import slick.lifted.PrimaryKey
 import slick.lifted.ProvenShape
 
-final class SlickH2Persistence(database: H2Profile.backend.DatabaseDef) extends Persistence {
+private object SlickH2Persistence {
 
-  private implicit val formats: Formats = Serialization.formats(NoTypeHints)
+  implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  private class Plans(tag: Tag) extends Table[(String, String, String)](tag, "PLANS") {
+  class Plans(tag: Tag) extends Table[(String, String, String)](tag, "PLANS") {
 
     def category: Rep[String] = {
       column[String]("CATEGORY")
@@ -46,22 +47,18 @@ final class SlickH2Persistence(database: H2Profile.backend.DatabaseDef) extends 
 
   }
 
-  private val plans: TableQuery[Plans] = TableQuery[Plans]
+  val plans: TableQuery[Plans] = TableQuery[Plans]
 
-  private val schemasCreated: Future[Unit] = database.run(plans.schema.create).recoverWith { case _ => Future.successful(()) }
+}
+
+final class SlickH2Persistence(database: H2Profile.backend.DatabaseDef) extends Persistence {
+
+  private val dbReady: Future[Unit] = database.run(plans.schema.create).recoverWith { case _ => Future.successful(()) }
 
   private def doDatabaseAction[R](query: DBIOAction[R, NoStream, Nothing]): Future[R] = {
-    schemasCreated.flatMap(_ =>
+    dbReady.flatMap(_ =>
       database.run(query)
     )
-  }
-
-  override def readPlan(key: LevelKey): Future[Plan] = {
-    val query = plans.filter(plan => plan.category === key.category && plan.name === key.name).map(_.shifts)
-    doDatabaseAction(query.result).map {
-      data =>
-        read[Plan](data.head)
-    }
   }
 
   override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
@@ -70,22 +67,38 @@ final class SlickH2Persistence(database: H2Profile.backend.DatabaseDef) extends 
     ).flatMap(_ => Future.successful(()))
   }
 
-  override def readAllKeys(): Future[Set[LevelKey]] = {
-    val query = plans.map(plan => (plan.category, plan.name))
-    doDatabaseAction(query.result).map(_.map {
-      case (category, name) => LevelKey(category, name)
-    }).map(_.toSet)
+  override def readPlan(key: LevelKey): Future[Plan] = {
+    doDatabaseAction(
+      plans.filter(plan =>
+        plan.category === key.category && plan.name === key.name
+      ).map(_.shifts).result
+    ).map(data =>
+      read[Plan](data.head)
+    )
   }
 
   override def deletePlan(key: LevelKey): Future[Unit] = {
-    val query = plans.filter(plan => plan.category === key.category && plan.name === key.name).delete
-    doDatabaseAction(query).flatMap(result =>
+    doDatabaseAction(
+      plans.filter(plan =>
+        plan.category === key.category && plan.name === key.name
+      ).delete
+    ).flatMap(result =>
       if (result > 0) {
         Future.successful(())
       } else {
         Future.failed(new IllegalStateException("key not found"))
       }
     )
+  }
+
+  override def readAllKeys(): Future[Set[LevelKey]] = {
+    doDatabaseAction(
+      plans.map(plan =>
+        (plan.category, plan.name)
+      ).result
+    ).map(_.map {
+      case (category, name) => LevelKey(category, name)
+    }).map(_.toSet)
   }
 
 }

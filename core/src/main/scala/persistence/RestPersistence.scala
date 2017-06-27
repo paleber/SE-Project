@@ -18,10 +18,10 @@ class RestPersistence(url: String, ws: WSClient) extends Persistence {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  override def readAllKeys(): Future[Set[LevelKey]] = {
-    ws.url(s"$url/planKeys").get().flatMap(result =>
+  override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
+    ws.url(s"$url/plan/${write(key)}").put(write(plan)).flatMap(result =>
       if (result.status == 200) {
-        Future.successful(read[Set[LevelKey]](result.json.toString))
+        Future.successful(())
       } else {
         Future.failed(new IllegalStateException("Status:" + result.status))
       }
@@ -38,16 +38,6 @@ class RestPersistence(url: String, ws: WSClient) extends Persistence {
     )
   }
 
-  override def createPlan(key: LevelKey, plan: Plan): Future[Unit] = {
-    ws.url(s"$url/plan/${write(key)}").put(write(plan)).flatMap(result =>
-      if (result.status == 200) {
-        Future.successful(())
-      } else {
-        Future.failed(new IllegalStateException("Status:" + result.status))
-      }
-    )
-  }
-
   override def deletePlan(key: LevelKey): Future[Unit] = {
     ws.url(s"$url/plan/${write(key)}").delete().flatMap(result =>
       if (result.status == 200) {
@@ -57,5 +47,16 @@ class RestPersistence(url: String, ws: WSClient) extends Persistence {
       }
     )
   }
+
+  override def readAllKeys(): Future[Set[LevelKey]] = {
+    ws.url(s"$url/planKeys").get().flatMap(result =>
+      if (result.status == 200) {
+        Future.successful(read[Set[LevelKey]](result.json.toString))
+      } else {
+        Future.failed(new IllegalStateException("Status:" + result.status))
+      }
+    )
+  }
+
 
 }
