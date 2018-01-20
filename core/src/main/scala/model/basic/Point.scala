@@ -1,5 +1,7 @@
 package model.basic
 
+import scala.math.BigDecimal.RoundingMode
+
 object Point {
   val ZERO = Point(0, 0)
 }
@@ -14,11 +16,11 @@ case class Point(x: Double, y: Double) {
     Point(x + v.x, y + v.y)
   }
 
-  def distanceTo(p: Point) = {
+  def distanceTo(p: Point): Double = {
     Math.sqrt(distanceSquareTo(p))
   }
 
-  def distanceSquareTo(p: Point) = {
+  def distanceSquareTo(p: Point): Double = {
     (x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)
   }
 
@@ -44,8 +46,8 @@ case class Point(x: Double, y: Double) {
   }
 
   override def toString: String = {
-    val xs = BigDecimal(x).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
-    val ys = BigDecimal(y).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val xs = BigDecimal(x).setScale(4, RoundingMode.HALF_UP).toDouble
+    val ys = BigDecimal(y).setScale(4, RoundingMode.HALF_UP).toDouble
     s"Point($xs,$ys)"
   }
 
